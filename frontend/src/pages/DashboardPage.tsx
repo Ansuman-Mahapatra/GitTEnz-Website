@@ -12,11 +12,14 @@ import { AIAssistant } from "@/components/ai/AIAssistant";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
+  const [localReposResults, setLocalReposResults] = useState<any[]>([]);
   const { token } = useAuth();
 
   const { data: repositories, isLoading } = useQuery({
@@ -32,18 +35,7 @@ export function DashboardPage() {
     enabled: !!token,
   });
 
-  const { data: localRepositories, refetch: fetchLocalRepos } = useQuery({
-    queryKey: ["local-repositories", localPath],
-    queryFn: async () => {
-      if (!localPath) return [];
-      const res = await fetch(`http://localhost:8080/api/repos/local?path=${encodeURIComponent(localPath)}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) return [];
-      return res.json();
-    },
-    enabled: false, // Wait for user action
-  });
+
 
   // Data processing
   const displayRepos = repositories || [];
@@ -139,35 +131,105 @@ export function DashboardPage() {
             className="space-y-6"
           >
             <div className="flex flex-col gap-4">
-              <h2 className="text-2xl font-bold">Local Repositories</h2>
-              <div className="flex gap-4 items-center bg-card p-4 rounded-lg border">
-                <input
-                  type="text"
-                  value={localPath}
-                  onChange={(e) => setLocalPath(e.target.value)}
-                  className="flex-1 bg-background border rounded px-3 py-2 text-sm text-foreground"
-                  placeholder="Enter directory path (e.g. C:/Projects)"
-                />
-                <button
-                  onClick={() => fetchLocalRepos()}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 text-sm font-medium"
-                >
-                  Scan Directory
-                </button>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Local Repositories</h2>
+                {localReposResults.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Found {localReposResults.length} projects
+                  </div>
+                )}
               </div>
+
+              <Card className="glass-card border-dashed border-2 border-muted-foreground/20">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                    <FolderGit2 className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Select your Projects Folder</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Select a directory to scan for local projects. We'll look for package.json, pom.xml, and other indicators.
+                    <br /><span className="text-xs opacity-70">(Your files stay on your device)</span>
+                  </p>
+                  <Button
+                    size="lg"
+                    className="glow-green gap-2"
+                    onClick={async () => {
+                      try {
+                        // @ts-ignore - File System Access API
+                        const dirHandle = await window.showDirectoryPicker();
+                        const newRepos: any[] = [];
+
+                        // Iterate through subdirectories
+                        // @ts-ignore
+                        for await (const entry of dirHandle.values()) {
+                          if (entry.kind === 'directory') {
+                            const repoName = entry.name;
+
+                            // Check for specific project files
+                            let language = "Unknown";
+                            let description = "Local Project";
+
+                            try {
+                              // Check for package.json (Node/JS/TS)
+                              // @ts-ignore
+                              const pkgHandle = await entry.getFileHandle('package.json').catch(() => null);
+                              if (pkgHandle) language = "JavaScript/TypeScript";
+
+                              // Check for pom.xml (Java)
+                              // @ts-ignore
+                              const pomHandle = await entry.getFileHandle('pom.xml').catch(() => null);
+                              if (pomHandle) language = "Java";
+
+                              // Check for requirements.txt (Python)
+                              // @ts-ignore
+                              const pyHandle = await entry.getFileHandle('requirements.txt').catch(() => null);
+                              if (pyHandle) language = "Python";
+
+                              // Check for Cargo.toml (Rust)
+                              // @ts-ignore
+                              const rustHandle = await entry.getFileHandle('Cargo.toml').catch(() => null);
+                              if (rustHandle) language = "Rust";
+
+                              // If we found a language indicator, treat as valid repo
+                              if (language !== "Unknown" || pkgHandle || pomHandle) {
+                                newRepos.push({
+                                  name: repoName,
+                                  description: `Local ${language} project`,
+                                  language: language,
+                                  visibility: "local",
+                                  stargazersCount: 0,
+                                  forksCount: 0,
+                                  updatedAt: new Date().toISOString()
+                                });
+                              }
+                            } catch (e) {
+                              console.error("Error determining repo type", e);
+                            }
+                          }
+                        }
+
+                        // @ts-ignore
+                        setLocalReposResults(newRepos);
+
+                      } catch (err) {
+                        console.error("User cancelled or API not supported", err);
+                      }
+                    }}
+                  >
+                    <FolderGit2 className="w-4 h-4" />
+                    Browse Folder
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
 
-            {localRepositories && localRepositories.length > 0 ? (
+            {localReposResults.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {localRepositories.map((repo: any, index: number) => (
+                {localReposResults.map((repo: any, index: number) => (
                   <RepositoryCard key={repo.name + index} repository={repo} index={index} />
                 ))}
               </div>
-            ) : (
-              <div className="text-center py-20 bg-muted/20 rounded-xl border border-dashed text-muted-foreground">
-                No local repositories found or scanned yet. enter a valid path and click Scan.
-              </div>
-            )}
+            ) : null}
           </motion.div>
         );
 
