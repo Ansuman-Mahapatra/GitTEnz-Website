@@ -43,13 +43,13 @@ export function LoginPage() {
             transition={{ delay: 0.2 }}
           >
             <div className="relative">
-              <div className="absolute top-1 left-1 w-20 h-20 rounded-2xl bg-white/50" />
+              <div className="absolute top-1 left-1 w-24 h-24 rounded-2xl bg-white/10 blur-xl" />
               <motion.div
-                className="relative w-20 h-20 rounded-2xl bg-white flex items-center justify-center glow-green shadow-xl"
-                whileHover={{ rotate: 10 }}
+                className="relative w-24 h-24 rounded-2xl bg-[#0d1117] flex items-center justify-center glow-green shadow-xl border border-white/10 overflow-hidden p-2"
+                whileHover={{ rotate: 5, scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <GitBranch className="w-10 h-10 text-primary" />
+                <img src="/logo.png" alt="GitTEnz Logo" className="w-full h-full object-contain" />
               </motion.div>
             </div>
             <div className="text-center">
