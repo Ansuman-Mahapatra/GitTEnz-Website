@@ -52,4 +52,11 @@ public class UserController {
 
         return userRepository.save(user);
     }
+
+    @GetMapping("/activity")
+    public List<java.util.Map<String, Object>> getActivity(java.security.Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return gitHubService.getUserEvents(user.getUsername(), user.getAccessToken());
+    }
 }
