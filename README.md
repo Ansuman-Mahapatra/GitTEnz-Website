@@ -2,18 +2,17 @@
 
 [![Deploy Status](https://img.shields.io/badge/Status-Live-green)](https://gittenz.netlify.app)
 
-GitTEnz is a modern web application that provides an enhanced interface for GitHub, allowing users to view repositories, statistics, and interact with an AI assistant. It features a React frontend and a Spring Boot backend with MongoDB.
+GitTEnz is a modern web application that provides an enhanced interface for GitHub, allowing users to view repositories, statistics, edit code, and interact with an AI assistant. It features a React frontend and a Spring Boot backend with MongoDB.
 
 ## 🚀 Features
 
 *   **GitHub Integration**: Log in with GitHub to sync repositories and view stats.
 *   **Context-Aware AI Assistant**: Chat with an AI about your code. It automatically reads the `README.md` of the current repository to provide relevant answers.
-*   **Activity Insights**: Visual charts of your contribution history (proxied securely via backend).
+*   **Activity Insights**: Granular breakdown of your contribution history (Pushes, Pull Requests) and visual charts.
+*   **Local Starring**: Star repositories locally on GitTEnz without affecting your GitHub stars.
+*   **Code Editor**: Built-in code viewer and editor with syntax highlighting.
 *   **Modern UI**: Built with React, Tailwind CSS, and Shadcn UI.
 *   **Secure Auth**: OAuth2 login with JWT authentication for API security.
-*   **Tech Stack**:
-    *   **Frontend**: React, Vite, TypeScript, TanStack Query, Tailwind CSS.
-    *   **Backend**: Spring Boot 3, MongoDB, Redis, Spring Security (OAuth2 + JWT).
 
 ## 🛠️ Prerequisites
 
@@ -21,7 +20,7 @@ Before you begin, ensure you have the following installed:
 
 *   **Java 17+** (JDK 21 recommended)
 *   **Node.js** (v18 or higher)
-*   **Maven** (optional if using `mvnw`, but good to have)
+*   **Maven**
 *   **MongoDB Atlas Account**: For the database.
 *   **Redis** (Optional): Local instance or Redis Cloud.
 
@@ -29,7 +28,7 @@ Before you begin, ensure you have the following installed:
 
 ### 1. Clone the Repository
 ```bash
-git clone https://github.com/yourusername/GitTEnz.git
+git clone https://github.com/YourUsername/GitTEnz.git
 cd GitTEnz
 ```
 
@@ -60,78 +59,6 @@ The backend requires several API keys to function securely.
     # Redis (Optional/Cloud)
     SPRING_DATA_REDIS_HOST=localhost
     SPRING_DATA_REDIS_PORT=6379
-    # SPRING_DATA_REDIS_USERNAME=default
-    # SPRING_DATA_REDIS_PASSWORD=secret
-    ```
-    
-    > **Note**: For a detailed guide on obtaining these credentials, refer to `GETTING_CREDENTIALS.md` in the project root.
-
-### 3. Frontend Setup (`/frontend`)
-
-1.  Navigate to the frontend directory:
-    ```bash
-    cd ../frontend
-# GitTEnz - Advanced GitHub Dashboard
-
-GitTEnz is a modern web application that provides an enhanced interface for GitHub, allowing users to view repositories, statistics, and interact with an AI assistant. It features a React frontend and a Spring Boot backend with MongoDB.
-
-## 🚀 Features
-
-*   **GitHub Integration**: Log in with GitHub to sync repositories and view stats.
-*   **AI Assistant**: Chat with an AI (powered by OpenAI) about your repositories.
-*   **Modern UI**: Built with React, Tailwind CSS, and Shadcn UI.
-*   **Secure Auth**: OAuth2 login with JWT authentication for API security.
-*   **Tech Stack**:
-    *   **Frontend**: React, Vite, TypeScript, TanStack Query, Tailwind CSS.
-    *   **Backend**: Spring Boot 3, MongoDB, Redis, Spring Security (OAuth2 + JWT).
-
-## 🛠️ Prerequisites
-
-Before you begin, ensure you have the following installed:
-
-*   **Java 17+** (JDK 21 recommended)
-*   **Node.js** (v18 or higher)
-*   **Maven** (optional if using `mvnw`, but good to have)
-*   **MongoDB Atlas Account**: For the database.
-*   **Redis** (Optional): Local instance or Redis Cloud.
-
-## ⚙️ Setup & Configuration
-
-### 1. Clone the Repository
-```bash
-git clone https://github.com/yourusername/GitTEnz.git
-cd GitTEnz
-```
-
-### 2. Backend Setup (`/backend`)
-
-The backend requires several API keys to function securely.
-
-1.  Navigate to the backend directory:
-    ```bash
-    cd backend
-    ```
-2.  **Configuration**:
-    The project uses a `.env` file for secrets. You can find the template in `backend/.env`.
-    
-    Open `backend/.env` and update the following values:
-
-    ```env
-    # GitHub OAuth (Settings > Developer Settings > OAuth Apps)
-    GITHUB_CLIENT_ID=your_client_id
-    GITHUB_CLIENT_SECRET=your_client_secret
-    
-    # OpenAI API (platform.openai.com)
-    OPENAI_API_KEY=sk-your_key_here
-    
-    # MongoDB Atlas Connection String
-    SPRING_DATA_MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/gitten
-    
-    # Redis (Optional/Cloud)
-    SPRING_DATA_REDIS_HOST=localhost
-    SPRING_DATA_REDIS_PORT=6379
-    # SPRING_DATA_REDIS_USERNAME=default
-    # SPRING_DATA_REDIS_PASSWORD=secret
     ```
     
     > **Note**: For a detailed guide on obtaining these credentials, refer to `GETTING_CREDENTIALS.md` in the project root.

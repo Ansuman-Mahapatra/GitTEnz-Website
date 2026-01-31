@@ -194,10 +194,18 @@ export function DashboardPage() {
 
   const realActivityData = calculateRealActivity();
 
+  const totalPushes = activityEvents
+    ? activityEvents.filter((e: any) => e.type === "PushEvent").length
+    : 0;
+
+  const totalPRs = activityEvents
+    ? activityEvents.filter((e: any) => e.type === "PullRequestEvent").length
+    : 0;
+
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
-    { title: "Total Forks", value: displayRepos.reduce((acc: number, r: any) => acc + (r.forksCount || 0), 0), icon: GitBranch, trend: "Across all repos", trendUp: true },
-    { title: "Total Stars", value: displayRepos.reduce((acc: number, r: any) => acc + (r.stargazersCount || 0), 0), icon: Star, trend: "Across all repos", trendUp: true },
+    { title: "Total Pushes", value: totalPushes, icon: GitCommit, trend: "Recent Activity", trendUp: totalPushes > 0 },
+    { title: "Total Pull Requests", value: totalPRs, icon: GitBranch, trend: "Recent Activity", trendUp: totalPRs > 0 },
     { title: "Total Open Issues", value: displayRepos.reduce((acc: number, r: any) => acc + (r.openIssuesCount || 0), 0), icon: GitCommit, trend: "Needs attention", trendUp: false },
   ];
 
