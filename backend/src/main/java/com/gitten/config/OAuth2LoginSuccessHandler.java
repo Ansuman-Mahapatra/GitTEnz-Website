@@ -32,7 +32,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 this.authorizedClientService = authorizedClientService;
         }
 
-        @org.springframework.beans.factory.annotation.Value("${frontend.url:http://localhost:5180}")
+        @org.springframework.beans.factory.annotation.Value("${frontend.url:https://gittenz.netlify.app}")
         private String frontendUrl;
 
         @Override
