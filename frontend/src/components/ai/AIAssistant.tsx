@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "react-router-dom";
+import { API_URL } from "@/config";
+import { useAuth } from "@/lib/auth";
 
 interface Message {
   id: string;
@@ -25,6 +28,18 @@ export function AIAssistant() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const location = useLocation();
+  const { token } = useAuth();
+
+  const getRepoContext = () => {
+    const match = location.pathname.match(/\/repository\/([^/]+)\/([^/]+)/);
+    if (match) {
+      return `${match[1]}/${match[2]}`;
+    }
+    return undefined;
+  };
+
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -46,24 +61,43 @@ export function AIAssistant() {
     setInput("");
     setLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "Based on your recent commit history, I can see you're working on the frontend.",
-        "That's an interesting pattern. Have you considered using a custom hook for that?",
-        "I can help you debug that. Can you provide the error log?",
-        "Your code quality score is looking good! Great work.",
-      ];
+    try {
+      const currentRepo = getRepoContext();
+      const payload: any = { message: userMessage.content };
+      if (currentRepo) {
+        payload.repoName = currentRepo;
+      }
+
+      const res = await fetch(`${API_URL}/api/chat`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) throw new Error("Failed to fetch response");
+      const data = await res.json();
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: responses[Math.floor(Math.random() * responses.length)],
+        content: data.response || "No response received.",
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error(error);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I'm having trouble connecting to the server. Please check if the backend is running.",
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -107,8 +141,8 @@ export function AIAssistant() {
                       >
                         <div
                           className={`max-w-[85%] p-3 rounded-2xl text-sm ${message.role === "user"
-                              ? "bg-primary text-primary-foreground rounded-br-none"
-                              : "bg-muted/80 backdrop-blur-sm border border-white/5 rounded-bl-none"
+                            ? "bg-primary text-primary-foreground rounded-br-none"
+                            : "bg-muted/80 backdrop-blur-sm border border-white/5 rounded-bl-none"
                             }`}
                         >
                           {message.content}

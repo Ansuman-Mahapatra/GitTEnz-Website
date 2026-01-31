@@ -20,11 +20,13 @@ public class ChatController {
     }
 
     @PostMapping
-    public Map<String, String> chat(@AuthenticationPrincipal OAuth2User oauth2User,
+    public Map<String, String> chat(org.springframework.security.core.Authentication authentication,
             @RequestBody Map<String, String> payload) {
-        String username = oauth2User.getAttribute("login");
+        String username = authentication.getName();
         String message = payload.get("message");
-        String response = aiService.chat(username, message);
+        String repoName = payload.get("repoName");
+        String filePath = payload.get("filePath");
+        String response = aiService.chat(username, message, repoName, filePath);
         return Map.of("response", response);
     }
 }

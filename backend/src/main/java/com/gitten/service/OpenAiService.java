@@ -10,6 +10,10 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.gitten.model.User;
+import com.gitten.repository.UserRepository;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -22,26 +26,68 @@ public class OpenAiService implements AiService {
 
     private final RepositoryService repositoryService;
     private final RestClient.Builder restClientBuilder;
+    private final UserRepository userRepository;
+    private final GitHubService gitHubService;
 
-    public OpenAiService(RepositoryService repositoryService, RestClient.Builder restClientBuilder) {
+    public OpenAiService(RepositoryService repositoryService, RestClient.Builder restClientBuilder,
+            UserRepository userRepository, GitHubService gitHubService) {
         this.repositoryService = repositoryService;
         this.restClientBuilder = restClientBuilder;
+        this.userRepository = userRepository;
+        this.gitHubService = gitHubService;
     }
 
     @Value("${openai.api.key:placeholder_key}")
     private String openAiApiKey;
 
     @Override
-    public String chat(String username, String userMessage) {
-        // Build Context
+    public String chat(String username, String userMessage, String repoName, String filePath) {
+        // Build generic context
         List<Repository> repos = repositoryService.getRepositoriesByUsername(username);
-        String repoContext = repos.stream()
+        String repoList = repos.stream()
                 .map(r -> r.getName() + " (" + r.getLanguage() + ")")
                 .collect(Collectors.joining(", "));
 
-        String systemPrompt = "You are GitTEn AI, a helpful assistant for GitHub repositories. " +
-                "The user has the following repositories: " + repoContext + ". " +
-                "Answer questions about these repositories or general git questions.";
+        StringBuilder contextBuilder = new StringBuilder();
+        contextBuilder.append("You are GitTEn AI, a helpful assistant for GitHub repositories. ");
+        contextBuilder.append("The user has the following repositories: ").append(repoList).append(". ");
+
+        // Fetch detailed context if repoName provided
+        if (repoName != null && !repoName.isEmpty()) {
+            contextBuilder.append("The user is currently viewing repository: ").append(repoName).append(". ");
+
+            // Fetch README content
+            try {
+                User user = userRepository.findByUsername(username).orElse(null);
+                if (user != null && user.getAccessToken() != null) {
+                    String[] parts = repoName.split("/");
+                    if (parts.length == 2) {
+                        Map<String, Object> readme = gitHubService.getFileContent(parts[0], parts[1], "README.md",
+                                user.getAccessToken());
+                        if (readme != null && readme.containsKey("content")) {
+                            String encodedContent = (String) readme.get("content");
+                            // Sanitize base64 string (remove newlines)
+                            String cleanEncoded = encodedContent.replaceAll("\\s", "");
+                            byte[] decodedBytes = Base64.getDecoder().decode(cleanEncoded);
+                            String decodedContent = new String(decodedBytes, StandardCharsets.UTF_8);
+                            // Limit README size to avoid token limits
+                            if (decodedContent.length() > 2000) {
+                                decodedContent = decodedContent.substring(0, 2000) + "...(truncated)";
+                            }
+                            contextBuilder.append("Here is the README.md content of the current repository:\n")
+                                    .append(decodedContent).append("\n");
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Could not fetch README for context: " + e.getMessage());
+            }
+        }
+
+        contextBuilder.append(
+                "Answer questions specifically about the repository content if provided, or general git questions.");
+
+        String systemPrompt = contextBuilder.toString();
 
         // Call OpenAI
         Map<String, Object> requestBody = Map.of(
