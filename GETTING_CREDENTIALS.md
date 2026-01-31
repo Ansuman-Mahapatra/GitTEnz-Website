@@ -7,12 +7,12 @@ To allow users to log in with GitHub:
 2.  Click **"New OAuth App"**.
 3.  Fill in the details:
     *   **Application Name**: GitTEnz (or any name)
-    *   **Homepage URL**: `http://localhost:5173`
+    *   **Homepage URL**: `http://localhost:5180`
     *   **Authorization callback URL**: `http://localhost:8080/login/oauth2/code/github`
 4.  Click **"Register application"**.
 5.  Copy the **Client ID**.
 6.  Click **"Generate a new client secret"** and copy the **Client Secret**.
-7.  Paste these into your `.env` file:
+7.  Paste these into your `backend/.env` file:
     ```env
     GITHUB_CLIENT_ID=your_id_here
     GITHUB_CLIENT_SECRET=your_secret_here
@@ -26,7 +26,7 @@ To enable the AI chat features:
 3.  Click **"Create new secret key"**.
 4.  Name it (e.g., "GitTEnz").
 5.  Copy the key (starts with `sk-...`).
-6.  Paste it into your `.env` file:
+6.  Paste it into your `backend/.env` file:
     ```env
     OPENAI_API_KEY=sk-...
     ```
@@ -42,9 +42,9 @@ You are currently using a hardcoded connection string. To use your own:
 5.  Go to **Database > Connect > Drivers**.
 6.  Copy the connection string.
 7.  Replace `<password>` with your database user's password.
-8.  Paste it into your `.env` file if you uncomment the `SPRING_DATA_MONGODB_URI` line.
+8.  Paste it into your `backend/.env` file to replace the default `SPRING_DATA_MONGODB_URI`.
 
 ---
 
 ### Important:
-The backend is configured to read the **`d:/GitTEnz/backend/.env`** file. Ensure you restart the backend after saving changes to this file.
+The backend is configured to read the **`backend/.env`** file. Ensure you restart the backend after saving changes to this file.
