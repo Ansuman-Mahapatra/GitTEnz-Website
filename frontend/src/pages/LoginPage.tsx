@@ -54,7 +54,7 @@ export function LoginPage() {
                 whileHover={{ rotate: 5, scale: 1.05 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <img src="/logo.png" alt="GitTEnz Logo" className="w-full h-full object-contain" />
+                <img src="/logo1.png" alt="GitTEnz Logo" className="w-full h-full object-contain" />
               </motion.div>
             </div>
             <div className="text-center">
