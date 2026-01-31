@@ -64,11 +64,13 @@ The application follows a classic **Client-Server** architecture with a separate
 
 ### **Dashboard & Repository Management**
 *   **Function**: Fetches user's repositories, displays stats (stars, forks, languages).
-*   **Activity Feed**: Uses a backend proxy endpoint (`/api/user/activity`) to securely fetch GitHub events using the stored OAuth token, avoiding CORS and Auth issues on the frontend.
+*   **Activity Feed & Stats**: Uses a backend proxy endpoint (`/api/user/activity`) to securely fetch GitHub events. The Dashboard now features granular activity tracking (Total Pushes, Pull Requests) and a robust breakdown.
+*   **Local Starring**: Implements a platform-specific "Star" feature that allows users to bookmark repositories locally on GitTEnz without affecting their GitHub stars.
 *   **Optimization**: Data is fetched from GitHub acts as the 'source of truth', but heavy computations or historical data might be cached.
 *   **Components**:
-    *   `DashboardPage.tsx`: Main landing view.
-    *   `RepositoryController.java`, `UserController.java`: API endpoints for fetching repo data and activity.
+    *   `DashboardPage.tsx`: Main landing view with specialized `StatsCard` for activity breakdown.
+    *   `RepositoryController.java`: Handles repositories and the new `/toggle-star` endpoint for local likes.
+    *   `SettingsPanel.tsx`: Fully functional settings management (Themes, Profile) with "Coming Soon" placeholders for future modules.
 
 ### **AI Assistant (The "Brain")**
 *   **Function**: Allows users to chat about their code. "What does this repo do?", "How do I fix this bug?".

@@ -136,6 +136,7 @@ export function SettingsPanel() {
     {
       title: "Privacy & Security",
       icon: Shield,
+      comingSoon: true, // Flag
       settings: [
         { id: "twoFactor", label: "Two-Factor Auth", description: "Add extra security layer" },
         { id: "activityLog", label: "Activity Log", description: "Track account activity" },
@@ -145,6 +146,7 @@ export function SettingsPanel() {
     {
       title: "Developer",
       icon: Code,
+      comingSoon: true, // Flag
       settings: [
         { id: "apiAccess", label: "API Access", description: "Enable API key generation" },
         { id: "webhooks", label: "Webhooks", description: "Configure webhook endpoints" },
@@ -286,28 +288,36 @@ export function SettingsPanel() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {section.settings.map((setting, index) => (
-                <div key={setting.id}>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <Label htmlFor={setting.id} className="text-sm font-medium">
-                        {setting.label}
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        {setting.description}
-                      </p>
-                    </div>
-                    <Switch
-                      id={setting.id}
-                      checked={preferences[setting.id]}
-                      onCheckedChange={() => handleToggle(setting.id)}
-                    />
-                  </div>
-                  {index < section.settings.length - 1 && (
-                    <Separator className="mt-4" />
-                  )}
+              {/* @ts-ignore */}
+              {section.comingSoon ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 bg-muted/20 border border-dashed rounded-md">
+                  <p className="font-semibold text-muted-foreground">Coming Soon</p>
+                  <p className="text-xs text-muted-foreground">This feature is currently under development.</p>
                 </div>
-              ))}
+              ) : (
+                section.settings.map((setting, index) => (
+                  <div key={setting.id}>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label htmlFor={setting.id} className="text-sm font-medium">
+                          {setting.label}
+                        </Label>
+                        <p className="text-xs text-muted-foreground">
+                          {setting.description}
+                        </p>
+                      </div>
+                      <Switch
+                        id={setting.id}
+                        checked={preferences[setting.id]}
+                        onCheckedChange={() => handleToggle(setting.id)}
+                      />
+                    </div>
+                    {index < section.settings.length - 1 && (
+                      <Separator className="mt-4" />
+                    )}
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         </motion.div>
