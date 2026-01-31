@@ -22,6 +22,7 @@ public class Repository {
     private Integer stargazersCount;
     private Integer forksCount;
     private Integer openIssuesCount;
+    private String visibility;
 
     private LocalDateTime updatedAt;
 
@@ -110,6 +111,14 @@ public class Repository {
 
     public void setOpenIssuesCount(Integer openIssuesCount) {
         this.openIssuesCount = openIssuesCount;
+    }
+
+    public String getVisibility() {
+        return visibility;
+    }
+
+    public void setVisibility(String visibility) {
+        this.visibility = visibility;
     }
 
     public LocalDateTime getUpdatedAt() {

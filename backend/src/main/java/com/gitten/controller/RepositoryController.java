@@ -4,6 +4,7 @@ import com.gitten.model.Repository;
 import com.gitten.repository.RepositoryRepository;
 import com.gitten.repository.UserRepository;
 import com.gitten.service.RepositoryService;
+import com.gitten.service.LocalGitService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,11 +27,14 @@ public class RepositoryController {
     private final com.gitten.service.GitHubService gitHubService;
     private final UserRepository userRepository;
 
+    private final LocalGitService localGitService;
+
     public RepositoryController(RepositoryService repositoryService, com.gitten.service.GitHubService gitHubService,
-            UserRepository userRepository) {
+            UserRepository userRepository, com.gitten.service.LocalGitService localGitService) {
         this.repositoryService = repositoryService;
         this.gitHubService = gitHubService;
         this.userRepository = userRepository;
+        this.localGitService = localGitService;
     }
 
     @GetMapping
@@ -38,6 +42,11 @@ public class RepositoryController {
         String username = principal.getName();
         List<Repository> repos = repositoryService.getRepositoriesByUsername(username);
         return ResponseEntity.ok(repos);
+    }
+
+    @GetMapping("/local")
+    public ResponseEntity<List<Repository>> getLocalRepositories(@RequestParam String path) {
+        return ResponseEntity.ok(localGitService.scanLocalRepositories(path));
     }
 
     @GetMapping("/{owner}/{repo}/branches")

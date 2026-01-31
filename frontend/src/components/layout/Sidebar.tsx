@@ -26,6 +26,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", icon: Home, label: "Dashboard" },
   { id: "repositories", icon: FolderGit2, label: "Repositories" },
+  { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
   { id: "activity", icon: History, label: "Activity" },
   { id: "starred", icon: Star, label: "Starred" },
 ];

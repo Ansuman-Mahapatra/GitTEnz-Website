@@ -13,23 +13,13 @@ import { CodeEditor } from "@/components/editor/CodeEditor";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
 
-// Mock data
-const mockRepositories = [
-  { id: 1, name: "gittenz-core", description: "Core library for GitTEnz platform", language: "TypeScript", stargazersCount: 128, forksCount: 24, watchersCount: 56, visibility: "public", updatedAt: "2024-01-15", htmlUrl: "#" },
-  { id: 2, name: "ai-assistant", description: "AI-powered code assistant module", language: "Python", stargazersCount: 89, forksCount: 12, watchersCount: 34, visibility: "public", updatedAt: "2024-01-14", htmlUrl: "#" },
-  { id: 3, name: "dashboard-ui", description: "Beautiful dashboard components", language: "TypeScript", stargazersCount: 256, forksCount: 45, watchersCount: 78, visibility: "public", updatedAt: "2024-01-13", htmlUrl: "#" },
-  { id: 4, name: "api-gateway", description: "API gateway and authentication", language: "Go", stargazersCount: 67, forksCount: 8, watchersCount: 23, visibility: "private", updatedAt: "2024-01-12", htmlUrl: "#" },
-  { id: 5, name: "mobile-app", description: "React Native mobile application", language: "JavaScript", stargazersCount: 45, forksCount: 5, watchersCount: 18, visibility: "private", updatedAt: "2024-01-11", htmlUrl: "#" },
-  { id: 6, name: "rust-utils", description: "High-performance utility functions", language: "Rust", stargazersCount: 112, forksCount: 19, watchersCount: 45, visibility: "public", updatedAt: "2024-01-10", htmlUrl: "#" },
-];
-
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
+  const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
   const { token } = useAuth();
 
-  const { data: repositories, isLoading, error } = useQuery({
+  const { data: repositories, isLoading } = useQuery({
     queryKey: ["repositories"],
     queryFn: async () => {
       if (!token) return [];
@@ -42,17 +32,59 @@ export function DashboardPage() {
     enabled: !!token,
   });
 
-  // Use real data or empty array. mockRepositories only if explicitly disconnected (not this case)
+  const { data: localRepositories, refetch: fetchLocalRepos } = useQuery({
+    queryKey: ["local-repositories", localPath],
+    queryFn: async () => {
+      if (!localPath) return [];
+      const res = await fetch(`http://localhost:8080/api/repos/local?path=${encodeURIComponent(localPath)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: false, // Wait for user action
+  });
+
+  // Data processing
   const displayRepos = repositories || [];
 
-  const totalStars = displayRepos.reduce((acc: number, repo: any) => acc + (repo.stargazersCount || 0), 0);
-  const totalForks = displayRepos.reduce((acc: number, repo: any) => acc + (repo.forksCount || 0), 0);
+  const languageCounts: Record<string, number> = {};
+  displayRepos.forEach((repo: any) => {
+    if (repo.language) {
+      languageCounts[repo.language] = (languageCounts[repo.language] || 0) + 1;
+    }
+  });
+  const realLanguageData = Object.entries(languageCounts)
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 5);
+
+  const calculateActivity = () => {
+    // Mock activity based on updatedAt day just for demonstration if no commit history
+    const activityCounts: Record<string, number> = {};
+    const dayMap: Record<number, string> = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+
+    displayRepos.forEach((repo: any) => {
+      if (repo.updatedAt) {
+        const d = new Date(repo.updatedAt);
+        const dayName = dayMap[d.getDay()];
+        activityCounts[dayName] = (activityCounts[dayName] || 0) + 1;
+      }
+    });
+
+    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    return days.map(day => ({
+      name: day,
+      commits: activityCounts[day] || 0
+    }));
+  };
+  const realActivityData = calculateActivity();
 
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
-    { title: "Total Forks", value: totalForks, icon: GitBranch, trend: "Across all repos", trendUp: true },
-    { title: "Total Stars", value: totalStars, icon: Star, trend: "Across all repos", trendUp: true },
-    { title: "Total Open Issues", value: displayRepos.reduce((acc: number, repo: any) => acc + (repo.openIssuesCount || 0), 0), icon: GitCommit, trend: "Needs attention", trendUp: false },
+    { title: "Total Forks", value: displayRepos.reduce((acc: number, r: any) => acc + (r.forksCount || 0), 0), icon: GitBranch, trend: "Across all repos", trendUp: true },
+    { title: "Total Stars", value: displayRepos.reduce((acc: number, r: any) => acc + (r.stargazersCount || 0), 0), icon: Star, trend: "Across all repos", trendUp: true },
+    { title: "Total Open Issues", value: displayRepos.reduce((acc: number, r: any) => acc + (r.openIssuesCount || 0), 0), icon: GitCommit, trend: "Needs attention", trendUp: false },
   ];
 
   if (isLoading) {
@@ -74,22 +106,16 @@ export function DashboardPage() {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
-            {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {statsData.map((stat, index) => (
                 <StatsCard key={stat.title} {...stat} index={index} />
               ))}
             </div>
-
-            {/* Charts Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <LanguageChart />
-              <ActivityChart />
+              <LanguageChart data={realLanguageData.length > 0 ? realLanguageData : undefined} />
+              <ActivityChart data={realActivityData} />
             </div>
-
-            {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Repositories */}
               <div className="lg:col-span-2 space-y-4">
                 <h2 className="text-lg font-semibold">Recent Repositories</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -98,12 +124,50 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
+              <div><ActivityFeed /></div>
+            </div>
+          </motion.div>
+        );
 
-              {/* Activity Feed */}
-              <div>
-                <ActivityFeed />
+      case "local-repos":
+        return (
+          <motion.div
+            key="local-repos"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex flex-col gap-4">
+              <h2 className="text-2xl font-bold">Local Repositories</h2>
+              <div className="flex gap-4 items-center bg-card p-4 rounded-lg border">
+                <input
+                  type="text"
+                  value={localPath}
+                  onChange={(e) => setLocalPath(e.target.value)}
+                  className="flex-1 bg-background border rounded px-3 py-2 text-sm text-foreground"
+                  placeholder="Enter directory path (e.g. C:/Projects)"
+                />
+                <button
+                  onClick={() => fetchLocalRepos()}
+                  className="bg-primary text-primary-foreground px-4 py-2 rounded hover:bg-primary/90 text-sm font-medium"
+                >
+                  Scan Directory
+                </button>
               </div>
             </div>
+
+            {localRepositories && localRepositories.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {localRepositories.map((repo: any, index: number) => (
+                  <RepositoryCard key={repo.name + index} repository={repo} index={index} />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-muted/20 rounded-xl border border-dashed text-muted-foreground">
+                No local repositories found or scanned yet. enter a valid path and click Scan.
+              </div>
+            )}
           </motion.div>
         );
 
@@ -144,12 +208,7 @@ export function DashboardPage() {
 
       case "settings":
         return (
-          <motion.div
-            key="settings"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-          >
+          <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <h2 className="text-2xl font-bold mb-6">Settings</h2>
             <SettingsPanel />
           </motion.div>
@@ -157,32 +216,18 @@ export function DashboardPage() {
 
       case "activity":
         return (
-          <motion.div
-            key="activity"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
+          <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Activity</h2>
-            <div className="max-w-2xl">
-              <ActivityFeed />
-            </div>
+            <div className="max-w-2xl"><ActivityFeed /></div>
           </motion.div>
         );
 
       case "starred":
         return (
-          <motion.div
-            key="starred"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="space-y-6"
-          >
+          <motion.div key="starred" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Starred Repositories</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayRepos.filter((_, i) => i % 2 === 0).map((repo: any, index: number) => (
+              {displayRepos.filter((_: any, i: number) => i % 2 === 0).map((repo: any, index: number) => (
                 <RepositoryCard key={repo.id} repository={repo} index={index} />
               ))}
             </div>
@@ -196,14 +241,10 @@ export function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-background overflow-hidden relative">
-      <AIAssistant /> {/* Floating Assistant added here */}
-
-      {/* Sidebar - Desktop */}
+      <AIAssistant />
       <div className="hidden lg:block">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
-
-      {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -218,15 +259,10 @@ export function DashboardPage() {
             exit={{ x: -280 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Sidebar activeTab={activeTab} onTabChange={(tab) => {
-              setActiveTab(tab);
-              setMobileMenuOpen(false);
-            }} />
+            <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} />
           </motion.div>
         </motion.div>
       )}
-
-      {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <Navbar onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
         <main className="flex-1 overflow-auto p-4 lg:p-6">
