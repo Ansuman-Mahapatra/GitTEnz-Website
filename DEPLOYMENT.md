@@ -45,7 +45,7 @@ Create a file named `Dockerfile` (no extension) in your `backend/` directory wit
 
 ```dockerfile
 # Build Stage
-FROM maven:3.9-eclipse-temurin-17 AS build
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 WORKDIR /app
 COPY pom.xml .
 COPY src ./src
@@ -54,7 +54,7 @@ RUN mvn clean package -DskipTests
 # Run Stage
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
+COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -75,11 +75,11 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
     *   `GITHUB_CLIENT_SECRET`: (Your GitHub Secret)
     *   `OPENAI_API_KEY`: (Your OpenAI Key)
     *   `SPRING_DATA_MONGODB_URI`: (Your MongoDB Connection String)
-    *   `FRONTEND_URL`: (The Netlify URL from Part 1, e.g., `https://gittenz-frontend.netlify.app`)
+    *   `FRONTEND_URL`: `https://gittenz.netlify.app`
     *   `PORT`: `8080`
 6.  Click **"Create Web Service"**.
 
-Render will build your app. This might take 5-10 minutes. Once done, it will give you a backend URL (e.g., `https://gittenz-backend.onrender.com`).
+Render will build your app. This might take 5-10 minutes. Once done, it will give you a backend URL (e.g., `https://gittenz.onrender.com`).
 
 ---
 
@@ -90,16 +90,16 @@ Now that both are online, we need to make sure they talk to each other correctly
 ### 1. Update Frontend Configuration
 1.  Go back to **Netlify** > **Site Settings** > **Environment variables**.
 2.  Update `VITE_API_URL`.
-    *   Value: Your **Render Backend URL** (e.g., `https://gittenz-backend.onrender.com`).
-    *   *Important: Do not add a trailing slash `/`.*
+    *   Value: `https://gittenz.onrender.com`
+    *   *Note: We have updated code/configuration to default to this, so this step is optional but recommended.*
 3.  Go to the **Deploys** tab and click **"Trigger deploy"** to rebuild the frontend with the new URL.
 
 ### 2. Update GitHub OAuth App
 1.  Go to **GitHub Developer Settings** > **OAuth Apps**.
 2.  Select your `GitTEnz` app.
 3.  Update the URLs to match your production site:
-    *   **Homepage URL**: `https://gittenz-frontend.netlify.app` (Your Netlify URL)
-    *   **Authorization callback URL**: `https://gittenz-backend.onrender.com/login/oauth2/code/github` (Make sure to replace the domain with your Render Backend URL).
+    *   **Homepage URL**: `https://gittenz.netlify.app`
+    *   **Authorization callback URL**: `https://gittenz.onrender.com/login/oauth2/code/github`
 4.  Save changes.
 
 ---
