@@ -10,7 +10,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chat")
-@RequiredArgsConstructor
+
 public class ChatController {
 
     private final AiService aiService;

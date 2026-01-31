@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
+
 public class GitHubServiceImpl implements GitHubService {
 
     private static final Logger log = LoggerFactory.getLogger(GitHubServiceImpl.class);

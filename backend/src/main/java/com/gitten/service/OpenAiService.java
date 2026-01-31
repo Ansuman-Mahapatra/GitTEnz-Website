@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+
 public class OpenAiService implements AiService {
 
     private static final Logger log = LoggerFactory.getLogger(OpenAiService.class);
