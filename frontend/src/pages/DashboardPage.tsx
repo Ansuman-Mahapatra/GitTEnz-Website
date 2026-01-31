@@ -29,6 +29,9 @@ export function DashboardPage() {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [streakData, setStreakData] = useState({ count: 0, dates: [] as string[] });
 
+  // Activity State
+  const [activityTimeframe, setActivityTimeframe] = useState<"weekly" | "monthly">("weekly");
+
   const { token } = useAuth();
 
   useEffect(() => {
@@ -115,7 +118,7 @@ export function DashboardPage() {
 
   // Fetch Real GitHub Activity
   const { data: activityEvents } = useQuery({
-    queryKey: ["github-activity"],
+    queryKey: ["github-activity", activityTimeframe],
     queryFn: async () => {
       if (!token) return [];
       // First get username
@@ -125,7 +128,7 @@ export function DashboardPage() {
       const userData = await userRes.json();
 
       // Then get events
-      const eventsRes = await fetch(`https://api.github.com/users/${userData.login}/events`, {
+      const eventsRes = await fetch(`https://api.github.com/users/${userData.login}/events?per_page=100`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!eventsRes.ok) return [];
@@ -137,26 +140,51 @@ export function DashboardPage() {
   const calculateRealActivity = () => {
     if (!activityEvents) return [];
 
-    const activityCounts: Record<string, number> = {};
-    const dayMap: Record<number, string> = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
+    // Create map for aggregation
+    const activityMap: Record<string, number> = {};
+    const today = new Date();
 
-    // Initialize days with 0
-    Object.values(dayMap).forEach(day => activityCounts[day] = 0);
+    // Determine data range
+    const daysToShow = activityTimeframe === 'weekly' ? 7 : 30;
 
+    // Initialize past days with 0
+    for (let i = 0; i < daysToShow; i++) {
+      const d = new Date();
+      d.setDate(today.getDate() - i);
+      // Format as YYYY-MM-DD for key
+      const key = d.toISOString().split('T')[0];
+      activityMap[key] = 0;
+    }
+
+    // Process events
     activityEvents.forEach((event: any) => {
+      // Monitor PushEvent for commits
       if (event.type === "PushEvent") {
-        const d = new Date(event.created_at);
-        const dayName = dayMap[d.getDay()];
-        // Add number of commits in this push
-        activityCounts[dayName] = (activityCounts[dayName] || 0) + (event.payload?.size || 1);
+        const dateKey = new Date(event.created_at).toISOString().split('T')[0];
+        if (activityMap[dateKey] !== undefined) {
+          activityMap[dateKey] += (event.payload?.size || 1);
+        }
       }
     });
 
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    return days.map(day => ({
-      name: day,
-      commits: activityCounts[day]
-    }));
+    // Convert to Array for chart
+    return Object.entries(activityMap)
+      .map(([date, count]) => {
+        const d = new Date(date);
+        // Format name based on view
+        // Weekly: "Mon", "Tue"
+        // Monthly: "1 Jan", "2 Jan"
+        let name;
+        if (activityTimeframe === 'weekly') {
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          name = days[d.getDay()];
+        } else {
+          name = `${d.getDate()}/${d.getMonth() + 1}`;
+        }
+
+        return { name, date, commits: count };
+      })
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
   const realActivityData = calculateRealActivity();
@@ -204,7 +232,11 @@ export function DashboardPage() {
               </div>
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <LanguageChart data={realLanguageData.length > 0 ? realLanguageData : undefined} />
-                <ActivityChart data={realActivityData} />
+                <ActivityChart
+                  data={realActivityData}
+                  timeframe={activityTimeframe}
+                  onTimeframeChange={setActivityTimeframe}
+                />
               </div>
             </div>
 

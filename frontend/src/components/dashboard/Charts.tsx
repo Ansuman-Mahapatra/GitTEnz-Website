@@ -69,13 +69,33 @@ export function LanguageChart({ data }: { data?: LanguageData[] }) {
     );
 }
 
-export function ActivityChart({ data }: { data?: ActivityData[] }) {
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format } from "date-fns";
+
+export function ActivityChart({
+    data,
+    timeframe,
+    onTimeframeChange
+}: {
+    data?: ActivityData[];
+    timeframe: "weekly" | "monthly";
+    onTimeframeChange: (val: "weekly" | "monthly") => void;
+}) {
     const chartData = data && data.length > 0 ? data : [];
 
     return (
         <Card className="glass-card">
-            <CardHeader>
-                <CardTitle className="text-sm font-medium">Weekly Activity</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                <CardTitle className="text-sm font-medium">Activity Report</CardTitle>
+                <Select value={timeframe} onValueChange={(v: "weekly" | "monthly") => onTimeframeChange(v)}>
+                    <SelectTrigger className="h-8 w-[100px] text-xs bg-muted/20 border-white/5">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                </Select>
             </CardHeader>
             <CardContent>
                 <div className="h-[200px]">
@@ -87,14 +107,15 @@ export function ActivityChart({ data }: { data?: ActivityData[] }) {
                                     <stop offset="95%" stopColor="#00E676" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} />
+                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} vertical={false} />
                             <XAxis
                                 dataKey="name"
-                                tick={{ fontSize: 12, fill: '#666' }}
-                                strokeOpacity={0.2}
+                                tick={{ fontSize: 10, fill: '#666' }}
+                                strokeOpacity={0.1}
                                 tickLine={false}
                                 axisLine={false}
                                 dy={10}
+                                interval={timeframe === 'monthly' ? 4 : 0}
                             />
                             <Tooltip
                                 contentStyle={{
