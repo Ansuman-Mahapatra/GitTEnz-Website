@@ -16,12 +16,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
+import { LocalRepoViewer } from "@/components/dashboard/LocalRepoViewer";
 
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
   const [localReposResults, setLocalReposResults] = useState<any[]>([]);
+  const [selectedLocalRepo, setSelectedLocalRepo] = useState<any>(null);
 
   // Onboarding & Streak State
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -277,7 +279,8 @@ export function DashboardPage() {
                                   visibility: "local",
                                   stargazersCount: 0,
                                   forksCount: 0,
-                                  updatedAt: new Date().toISOString()
+                                  updatedAt: new Date().toISOString(),
+                                  handle: entry // Store the handle!
                                 });
                               }
                             } catch (e) {
@@ -304,10 +307,22 @@ export function DashboardPage() {
             {localReposResults.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {localReposResults.map((repo: any, index: number) => (
-                  <RepositoryCard key={repo.name + index} repository={repo} index={index} />
+                  <div key={repo.name + index} onClick={() => setSelectedLocalRepo(repo)} className="cursor-pointer hover:scale-[1.01] transition-transform">
+                    <RepositoryCard repository={repo} index={index} />
+                  </div>
                 ))}
               </div>
             ) : null}
+
+            {/* Local Repo Viewer Modal */}
+            {selectedLocalRepo && (
+              <LocalRepoViewer
+                isOpen={!!selectedLocalRepo}
+                onClose={() => setSelectedLocalRepo(null)}
+                repoName={selectedLocalRepo.name}
+                dirHandle={selectedLocalRepo.handle}
+              />
+            )}
           </motion.div>
         );
 
