@@ -11,6 +11,7 @@ import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { AIAssistant } from "@/components/ai/AIAssistant";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
+import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
 
 // Mock data
 const mockRepositories = [
@@ -21,8 +22,6 @@ const mockRepositories = [
   { id: 5, name: "mobile-app", description: "React Native mobile application", language: "JavaScript", stargazersCount: 45, forksCount: 5, watchersCount: 18, visibility: "private", updatedAt: "2024-01-11", htmlUrl: "#" },
   { id: 6, name: "rust-utils", description: "High-performance utility functions", language: "Rust", stargazersCount: 112, forksCount: 19, watchersCount: 45, visibility: "public", updatedAt: "2024-01-10", htmlUrl: "#" },
 ];
-
-
 
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -82,6 +81,12 @@ export function DashboardPage() {
               ))}
             </div>
 
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <LanguageChart />
+              <ActivityChart />
+            </div>
+
             {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Repositories */}
@@ -133,20 +138,7 @@ export function DashboardPage() {
             exit={{ opacity: 0, x: -20 }}
             className="h-full"
           >
-            <CodeEditor />
-          </motion.div>
-        );
-
-      case "ai-assistant":
-        return (
-          <motion.div
-            key="ai"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="h-[calc(100vh-10rem)]"
-          >
-            <AIAssistant />
+            <CodeEditor initialCode="// Select a file to view code" />
           </motion.div>
         );
 
@@ -203,7 +195,9 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      <AIAssistant /> {/* Floating Assistant added here */}
+
       {/* Sidebar - Desktop */}
       <div className="hidden lg:block">
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />

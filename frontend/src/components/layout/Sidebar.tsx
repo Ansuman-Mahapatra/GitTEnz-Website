@@ -32,7 +32,6 @@ const menuItems = [
 
 const bottomItems = [
   { id: "notifications", icon: Bell, label: "Notifications" },
-  { id: "ai-assistant", icon: Bot, label: "AI Assistant" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 
