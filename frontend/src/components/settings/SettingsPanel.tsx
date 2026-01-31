@@ -83,6 +83,37 @@ export function SettingsPanel() {
     }
   };
 
+  const [preferences, setPreferences] = useState<Record<string, boolean>>({
+    darkMode: theme === "dark",
+    animations: true,
+    compactMode: false,
+    pushNotifications: false,
+    emailNotifications: true,
+    commitAlerts: true,
+    twoFactor: false,
+    activityLog: true,
+    sessionManagement: true,
+    apiAccess: false,
+    webhooks: false,
+    betaFeatures: false
+  });
+
+  useEffect(() => {
+    setPreferences(prev => ({ ...prev, darkMode: theme === "dark" }));
+  }, [theme]);
+
+  const handleToggle = (id: string) => {
+    if (id === "darkMode") {
+      setTheme(theme === "dark" ? "light" : "dark");
+      return;
+    }
+    setPreferences(prev => ({ ...prev, [id]: !prev[id] }));
+    toast({
+      title: "Setting Updated",
+      description: "Your preference has been saved locally.",
+    });
+  };
+
   const settingsSections = [
     {
       title: "Appearance",
@@ -266,7 +297,11 @@ export function SettingsPanel() {
                         {setting.description}
                       </p>
                     </div>
-                    <Switch id={setting.id} disabled />
+                    <Switch
+                      id={setting.id}
+                      checked={preferences[setting.id]}
+                      onCheckedChange={() => handleToggle(setting.id)}
+                    />
                   </div>
                   {index < section.settings.length - 1 && (
                     <Separator className="mt-4" />
