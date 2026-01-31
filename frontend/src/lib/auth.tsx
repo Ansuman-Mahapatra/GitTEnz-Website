@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { API_URL } from "@/config";
 
 export interface User {
   username: string;
@@ -31,12 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setTokenState(storedToken);
         try {
           // Verify token and get user details from backend
-          const response = await fetch("http://localhost:8080/api/user/me", {
+          const response = await fetch(`${API_URL}/api/user/me`, {
             headers: {
               Authorization: `Bearer ${storedToken}`,
             },
           });
-          
+
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
@@ -63,13 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setTokenState(newToken);
     // Optionally trigger a user fetch here or rely on page reload/effect
     // For smoother UX, we can manually fetch user immediately
-    fetch("http://localhost:8080/api/user/me", {
-        headers: { Authorization: `Bearer ${newToken}` }
-    }).then(res => res.json()).then(data => setUser(data)).catch(() => {});
+    fetch(`${API_URL}/api/user/me`, {
+      headers: { Authorization: `Bearer ${newToken}` }
+    }).then(res => res.json()).then(data => setUser(data)).catch(() => { });
   };
 
   const signInWithGitHub = () => {
-    window.location.href = "http://localhost:8080/oauth2/authorization/github";
+    window.location.href = `${API_URL}/oauth2/authorization/github`;
   };
 
   const signOut = () => {

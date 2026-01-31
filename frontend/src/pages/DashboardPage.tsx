@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { API_URL } from "@/config";
 import { motion } from "framer-motion";
 import { FolderGit2, GitBranch, GitCommit, Star } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -91,7 +92,7 @@ export function DashboardPage() {
     queryKey: ["repositories"],
     queryFn: async () => {
       if (!token) return [];
-      const res = await fetch("http://localhost:8080/api/repos", {
+      const res = await fetch(`${API_URL}/api/repos`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) throw new Error("Failed to fetch");

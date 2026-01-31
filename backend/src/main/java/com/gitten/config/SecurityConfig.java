@@ -48,11 +48,21 @@ public class SecurityConfig {
                 return http.build();
         }
 
+        @org.springframework.beans.factory.annotation.Value("${frontend.url:http://localhost:5180}")
+        private String frontendUrl;
+
         @Bean
         public org.springframework.web.cors.CorsConfigurationSource corsConfigurationSource() {
                 org.springframework.web.cors.CorsConfiguration configuration = new org.springframework.web.cors.CorsConfiguration();
-                configuration.setAllowedOrigins(java.util.List.of("http://localhost:5180", "http://localhost:5173",
-                                "https://gittenz.netlify.app"));
+                // Dynamically add the frontend URL from environment variable
+                java.util.List<String> allowedOrigins = new java.util.ArrayList<>();
+                allowedOrigins.add("http://localhost:5180");
+                allowedOrigins.add("http://localhost:5173");
+                allowedOrigins.add("https://gittenz.netlify.app");
+                if (frontendUrl != null && !frontendUrl.isEmpty()) {
+                        allowedOrigins.add(frontendUrl);
+                }
+                configuration.setAllowedOrigins(allowedOrigins);
                 configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                 configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
                 configuration.setAllowCredentials(true);

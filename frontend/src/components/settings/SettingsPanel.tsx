@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
+import { API_URL } from "@/config";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
@@ -44,7 +45,7 @@ export function SettingsPanel() {
     if (!token) return;
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost:8080/api/user/profile", {
+      const response = await fetch(`${API_URL}/api/user/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

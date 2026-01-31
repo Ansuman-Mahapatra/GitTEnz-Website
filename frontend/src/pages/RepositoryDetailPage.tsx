@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
+import { API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
 import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
@@ -32,7 +33,7 @@ export function RepositoryDetailPage() {
     const { data: branches, isLoading: branchesLoading } = useQuery({
         queryKey: ["branches", owner, repo],
         queryFn: async () => {
-            const res = await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/branches`, {
+            const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/branches`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch branches");
@@ -57,7 +58,7 @@ export function RepositoryDetailPage() {
             const branchObj = branches.find((b: any) => b.name === selectedBranch);
             const sha = branchObj?.commit?.sha || selectedBranch;
 
-            const res = await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/commits?branch=${sha}`, {
+            const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/commits?branch=${sha}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch commits");
@@ -74,7 +75,7 @@ export function RepositoryDetailPage() {
         queryKey: ["tree", owner, repo, selectedBranchSha],
         queryFn: async () => {
             if (!selectedBranchSha) return null;
-            const res = await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/tree/${selectedBranchSha}`, {
+            const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/tree/${selectedBranchSha}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch tree");
@@ -88,7 +89,7 @@ export function RepositoryDetailPage() {
         queryKey: ["content", owner, repo, selectedFile?.path],
         queryFn: async () => {
             if (!selectedFile) return "";
-            const res = await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/contents/${selectedFile.path}`, {
+            const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/contents/${selectedFile.path}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch content");
@@ -140,7 +141,7 @@ export function RepositoryDetailPage() {
                 const baseSha = currentBranchObj?.commit?.sha;
 
                 // Create branch
-                await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/branches`, {
+                await fetch(`${API_URL}/api/repos/${owner}/${repo}/branches`, {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
@@ -155,7 +156,7 @@ export function RepositoryDetailPage() {
             }
 
             // Update file
-            const res = await fetch(`http://localhost:8080/api/repos/${owner}/${repo}/contents/${selectedFile.path}`, {
+            const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/contents/${selectedFile.path}`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json",
