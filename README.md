@@ -1,11 +1,14 @@
 # GitTEnz - Advanced GitHub Dashboard
 
+[![Deploy Status](https://img.shields.io/badge/Status-Live-green)](https://gittenz.netlify.app)
+
 GitTEnz is a modern web application that provides an enhanced interface for GitHub, allowing users to view repositories, statistics, and interact with an AI assistant. It features a React frontend and a Spring Boot backend with MongoDB.
 
 ## 🚀 Features
 
 *   **GitHub Integration**: Log in with GitHub to sync repositories and view stats.
-*   **AI Assistant**: Chat with an AI (powered by OpenAI) about your repositories.
+*   **Context-Aware AI Assistant**: Chat with an AI about your code. It automatically reads the `README.md` of the current repository to provide relevant answers.
+*   **Activity Insights**: Visual charts of your contribution history (proxied securely via backend).
 *   **Modern UI**: Built with React, Tailwind CSS, and Shadcn UI.
 *   **Secure Auth**: OAuth2 login with JWT authentication for API security.
 *   **Tech Stack**:

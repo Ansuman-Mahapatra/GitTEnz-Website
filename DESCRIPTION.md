@@ -56,26 +56,29 @@ The application follows a classic **Client-Server** architecture with a separate
     2.  GitHub calls back backend (`/login/oauth2/code/github`) with a code.
     3.  Backend exchanges code for an access token.
     4.  Backend creates/updates user in MongoDB.
-    5.  Backend issues a **JWT** to the frontend (via cookie or response).
+    5.  Backend issues a **JWT** to the frontend (stored in LocalStorage/Context).
+    6.  Frontend attaches this JWT as `Authorization: Bearer <token>` header for subsequent API calls.
 *   **Key Files**:
-    *   `src/lib/auth.tsx` (Frontend): Auth context provider.
+    *   `src/lib/auth.tsx` (Frontend): Auth context provider and token management.
     *   `SecurityConfig.java` (Backend): Configures HTTP security chains and OAuth providers.
 
 ### **Dashboard & Repository Management**
 *   **Function**: Fetches user's repositories, displays stats (stars, forks, languages).
-*   **Optimization**: Data is fetched from GitHub acts as the 'source of truth', but heavy computations or historical data might be cached in Redis/MongoDB to avoid rate limits.
+*   **Activity Feed**: Uses a backend proxy endpoint (`/api/user/activity`) to securely fetch GitHub events using the stored OAuth token, avoiding CORS and Auth issues on the frontend.
+*   **Optimization**: Data is fetched from GitHub acts as the 'source of truth', but heavy computations or historical data might be cached.
 *   **Components**:
     *   `DashboardPage.tsx`: Main landing view.
-    *   `RepositoryController.java`: API endpoints for fetching repo data.
+    *   `RepositoryController.java`, `UserController.java`: API endpoints for fetching repo data and activity.
 
 ### **AI Assistant (The "Brain")**
 *   **Function**: Allows users to chat about their code. "What does this repo do?", "How do I fix this bug?".
+*   **Context Awareness**: The AI is now context-aware. When viewing a repository, it automatically fetches the `README.md` content from GitHub to understand the project's purpose and structure.
 *   **Implementation**:
-    1.  User sends a prompt from `ChatInterface.tsx`.
-    2.  Backend receives it in `ChatController.java`.
-    3.  `OpenAiService.java` constructs a prompt context (potentially including file snippets or repo summaries).
-    4.  Sends request to OpenAI GPT models.
-    5.  Streams or returns the response to the user.
+    1.  User sends a prompt from `AIAssistant.tsx`.
+    2.  Frontend detects the current repository from the URL.
+    3.  Backend receives the prompt and repository context in `ChatController.java`.
+    4.  `OpenAiService.java` fetches the repository's documentation (README) and constructs a system prompt.
+    5.  Sends request to OpenAI GPT models and returns the intelligent response.
 
 ---
 
