@@ -29,6 +29,17 @@ public class Repository {
     @DBRef
     private User owner;
 
+    // Local likes/stars
+    private java.util.Set<String> likedUserIds = new java.util.HashSet<>();
+
+    public java.util.Set<String> getLikedUserIds() {
+        return likedUserIds;
+    }
+
+    public void setLikedUserIds(java.util.Set<String> likedUserIds) {
+        this.likedUserIds = likedUserIds;
+    }
+
     public void setOwner(User owner) {
         this.owner = owner;
     }

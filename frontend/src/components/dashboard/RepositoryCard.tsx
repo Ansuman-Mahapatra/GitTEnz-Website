@@ -16,6 +16,7 @@ interface Repository {
   visibility: string;
   updatedAt: string;
   htmlUrl: string;
+  likedUserIds?: string[]; // Add this field
 }
 
 interface RepositoryCardProps {
@@ -32,19 +33,56 @@ const languageColors: Record<string, string> = {
   default: "hsl(var(--muted-foreground))",
 };
 
+import { useState } from "react";
+import { useAuth } from "@/lib/auth";
+import { API_URL } from "@/config";
+import { useToast } from "@/components/ui/use-toast";
+
 export function RepositoryCard({ repository, index }: RepositoryCardProps) {
   const navigate = useNavigate();
+  const { user, token } = useAuth();
+  const { toast } = useToast();
+
+  const [likedUserIds, setLikedUserIds] = useState<string[]>(repository.likedUserIds || []);
+  // Ensure we compare strings properly
+  const isLiked = user?.id ? likedUserIds.includes(user.id) : false;
+
   const languageColor = languageColors[repository.language || ""] || languageColors.default;
 
   const handleNavigate = () => {
-    // fullName is usually "owner/repo"
     if (repository.fullName) {
       const [owner, repo] = repository.fullName.split('/');
       navigate(`/dashboard/repository/${owner}/${repo}`);
     } else {
-      // Fallback if fullName is missing (e.g. mock data), assuming single user
-      // but for now, let's just log or try to navigate with just name
       console.warn("No fullName for repository", repository);
+    }
+  };
+
+  const handleStar = async (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card navigation
+    if (!token || !user?.id) {
+      toast({ title: "Login Required", description: "You must be logged in to star repositories." });
+      return;
+    }
+
+    const originalLikes = [...likedUserIds];
+    const newLikes = isLiked
+      ? originalLikes.filter(id => id !== user.id)
+      : [...originalLikes, user.id];
+
+    setLikedUserIds(newLikes);
+
+    try {
+      // Use repository.id here (which should be the MongoDB ID)
+      const res = await fetch(`${API_URL}/api/repos/${repository.id}/toggle-star`, {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` }
+      });
+
+      if (!res.ok) throw new Error("Failed to star");
+    } catch (error) {
+      setLikedUserIds(originalLikes);
+      toast({ title: "Error", description: "Could not update star status.", variant: "destructive" });
     }
   };
 
@@ -89,11 +127,21 @@ export function RepositoryCard({ repository, index }: RepositoryCardProps) {
                   <span>{repository.language}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Star className="w-3.5 h-3.5" />
-                <span>{repository.stargazersCount}</span>
+              {/* Local Stars */}
+              <div
+                className={`flex items-center gap-1 hover:text-yellow-500 transition-colors ${isLiked ? "text-yellow-500" : ""}`}
+                onClick={handleStar}
+                title="Local GitTEnz Star"
+              >
+                <Star className={`w-3.5 h-3.5 ${isLiked ? "fill-current" : ""}`} />
+                <span>{likedUserIds.length}</span>
               </div>
-              <div className="flex items-center gap-1">
+
+              {/* GitHub Stars (Small separate indicator if needed, or remove as per user request 'only not fetch from github') */}
+              {/* User said: 'make anyone can star the repos in my site only not fetch from github' */}
+              {/* I replaced the main Star indicator with the local one. I'll hide the GitHub one to strictly follow 'not fetch from github' visually, or maybe label it differently. */}
+
+              <div className="flex items-center gap-1" title="GitHub Forks">
                 <GitFork className="w-3.5 h-3.5" />
                 <span>{repository.forksCount}</span>
               </div>

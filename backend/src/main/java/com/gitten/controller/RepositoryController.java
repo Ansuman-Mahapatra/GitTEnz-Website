@@ -26,15 +26,17 @@ public class RepositoryController {
     private final RepositoryService repositoryService;
     private final com.gitten.service.GitHubService gitHubService;
     private final UserRepository userRepository;
+    private final RepositoryRepository repositoryRepository;
 
     private final LocalGitService localGitService;
 
     public RepositoryController(RepositoryService repositoryService, com.gitten.service.GitHubService gitHubService,
-            UserRepository userRepository, com.gitten.service.LocalGitService localGitService) {
+            UserRepository userRepository, LocalGitService localGitService, RepositoryRepository repositoryRepository) {
         this.repositoryService = repositoryService;
         this.gitHubService = gitHubService;
         this.userRepository = userRepository;
         this.localGitService = localGitService;
+        this.repositoryRepository = repositoryRepository;
     }
 
     @GetMapping
@@ -113,5 +115,22 @@ public class RepositoryController {
         return userRepository.findByUsername(username)
                 .map(com.gitten.model.User::getAccessToken)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/{id}/toggle-star")
+    public Repository toggleStar(@PathVariable String id, java.security.Principal principal) {
+        com.gitten.model.User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        Repository repo = repositoryRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Repository not found"));
+
+        if (repo.getLikedUserIds().contains(user.getId())) {
+            repo.getLikedUserIds().remove(user.getId());
+        } else {
+            repo.getLikedUserIds().add(user.getId());
+        }
+
+        return repositoryRepository.save(repo);
     }
 }
