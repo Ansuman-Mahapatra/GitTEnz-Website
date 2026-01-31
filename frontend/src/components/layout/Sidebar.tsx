@@ -76,7 +76,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         className="p-6 flex items-center gap-3"
       >
         <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center glow-green overflow-hidden">
-          <img src="/logo.png" alt="GitTEnz" className="w-full h-full object-cover" />
+          <img src="/logo1.png" alt="GitTEnz" className="w-full h-full object-cover" />
         </div>
         <span className="text-xl font-bold text-gradient">GitTEnz</span>
       </motion.div>

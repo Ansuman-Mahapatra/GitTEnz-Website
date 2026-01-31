@@ -1,29 +1,24 @@
-
 import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, AreaChart, Area, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8"];
+const COLORS = ["#00E676", "#2979FF", "#FFC400", "#FF3D00", "#E040FB"];
 
-const languageData = [
-    { name: "TypeScript", value: 45 },
-    { name: "Python", value: 25 },
-    { name: "Rust", value: 15 },
-    { name: "Go", value: 10 },
-    { name: "Other", value: 5 },
-];
+interface LanguageData {
+    name: string;
+    value: number;
+}
 
-const activityData = [
-    { name: "Mon", commits: 4 },
-    { name: "Tue", commits: 7 },
-    { name: "Wed", commits: 2 },
-    { name: "Thu", commits: 12 },
-    { name: "Fri", commits: 9 },
-    { name: "Sat", commits: 3 },
-    { name: "Sun", commits: 5 },
-];
+interface ActivityData {
+    name: string;
+    commits: number;
+}
 
-export function LanguageChart() {
+export function LanguageChart({ data }: { data?: LanguageData[] }) {
+    const chartData = data && data.length > 0 ? data : [
+        { name: "No Data", value: 1 }
+    ];
+
     return (
         <Card className="glass-card">
             <CardHeader>
@@ -34,7 +29,7 @@ export function LanguageChart() {
                     <ResponsiveContainer width="100%" height="100%">
                         <PieChart>
                             <Pie
-                                data={languageData}
+                                data={chartData}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={60}
@@ -43,20 +38,28 @@ export function LanguageChart() {
                                 paddingAngle={5}
                                 dataKey="value"
                             >
-                                {languageData.map((_, index) => (
+                                {chartData.map((_, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                 ))}
                             </Pie>
                             <Tooltip
-                                contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                                    border: '1px solid rgba(0, 230, 118, 0.4)',
+                                    borderRadius: '8px',
+                                    color: '#00E676',
+                                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                                }}
+                                itemStyle={{ color: '#00E676', fontWeight: 600 }}
+                                labelStyle={{ color: '#fff' }}
                             />
                         </PieChart>
                     </ResponsiveContainer>
                 </div>
-                <div className="flex justify-center gap-4 text-xs text-muted-foreground mt-4">
-                    {languageData.slice(0, 3).map((lang, i) => (
+                <div className="flex justify-center flex-wrap gap-4 text-xs text-muted-foreground mt-4">
+                    {chartData.slice(0, 4).map((lang, i) => (
                         <div key={lang.name} className="flex items-center gap-1">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i] }} />
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: COLORS[i % COLORS.length] }} />
                             {lang.name}
                         </div>
                     ))}
@@ -66,7 +69,9 @@ export function LanguageChart() {
     );
 }
 
-export function ActivityChart() {
+export function ActivityChart({ data }: { data?: ActivityData[] }) {
+    const chartData = data && data.length > 0 ? data : [];
+
     return (
         <Card className="glass-card">
             <CardHeader>
@@ -75,22 +80,37 @@ export function ActivityChart() {
             <CardContent>
                 <div className="h-[200px]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={activityData}>
+                        <AreaChart data={chartData}>
                             <defs>
                                 <linearGradient id="colorCommits" x1="0" y1="0" x2="0" y2="1">
                                     <stop offset="5%" stopColor="#00E676" stopOpacity={0.3} />
                                     <stop offset="95%" stopColor="#00E676" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
-                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.1} />
-                            <XAxis dataKey="name" tick={{ fontSize: 12 }} strokeOpacity={0.5} />
+                            <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.05} />
+                            <XAxis
+                                dataKey="name"
+                                tick={{ fontSize: 12, fill: '#666' }}
+                                strokeOpacity={0.2}
+                                tickLine={false}
+                                axisLine={false}
+                                dy={10}
+                            />
                             <Tooltip
-                                contentStyle={{ backgroundColor: 'rgba(0,0,0,0.8)', border: 'none', borderRadius: '8px', color: '#fff' }}
+                                contentStyle={{
+                                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                                    border: '1px solid rgba(0, 230, 118, 0.2)',
+                                    borderRadius: '8px',
+                                    color: '#fff',
+                                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)'
+                                }}
+                                cursor={{ stroke: 'rgba(0, 230, 118, 0.4)', strokeWidth: 1, strokeDasharray: '4 4' }}
                             />
                             <Area
                                 type="monotone"
                                 dataKey="commits"
                                 stroke="#00E676"
+                                strokeWidth={2}
                                 fillOpacity={1}
                                 fill="url(#colorCommits)"
                             />

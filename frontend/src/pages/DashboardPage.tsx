@@ -113,26 +113,53 @@ export function DashboardPage() {
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  const calculateActivity = () => {
-    // Mock activity based on updatedAt day just for demonstration if no commit history
+  // Fetch Real GitHub Activity
+  const { data: activityEvents } = useQuery({
+    queryKey: ["github-activity"],
+    queryFn: async () => {
+      if (!token) return [];
+      // First get username
+      const userRes = await fetch("https://api.github.com/user", {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const userData = await userRes.json();
+
+      // Then get events
+      const eventsRes = await fetch(`https://api.github.com/users/${userData.login}/events`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!eventsRes.ok) return [];
+      return eventsRes.json();
+    },
+    enabled: !!token,
+  });
+
+  const calculateRealActivity = () => {
+    if (!activityEvents) return [];
+
     const activityCounts: Record<string, number> = {};
     const dayMap: Record<number, string> = { 0: 'Sun', 1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat' };
 
-    displayRepos.forEach((repo: any) => {
-      if (repo.updatedAt) {
-        const d = new Date(repo.updatedAt);
+    // Initialize days with 0
+    Object.values(dayMap).forEach(day => activityCounts[day] = 0);
+
+    activityEvents.forEach((event: any) => {
+      if (event.type === "PushEvent") {
+        const d = new Date(event.created_at);
         const dayName = dayMap[d.getDay()];
-        activityCounts[dayName] = (activityCounts[dayName] || 0) + 1;
+        // Add number of commits in this push
+        activityCounts[dayName] = (activityCounts[dayName] || 0) + (event.payload?.size || 1);
       }
     });
 
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     return days.map(day => ({
       name: day,
-      commits: activityCounts[day] || 0
+      commits: activityCounts[day]
     }));
   };
-  const realActivityData = calculateActivity();
+
+  const realActivityData = calculateRealActivity();
 
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
