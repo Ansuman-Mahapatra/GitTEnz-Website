@@ -1,0 +1,30 @@
+# Credentials
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.pfx
+*.p12
+
+# Builds
+target/
+build/
+dist/
+node_modules/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# MacOS
+.DS_Store
+.env
+backend/.env
+run.log
+backend/run.log
