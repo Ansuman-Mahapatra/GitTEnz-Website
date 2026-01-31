@@ -188,4 +188,15 @@ public class GitHubServiceImpl implements GitHubService {
                 .body(new ParameterizedTypeReference<>() {
                 });
     }
+
+    @Override
+    public List<java.util.Map<String, Object>> getUserEvents(String username, String oauthToken) {
+        log.info("Fetching events for user: {}", username);
+        return restClient.get()
+                .uri("/users/" + username + "/events?per_page=100")
+                .header("Authorization", "Bearer " + oauthToken)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+    }
 }

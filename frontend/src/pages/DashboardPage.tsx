@@ -125,18 +125,11 @@ export function DashboardPage() {
     queryKey: ["github-activity", activityTimeframe],
     queryFn: async () => {
       if (!token) return [];
-      // First get username
-      const userRes = await fetch("https://api.github.com/user", {
+      const res = await fetch(`${API_URL}/api/user/activity`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const userData = await userRes.json();
-
-      // Then get events
-      const eventsRes = await fetch(`https://api.github.com/users/${userData.login}/events?per_page=100`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!eventsRes.ok) return [];
-      return eventsRes.json();
+      if (!res.ok) return [];
+      return res.json();
     },
     enabled: !!token,
   });
