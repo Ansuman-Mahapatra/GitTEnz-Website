@@ -7,7 +7,12 @@ export function LoginPage() {
   const { signInWithGitHub, loading } = useAuth();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-github p-4">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="min-h-screen flex items-center justify-center bg-gradient-github p-4"
+    >
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <motion.div
@@ -116,6 +121,6 @@ export function LoginPage() {
           &copy; {new Date().getFullYear()} GitTEnz. All rights reserved.
         </motion.p>
       </motion.div>
-    </div>
+    </motion.div>
   );
 }

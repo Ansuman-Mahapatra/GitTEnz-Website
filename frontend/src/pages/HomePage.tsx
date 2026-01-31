@@ -6,7 +6,12 @@ import { GitBranch, Code2, Bot, Zap, Shield, Globe } from "lucide-react";
 
 export function HomePage() {
     return (
-        <div className="min-h-screen bg-background text-foreground overflow-hidden">
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="min-h-screen bg-background text-foreground overflow-hidden"
+        >
             {/* Navbar */}
             <nav className="border-b border-border/40 backdrop-blur-md bg-background/80 fixed w-full z-50">
                 <div className="container mx-auto px-6 h-16 flex items-center justify-between">
@@ -53,11 +58,11 @@ export function HomePage() {
                                     Start for Free
                                 </Button>
                             </Link>
-                            <Link to="#features">
+                            <a href="#features">
                                 <Button size="lg" variant="outline" className="h-12 px-8 text-lg w-full sm:w-auto hover:bg-white/5">
                                     Explore Features
                                 </Button>
-                            </Link>
+                            </a>
                         </div>
                     </motion.div>
 
@@ -161,10 +166,13 @@ export function HomePage() {
             {/* Footer */}
             <footer className="py-12 border-t border-border/40">
                 <div className="container px-6 mx-auto text-center text-muted-foreground">
-                    <p>© 2024 GitTEnz. All rights reserved.</p>
+                    <p className="font-medium">© 2024 GitTEnz. All rights reserved.</p>
+                    <p className="mt-2 text-sm opacity-70">
+                        Built with ❤️ by <span className="text-primary hover:underline cursor-pointer">Ansuman</span>
+                    </p>
                 </div>
             </footer>
-        </div>
+        </motion.div>
     );
 }
 
