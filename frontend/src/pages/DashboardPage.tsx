@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { motion } from "framer-motion";
@@ -14,13 +14,73 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
+import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
   const [localReposResults, setLocalReposResults] = useState<any[]>([]);
+
+  // Onboarding & Streak State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [streakData, setStreakData] = useState({ count: 0, dates: [] as string[] });
+
   const { token } = useAuth();
+
+  useEffect(() => {
+    // Check Onboarding
+    const onboardingDone = localStorage.getItem("gitten_onboarding_completed");
+    if (!onboardingDone) {
+      setShowOnboarding(true);
+    }
+
+    // Check Streak
+    const storedStreak = localStorage.getItem("gitten_streak");
+    let currentStreak = storedStreak ? JSON.parse(storedStreak) : { count: 0, dates: [], lastLogin: null };
+
+    const todayStr = new Date().toDateString();
+    const lastLoginDate = currentStreak.lastLogin ? new Date(currentStreak.lastLogin).toDateString() : null;
+
+    // If first time login today
+    if (lastLoginDate !== todayStr) {
+      let newCount = currentStreak.count;
+
+      if (lastLoginDate) {
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        if (yesterday.toDateString() === lastLoginDate) {
+          // Streak continues
+          newCount++;
+        } else {
+          // Streak broken
+          newCount = 1;
+        }
+      } else {
+        // First ever login
+        newCount = 1;
+      }
+
+      currentStreak = {
+        count: newCount,
+        dates: [...currentStreak.dates, new Date().toISOString()],
+        lastLogin: new Date().toISOString()
+      };
+
+      localStorage.setItem("gitten_streak", JSON.stringify(currentStreak));
+    }
+
+    setStreakData({ count: currentStreak.count, dates: currentStreak.dates });
+
+  }, []);
+
+  const handleOnboardingComplete = (data: any) => {
+    localStorage.setItem("gitten_onboarding_completed", "true");
+    localStorage.setItem("gitten_user_preferences", JSON.stringify(data));
+    setShowOnboarding(false);
+  };
+
 
   const { data: repositories, isLoading } = useQuery({
     queryKey: ["repositories"],
@@ -98,16 +158,30 @@ export function DashboardPage() {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
+            {/* Onboarding Modal */}
+            <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
+
+            {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {statsData.map((stat, index) => (
                 <StatsCard key={stat.title} {...stat} index={index} />
               ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <LanguageChart data={realLanguageData.length > 0 ? realLanguageData : undefined} />
-              <ActivityChart data={realActivityData} />
+
+            {/* Charts Section including Streak */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <StreakCalendar loginDates={streakData.dates} streakCount={streakData.count} />
+              </div>
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <LanguageChart data={realLanguageData.length > 0 ? realLanguageData : undefined} />
+                <ActivityChart data={realActivityData} />
+              </div>
             </div>
+
+            {/* Main Content */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Repositories */}
               <div className="lg:col-span-2 space-y-4">
                 <h2 className="text-lg font-semibold">Recent Repositories</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -116,7 +190,11 @@ export function DashboardPage() {
                   ))}
                 </div>
               </div>
-              <div><ActivityFeed /></div>
+
+              {/* Activity Feed */}
+              <div>
+                <ActivityFeed />
+              </div>
             </div>
           </motion.div>
         );
