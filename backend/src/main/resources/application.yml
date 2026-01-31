@@ -31,7 +31,7 @@ openai:
     key: ${OPENAI_API_KEY}
 
 frontend:
-  url: ${FRONTEND_URL:http://localhost:5180}
+  url: ${FRONTEND_URL:https://gittenz.netlify.app}
 
 server:
   port: 8080
