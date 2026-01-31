@@ -105,16 +105,19 @@ export function DashboardPage() {
   // Data processing
   const displayRepos = repositories || [];
 
-  const languageCounts: Record<string, number> = {};
+  // FIXED: Use a Map to aggregate totals across ALL repos for accuracy
+  const languageMap = new Map<string, number>();
   displayRepos.forEach((repo: any) => {
     if (repo.language) {
-      languageCounts[repo.language] = (languageCounts[repo.language] || 0) + 1;
+      const count = languageMap.get(repo.language) || 0;
+      languageMap.set(repo.language, count + 1);
     }
   });
-  const realLanguageData = Object.entries(languageCounts)
+
+  const realLanguageData = Array.from(languageMap.entries())
     .map(([name, value]) => ({ name, value }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
+    .slice(0, 10); // Show top 10
 
   // Fetch Real GitHub Activity
   const { data: activityEvents } = useQuery({
@@ -138,50 +141,58 @@ export function DashboardPage() {
   });
 
   const calculateRealActivity = () => {
-    if (!activityEvents) return [];
-
-    // Create map for aggregation
+    // If no events loaded yet, just return zeros for the timeframe
+    // This prevents "empty" chart flashing if loading is slow
     const activityMap: Record<string, number> = {};
     const today = new Date();
 
-    // Determine data range
+    // Determine data range (Weekly = 7 days, Monthly = 30 days)
     const daysToShow = activityTimeframe === 'weekly' ? 7 : 30;
 
-    // Initialize past days with 0
-    for (let i = 0; i < daysToShow; i++) {
+    // Initialize chart with 0s for every day in the range
+    for (let i = daysToShow - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(today.getDate() - i);
-      // Format as YYYY-MM-DD for key
-      const key = d.toISOString().split('T')[0];
+      const key = d.toISOString().split('T')[0]; // YYYY-MM-DD
       activityMap[key] = 0;
     }
 
-    // Process events
-    activityEvents.forEach((event: any) => {
-      // Monitor PushEvent for commits
-      if (event.type === "PushEvent") {
-        const dateKey = new Date(event.created_at).toISOString().split('T')[0];
-        if (activityMap[dateKey] !== undefined) {
-          activityMap[dateKey] += (event.payload?.size || 1);
-        }
-      }
-    });
+    if (activityEvents) {
+      activityEvents.forEach((event: any) => {
+        // We only care about PushEvent (commits), but also include specific other events for "User Activity"
+        // Parsing dates from API which are UTC
+        const eventDate = new Date(event.created_at);
+        const dateKey = eventDate.toISOString().split('T')[0];
 
-    // Convert to Array for chart
+        if (activityMap[dateKey] !== undefined) {
+          let contribution = 0;
+          if (event.type === "PushEvent") {
+            contribution = event.payload?.size || 1;
+          } else if (event.type === "PullRequestEvent" || event.type === "CreateEvent") {
+            contribution = 1;
+          }
+
+          if (contribution > 0) {
+            activityMap[dateKey] += contribution;
+          }
+        }
+      });
+    }
+
+    // Convert map to array for Recharts
     return Object.entries(activityMap)
       .map(([date, count]) => {
         const d = new Date(date);
-        // Format name based on view
-        // Weekly: "Mon", "Tue"
-        // Monthly: "1 Jan", "2 Jan"
         let name;
         if (activityTimeframe === 'weekly') {
           const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-          name = days[d.getDay()];
+          // Use UTC day to avoid timezone shifting issues as the KEY is date string (UTC)
+          name = days[d.getUTCDay()];
         } else {
-          name = `${d.getDate()}/${d.getMonth() + 1}`;
+          // Format: "1 Jan"
+          const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          name = `${d.getUTCDate()} ${months[d.getUTCMonth()]}`;
         }
-
         return { name, date, commits: count };
       })
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
