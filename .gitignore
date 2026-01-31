@@ -1,4 +1,6 @@
-# Credentials
+# ======================
+# Environment / Credentials
+# ======================
 .env
 .env.*
 !.env.example
@@ -7,24 +9,36 @@
 *.pfx
 *.p12
 
-# Builds
-target/
-build/
-dist/
+# ======================
+# Node / Build Artifacts
+# ======================
 node_modules/
+dist/
+build/
+target/
 
-# IDEs
+# ======================
+# Logs
+# ======================
+*.log
+logs/
+
+# ======================
+# IDE / Editor
+# ======================
 .idea/
 .vscode/
 *.iml
 
-# Logs
-*.log
-logs/
-
+# ======================
 # MacOS
+# ======================
 .DS_Store
-.env
-backend/.env
-run.log
-backend/run.log
+
+# ======================
+# Package locks (any folder)
+# ======================
+# Ignore package-lock.json anywhere
+package-lock.json
+**/package-lock.json
+
