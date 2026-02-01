@@ -199,4 +199,15 @@ public class GitHubServiceImpl implements GitHubService {
                 .body(new ParameterizedTypeReference<>() {
                 });
     }
+
+    @Override
+    public List<java.util.Map<String, Object>> getStarredRepositories(String username, String oauthToken) {
+        log.info("Fetching starred repositories for user: {}", username);
+        return restClient.get()
+                .uri("/users/" + username + "/starred?per_page=100&sort=created")
+                .header("Authorization", "Bearer " + oauthToken)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
+    }
 }

@@ -25,4 +25,6 @@ public interface GitHubService {
                         String oauthToken);
 
         List<java.util.Map<String, Object>> getUserEvents(String username, String oauthToken);
+
+        List<java.util.Map<String, Object>> getStarredRepositories(String username, String oauthToken);
 }

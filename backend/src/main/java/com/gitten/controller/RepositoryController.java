@@ -51,6 +51,18 @@ public class RepositoryController {
         return ResponseEntity.ok(localGitService.scanLocalRepositories(path));
     }
 
+    @org.springframework.web.bind.annotation.PostMapping("/local-save")
+    public ResponseEntity<Repository> saveLocalRepo(
+            @org.springframework.web.bind.annotation.RequestBody Repository repo, java.security.Principal principal) {
+        com.gitten.model.User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        repo.setOwner(user);
+        repo.setLocal(true);
+        // Ensure no ID collision for new repo
+        repo.setId(null);
+        return ResponseEntity.ok(repositoryRepository.save(repo));
+    }
+
     @GetMapping("/{owner}/{repo}/branches")
     public ResponseEntity<?> getBranches(@PathVariable String owner, @PathVariable String repo,
             java.security.Principal principal) {
