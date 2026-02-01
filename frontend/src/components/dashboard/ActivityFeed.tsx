@@ -36,7 +36,62 @@ const activityColors = {
   create: "text-primary",
 };
 
-export function ActivityFeed() {
+interface ActivityFeedProps {
+  events?: any[];
+}
+
+export function ActivityFeed({ events }: ActivityFeedProps) {
+  const activities = events && events.length > 0
+    ? events.slice(0, 10).map((event: any) => {
+      let type: "commit" | "branch" | "merge" | "star" | "create" = "commit";
+      let message = "Unknown activity";
+      let repo = event.repo?.name || "repository";
+
+      if (event.type === "PushEvent") {
+        type = "commit";
+        message = `Pushed ${event.payload?.size || 1} commit(s)`;
+        if (event.payload?.commits?.[0]?.message) {
+          message = event.payload.commits[0].message;
+        }
+      } else if (event.type === "CreateEvent") {
+        if (event.payload?.ref_type === "branch") {
+          type = "branch";
+          message = `Created branch ${event.payload?.ref}`;
+        } else {
+          type = "create";
+          message = "Created repository";
+        }
+      } else if (event.type === "PullRequestEvent") {
+        type = "merge";
+        message = `${event.payload?.action} PR #${event.payload?.number}`;
+      } else if (event.type === "WatchEvent") {
+        type = "star";
+        message = "Starred repository";
+      }
+
+      return {
+        id: event.id,
+        type,
+        message,
+        repo: repo.replace("Ansuman-Mahapatra/", ""),
+        time: new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      };
+    })
+    : [];
+
+  if (!activities || activities.length === 0) {
+    return (
+      <Card className="glass-card h-full">
+        <CardHeader>
+          <CardTitle className="text-lg">Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent className="p-6 text-center text-muted-foreground text-sm">
+          No recent activity found.
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="glass-card h-full">
       <CardHeader>
@@ -45,7 +100,7 @@ export function ActivityFeed() {
       <CardContent className="p-0">
         <ScrollArea className="h-[300px] px-6">
           <div className="space-y-4 pb-6">
-            {mockActivities.map((activity, index) => {
+            {activities.map((activity: any, index: number) => {
               const Icon = activityIcons[activity.type];
               const colorClass = activityColors[activity.type];
 
@@ -57,7 +112,7 @@ export function ActivityFeed() {
                   transition={{ delay: index * 0.08 }}
                   className="flex items-start gap-3 group"
                 >
-                  <motion.div 
+                  <motion.div
                     className={`w-8 h-8 rounded-full bg-muted flex items-center justify-center flex-shrink-0 ${colorClass}`}
                     whileHover={{ scale: 1.1 }}
                   >
