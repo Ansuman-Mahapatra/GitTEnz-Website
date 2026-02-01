@@ -1,38 +1,50 @@
 # Deployment Guide for GitTEnz
 
-This guide details how to publish your GitTEnz application to the web. We will deploy the **Frontend to Netlify** and the **Backend to Render** (a reliable platform for Java/Spring Boot apps).
+This guide details how to publish your GitTEnz application to the web. We will deploy the **Frontend to Vercel** and the **Backend to Render** (a reliable platform for Java/Spring Boot apps).
 
 ---
 
-## 🏗️ PART 1: Frontend Deployment (Netlify)
+## 🏗️ PART 1: Frontend Deployment (Vercel)
 
-Netlify is excellent for static sites and Single Page Applications (SPAs) like React.
+Vercel is the creators of Next.js but is also excellent for deploying Vite/React applications.
 
 ### 1. Preparation
-Before deploying, we need to ensure the app handles routing correctly (so refreshing a page doesn't give a 404).
+We need to ensure the app handles routing correctly (so refreshing a page like `/dashboard` doesn't give a 404).
 
-1.  Create a file named `_redirects` inside your `frontend/public/` folder.
-2.  Add this single line to it:
+1.  A `vercel.json` file has been added to your `frontend/` directory with the following content:
+    ```json
+    {
+      "rewrites": [
+        {
+          "source": "/(.*)",
+          "destination": "/index.html"
+        }
+      ]
+    }
     ```
-    /*  /index.html  200
+2.  Commit and push this file to GitHub:
+    ```bash
+    git add frontend/vercel.json
+    git commit -m "chore: add vercel configuration"
+    git push
     ```
-3.  Commit and push this change to GitHub.
 
-### 2. Connect to Netlify
-1.  Log in to [Netlify](https://app.netlify.com/).
-2.  Click **"Add new site"** > **"Import from an existing project"**.
-3.  Select **GitHub** and choose your repository `GitTEnz-Website`.
-4.  Configure the build settings:
-    *   **Base directory**: `frontend`
-    *   **Build command**: `npm run build`
-    *   **Publish directory**: `frontend/dist`
+### 2. Connect to Vercel
+1.  Log in to [Vercel](https://vercel.com).
+2.  Click **"Add New..."** > **"Project"**.
+3.  Import from **GitHub** and select your repository `GitTEnz-Website`.
+4.  **Configure Project**:
+    *   **Root Directory**: Click "Edit" and select `frontend`.
+    *   **Framework Preset**: It should auto-detect "Vite".
+    *   **Build Command**: `npm run build` (Default)
+    *   **Output Directory**: `dist` (Default)
 5.  **Environment Variables**:
-    *   Click "Show advanced" or "Environment variables".
-    *   Add key: `VITE_API_URL`
-    *   Value: *Leave this blank for now, or put `http://localhost:8080` until we deploy the backend.* (We will update this in Part 3).
-6.  Click **"Deploy site"**.
+    *   Expand "Environment Variables".
+    *   Key: `VITE_API_URL`
+    *   Value: *Leave blank for now, or put `https://gittenz.onrender.com` if you already have the backend URL.*
+6.  Click **"Deploy"**.
 
-Your frontend will be live (e.g., `https://gittenz-frontend.netlify.app`).
+Your frontend will be live (e.g., `https://gittenz.vercel.app`).
 
 ---
 
@@ -41,7 +53,7 @@ Your frontend will be live (e.g., `https://gittenz-frontend.netlify.app`).
 Render is great for hosting Dockerized Java applications.
 
 ### 1. Add a Dockerfile
-Create a file named `Dockerfile` (no extension) in your `backend/` directory with the following content. This tells Render how to build your Java app.
+Ensure you have the `Dockerfile` in your `backend/` directory.
 
 ```dockerfile
 # Build Stage
@@ -58,7 +70,6 @@ COPY --from=build /app/target/backend-0.0.1-SNAPSHOT.jar app.jar
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
-*Commit and push this file to GitHub.*
 
 ### 2. Deploy on Render
 1.  Log in to [Render](https://dashboard.render.com/).
@@ -70,16 +81,16 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
     *   **Region**: Choose one close to you (or your Database).
     *   **Instance Type**: Free (if available) or Starter.
 5.  **Environment Variables**:
-    You MUST add all your secrets here. Copy the values from your local `.env`.
-    *   `GITHUB_CLIENT_ID`: (Your GitHub ID)
-    *   `GITHUB_CLIENT_SECRET`: (Your GitHub Secret)
+    You MUST add all your secrets here.
+    *   `GITHUB_CLIENT_ID`: (Your GitHub Client ID)
+    *   `GITHUB_CLIENT_SECRET`: (Your GitHub Client Secret)
     *   `OPENAI_API_KEY`: (Your OpenAI Key)
     *   `SPRING_DATA_MONGODB_URI`: (Your MongoDB Connection String)
-    *   `FRONTEND_URL`: `https://gittenz.netlify.app`
+    *   `FRONTEND_URL`: **Update this to your new Vercel URL** (e.g., `https://gittenz.vercel.app`)
     *   `PORT`: `8080`
 6.  Click **"Create Web Service"**.
 
-Render will build your app. This might take 5-10 minutes. Once done, it will give you a backend URL (e.g., `https://gittenz.onrender.com`).
+Render will build your app. Once done, it will give you a backend URL (e.g., `https://gittenz.onrender.com`).
 
 ---
 
@@ -87,24 +98,24 @@ Render will build your app. This might take 5-10 minutes. Once done, it will giv
 
 Now that both are online, we need to make sure they talk to each other correctly.
 
-### 1. Update Frontend Configuration
-1.  Go back to **Netlify** > **Site Settings** > **Environment variables**.
-2.  Update `VITE_API_URL`.
-    *   Value: `https://gittenz.onrender.com`
-    *   *Note: We have updated code/configuration to default to this, so this step is optional but recommended.*
-3.  Go to the **Deploys** tab and click **"Trigger deploy"** to rebuild the frontend with the new URL.
+### 1. Update Frontend Configuration (Vercel)
+1.  Go to your project dashboard on **Vercel**.
+2.  Navigate to **Settings** > **Environment Variables**.
+3.  Add/Edit `VITE_API_URL`.
+    *   Value: `https://gittenz.onrender.com` (Your Render Backend URL).
+4.  Go to the **Deployments** tab, click on the three dots of the latest deployment, and select **"Redeploy"** for changes to take effect.
 
 ### 2. Update GitHub OAuth App
 1.  Go to **GitHub Developer Settings** > **OAuth Apps**.
 2.  Select your `GitTEnz` app.
-3.  Update the URLs to match your production site:
-    *   **Homepage URL**: `https://gittenz.netlify.app`
-    *   **Authorization callback URL**: `https://gittenz.onrender.com/login/oauth2/code/github`
+3.  Update the URLs to match your new Vercel deployment:
+    *   **Homepage URL**: `https://gittenz.vercel.app` (Your Vercel URL)
+    *   **Authorization callback URL**: `https://gittenz.onrender.com/login/oauth2/code/github` (This remains the Backend URL, this does NOT change).
 4.  Save changes.
 
 ---
 
 ## ✅ Verification
-1.  Open your Netlify URL.
+1.  Open your Vercel URL.
 2.  Click **Login**.
-3.  You should be redirected to GitHub -> Authorized -> and back to your Netlify App, with data fetched from your Render Backend!
+3.  You should be redirected to GitHub -> Authorized -> and back to your Vercel App.
