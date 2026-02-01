@@ -24,7 +24,26 @@ public class Repository {
     private Integer openIssuesCount;
     private String visibility;
 
+    private boolean isLocal = false;
+    private String localPath;
+
     private LocalDateTime updatedAt;
+
+    public boolean isLocal() {
+        return isLocal;
+    }
+
+    public void setLocal(boolean local) {
+        isLocal = local;
+    }
+
+    public String getLocalPath() {
+        return localPath;
+    }
+
+    public void setLocalPath(String localPath) {
+        this.localPath = localPath;
+    }
 
     @DBRef
     private User owner;

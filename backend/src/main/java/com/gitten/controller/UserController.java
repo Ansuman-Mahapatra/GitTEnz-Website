@@ -59,4 +59,19 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         return gitHubService.getUserEvents(user.getUsername(), user.getAccessToken());
     }
+
+    @GetMapping("/starred")
+    public List<java.util.Map<String, Object>> getStarredRepositories(java.security.Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        return gitHubService.getStarredRepositories(user.getUsername(), user.getAccessToken());
+    }
+
+    @PostMapping("/onboarding")
+    public User completeOnboarding(java.security.Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        user.setOnboardingCompleted(true);
+        return userRepository.save(user);
+    }
 }

@@ -19,6 +19,8 @@ public class User {
 
     private String accessToken;
 
+    private boolean onboardingCompleted = false;
+
     public String getId() {
         return id;
     }
@@ -73,5 +75,13 @@ public class User {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public boolean isOnboardingCompleted() {
+        return onboardingCompleted;
+    }
+
+    public void setOnboardingCompleted(boolean onboardingCompleted) {
+        this.onboardingCompleted = onboardingCompleted;
     }
 }

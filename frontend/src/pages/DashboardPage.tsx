@@ -33,13 +33,16 @@ export function DashboardPage() {
   // Activity State
   const [activityTimeframe, setActivityTimeframe] = useState<"weekly" | "monthly">("weekly");
 
-  const { token } = useAuth();
+  const { token, user, setToken } = useAuth(); // Assuming setToken or setUser is available or we trigger refetch?
+  // We can't update user easily in AuthContext without a setUser exposed. 
+  // For now we just hide modal, next reload will be fine if backend updated.
 
   useEffect(() => {
-    // Check Onboarding
-    const onboardingDone = localStorage.getItem("gitten_onboarding_completed");
-    if (!onboardingDone) {
+    // Check Onboarding via User Profile
+    if (user && user.onboardingCompleted === false) {
       setShowOnboarding(true);
+    } else if (user && user.onboardingCompleted === true) {
+      setShowOnboarding(false);
     }
 
     // Check Streak
@@ -79,10 +82,22 @@ export function DashboardPage() {
 
     setStreakData({ count: currentStreak.count, dates: currentStreak.dates });
 
-  }, []);
+  }, [user]);
 
-  const handleOnboardingComplete = (data: any) => {
-    localStorage.setItem("gitten_onboarding_completed", "true");
+  const handleOnboardingComplete = async (data: any) => {
+    try {
+      if (token) {
+        await fetch(`${API_URL}/api/user/onboarding`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        // Force page reload to refresh user state or just hide modal
+        // Ideally we update context, but for now:
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error("Failed to save onboarding status", e);
+    }
     localStorage.setItem("gitten_user_preferences", JSON.stringify(data));
     setShowOnboarding(false);
   };
@@ -126,6 +141,19 @@ export function DashboardPage() {
     queryFn: async () => {
       if (!token) return [];
       const res = await fetch(`${API_URL}/api/user/activity`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!token,
+  });
+
+  const { data: starredRepos } = useQuery({
+    queryKey: ["starred-repositories"],
+    queryFn: async () => {
+      if (!token) return [];
+      const res = await fetch(`${API_URL}/api/user/starred`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (!res.ok) return [];
@@ -454,7 +482,7 @@ export function DashboardPage() {
           <motion.div key="starred" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Starred Repositories</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayRepos.filter((_: any, i: number) => i % 2 === 0).map((repo: any, index: number) => (
+              {starredRepos?.map((repo: any, index: number) => (
                 <RepositoryCard key={repo.id} repository={repo} index={index} />
               ))}
             </div>
