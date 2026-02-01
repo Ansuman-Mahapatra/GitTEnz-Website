@@ -445,7 +445,7 @@ export function DashboardPage() {
         return (
           <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Activity</h2>
-            <div className="max-w-2xl"><ActivityFeed /></div>
+            <div className="max-w-2xl"><ActivityFeed events={activityEvents} /></div>
           </motion.div>
         );
 
