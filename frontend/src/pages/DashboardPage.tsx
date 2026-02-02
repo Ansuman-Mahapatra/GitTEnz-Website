@@ -147,6 +147,7 @@ export function DashboardPage() {
       return res.json();
     },
     enabled: !!token,
+    refetchInterval: 5000,
   });
 
   const { data: starredRepos } = useQuery({
@@ -160,6 +161,7 @@ export function DashboardPage() {
       return res.json();
     },
     enabled: !!token,
+    refetchInterval: 5000,
   });
 
   const calculateRealActivity = () => {
