@@ -5,6 +5,7 @@ import com.gitten.repository.RepositoryRepository;
 import com.gitten.repository.UserRepository;
 import com.gitten.service.RepositoryService;
 import com.gitten.service.LocalGitService;
+import com.gitten.service.GitHubService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -18,19 +19,20 @@ import org.springframework.web.bind.annotation.RequestParam;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/repos")
 public class RepositoryController {
 
     private final RepositoryService repositoryService;
-    private final com.gitten.service.GitHubService gitHubService;
+    private final GitHubService gitHubService;
     private final UserRepository userRepository;
     private final RepositoryRepository repositoryRepository;
 
     private final LocalGitService localGitService;
 
-    public RepositoryController(RepositoryService repositoryService, com.gitten.service.GitHubService gitHubService,
+    public RepositoryController(RepositoryService repositoryService, GitHubService gitHubService,
             UserRepository userRepository, LocalGitService localGitService, RepositoryRepository repositoryRepository) {
         this.repositoryService = repositoryService;
         this.gitHubService = gitHubService;
@@ -63,9 +65,26 @@ public class RepositoryController {
         return ResponseEntity.ok(repositoryRepository.save(repo));
     }
 
+    private Repository findLocalRepo(String ownerUsername, String repoName) {
+        Optional<com.gitten.model.User> userOpt = userRepository.findByUsername(ownerUsername);
+        if (userOpt.isEmpty())
+            return null;
+
+        Optional<Repository> repoOpt = repositoryRepository.findByOwnerAndName(userOpt.get(), repoName);
+        if (repoOpt.isPresent() && repoOpt.get().isLocal()) {
+            return repoOpt.get();
+        }
+        return null;
+    }
+
     @GetMapping("/{owner}/{repo}/branches")
     public ResponseEntity<?> getBranches(@PathVariable String owner, @PathVariable String repo,
             java.security.Principal principal) {
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(localGitService.getBranches(localRepo.getLocalPath()));
+        }
+
         String token = getToken(principal.getName());
         return ResponseEntity.ok(gitHubService.getBranches(owner, repo, token));
     }
@@ -73,6 +92,11 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/commits")
     public ResponseEntity<?> getCommits(@PathVariable String owner, @PathVariable String repo,
             @RequestParam(required = false) String branch, java.security.Principal principal) {
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(localGitService.getCommits(localRepo.getLocalPath(), branch));
+        }
+
         String token = getToken(principal.getName());
         return ResponseEntity.ok(gitHubService.getCommits(owner, repo, branch, token));
     }
@@ -80,6 +104,11 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/tree/{sha}")
     public ResponseEntity<?> getTree(@PathVariable String owner, @PathVariable String repo, @PathVariable String sha,
             java.security.Principal principal) {
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(localGitService.getFileTree(localRepo.getLocalPath(), sha));
+        }
+
         String token = getToken(principal.getName());
         return ResponseEntity.ok(gitHubService.getFileTree(owner, repo, sha, token));
     }
@@ -90,11 +119,13 @@ public class RepositoryController {
         // Extract path from pattern
         String fullPath = (String) request
                 .getAttribute(org.springframework.web.servlet.HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-        // /api/repos/{owner}/{repo}/contents/PATH -> we want PATH.
-        // prefix length: /api/repos/owner/repo/contents/ is 23 + owner + repo length
-        // Safer way: split or substring
         String prefix = "/api/repos/" + owner + "/" + repo + "/contents/";
         String path = fullPath.substring(fullPath.indexOf(prefix) + prefix.length());
+
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(localGitService.getFileContent(localRepo.getLocalPath(), path));
+        }
 
         String token = getToken(principal.getName());
         return ResponseEntity.ok(gitHubService.getFileContent(owner, repo, path, token));
@@ -109,6 +140,12 @@ public class RepositoryController {
         String prefix = "/api/repos/" + owner + "/" + repo + "/contents/";
         String path = fullPath.substring(fullPath.indexOf(prefix) + prefix.length());
 
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(localGitService.updateFile(localRepo.getLocalPath(), path, body.get("content"),
+                    body.get("message")));
+        }
+
         String token = getToken(principal.getName());
         return ResponseEntity.ok(gitHubService.updateFile(owner, repo, path, body.get("content"), body.get("message"),
                 body.get("sha"), token));
@@ -118,6 +155,12 @@ public class RepositoryController {
     public ResponseEntity<?> createBranch(@PathVariable String owner, @PathVariable String repo,
             @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body,
             java.security.Principal principal) {
+        Repository localRepo = findLocalRepo(owner, repo);
+        if (localRepo != null) {
+            return ResponseEntity.ok(
+                    localGitService.createBranch(localRepo.getLocalPath(), body.get("branchName"), body.get("sha")));
+        }
+
         String token = getToken(principal.getName());
         return ResponseEntity
                 .ok(gitHubService.createBranch(owner, repo, body.get("branchName"), body.get("sha"), token));

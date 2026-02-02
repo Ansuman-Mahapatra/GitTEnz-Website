@@ -12,4 +12,6 @@ public interface RepositoryRepository extends MongoRepository<Repository, String
     Optional<Repository> findByGithubId(Long githubId);
 
     List<Repository> findByLikedUserIdsContaining(String userId);
+
+    Optional<Repository> findByOwnerAndName(User owner, String name);
 }
