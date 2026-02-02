@@ -34,31 +34,18 @@ mvn spring-boot:run
 ```
 
 ## Features
+- **OAuth2 Login**: Secure authentication with GitHub.
+- **Dashboard**: View repository stats (Stars, Forks, Languages) and Recent Activity.
+- **Activity Feed**: Real-time updates of your GitHub actions with multi-commit details.
+- **Repository Management**:
+  - View code, branches, and commits.
+  - **File Tree**: Explore your project structure hierarchically.
+  - **Code Editor**: View and edit files with syntax highlighting.
+  - **Local Repos**: Select and view local folders securely.
+- **AI Assistant**: Chat with your codebase contextually.
+- **Dark Mode**: Sleek, modern interface with glassmorphism effects.
 
-- OAuth2 Login with GitHub
-- Repository Analysis
-- AI Chat
-
-## Deploying
-
-[Add deployment instructions]
-tHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-
-## What technologies are used for this project?
-
-This project is built with:
+## Technologies
 
 - Vite
 - TypeScript

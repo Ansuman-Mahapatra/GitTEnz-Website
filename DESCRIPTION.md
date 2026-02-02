@@ -64,13 +64,15 @@ The application follows a classic **Client-Server** architecture with a separate
 
 ### **Dashboard & Repository Management**
 *   **Function**: Fetches user's repositories, displays stats (stars, forks, languages).
-*   **Activity Feed & Stats**: Uses a backend proxy endpoint (`/api/user/activity`) to securely fetch GitHub events. The Dashboard now features granular activity tracking (Total Pushes, Pull Requests) and a robust breakdown.
+*   **Activity Feed & Stats**: Uses a backend proxy endpoint (`/api/user/activity`) to securely fetch GitHub events. The Dashboard features granular activity tracking (Total Pushes, Pull Requests) with **5-second auto-refresh** and detailed multi-commit breakdowns.
+*   **Local Repositories**: Allows users to securely select a local folder to view its contents and metadata directly in the browser using the File System Access API. Includes verification for git initialization.
 *   **Local Starring**: Implements a platform-specific "Star" feature that allows users to bookmark repositories locally on GitTEnz without affecting their GitHub stars.
 *   **Optimization**: Data is fetched from GitHub acts as the 'source of truth', but heavy computations or historical data might be cached.
 *   **Components**:
-    *   `DashboardPage.tsx`: Main landing view with specialized `StatsCard` for activity breakdown.
+    *   `DashboardPage.tsx`: Main landing view with specialized `StatsCard`, Charts, and Local Repo management.
     *   `RepositoryController.java`: Handles repositories and the new `/toggle-star` endpoint for local likes.
     *   `SettingsPanel.tsx`: Fully functional settings management (Themes, Profile) with "Coming Soon" placeholders for future modules.
+    *   `RepositoryDetailPage.tsx`: Features a hierarchical **File Tree** explorer, commit history, and code editor with polling for real-time updates.
 
 ### **AI Assistant (The "Brain")**
 *   **Function**: Allows users to chat about their code. "What does this repo do?", "How do I fix this bug?".
