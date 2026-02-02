@@ -8,5 +8,8 @@ import java.util.Optional;
 
 public interface RepositoryRepository extends MongoRepository<Repository, String> {
     List<Repository> findByOwner(User owner);
+
     Optional<Repository> findByGithubId(Long githubId);
+
+    List<Repository> findByLikedUserIdsContaining(String userId);
 }
