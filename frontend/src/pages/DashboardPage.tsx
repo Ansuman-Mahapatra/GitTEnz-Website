@@ -282,20 +282,13 @@ export function DashboardPage() {
             </div>
 
             {/* Main Content */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Repositories */}
-              <div className="lg:col-span-2 space-y-4">
-                <h2 className="text-lg font-semibold">Recent Repositories</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {displayRepos.slice(0, 4).map((repo: any, index: number) => (
-                    <RepositoryCard key={repo.id} repository={repo} index={index} />
-                  ))}
-                </div>
-              </div>
-
-              {/* Activity Feed */}
-              <div>
-                <ActivityFeed />
+            {/* Main Content */}
+            <div className="space-y-4">
+              <h2 className="text-lg font-semibold">Recent Repositories</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {displayRepos.slice(0, 4).map((repo: any, index: number) => (
+                  <RepositoryCard key={repo.id} repository={repo} index={index} />
+                ))}
               </div>
             </div>
           </motion.div>
