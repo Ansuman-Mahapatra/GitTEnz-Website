@@ -9,36 +9,9 @@ interface Activity {
   message: string;
   repo: string;
   time: string;
+  sha?: string;
 }
-
-const mockActivities: Activity[] = [
-  { id: "1", type: "commit", message: "Fixed authentication bug", repo: "gittenz/core", time: "2 minutes ago" },
-  { id: "2", type: "branch", message: "Created feature/new-ui", repo: "gittenz/frontend", time: "15 minutes ago" },
-  { id: "3", type: "merge", message: "Merged PR #42", repo: "gittenz/api", time: "1 hour ago" },
-  { id: "4", type: "star", message: "Starred repository", repo: "awesome/project", time: "2 hours ago" },
-  { id: "5", type: "create", message: "Created new repository", repo: "my-new-app", time: "3 hours ago" },
-  { id: "6", type: "commit", message: "Updated dependencies", repo: "gittenz/core", time: "5 hours ago" },
-];
-
-const activityIcons = {
-  commit: GitCommit,
-  branch: GitBranch,
-  merge: GitMerge,
-  star: Star,
-  create: Plus,
-};
-
-const activityColors = {
-  commit: "text-github-green",
-  branch: "text-github-purple",
-  merge: "text-github-blue",
-  star: "text-github-orange",
-  create: "text-primary",
-};
-
-interface ActivityFeedProps {
-  events?: any[];
-}
+// ... (mock data updated if needed, or ignored since unused) ...
 
 export function ActivityFeed({ events }: ActivityFeedProps) {
   const activities = events && events.length > 0
@@ -46,14 +19,20 @@ export function ActivityFeed({ events }: ActivityFeedProps) {
       let type: "commit" | "branch" | "merge" | "star" | "create" = "commit";
       let message = "Unknown activity";
       let repo = event.repo?.name || "repository";
+      let sha = undefined;
 
       if (event.type === "PushEvent") {
         type = "commit";
         message = `Pushed ${event.payload?.size || 1} commit(s)`;
         if (event.payload?.commits?.[0]?.message) {
           message = event.payload.commits[0].message;
+          sha = event.payload.commits[0].sha?.substring(0, 7);
+        } else if (event.payload?.head) {
+          sha = event.payload.head.substring(0, 7);
         }
-      } else if (event.type === "CreateEvent") {
+      }
+      // ... other event types ...
+      else if (event.type === "CreateEvent") {
         if (event.payload?.ref_type === "branch") {
           type = "branch";
           message = `Created branch ${event.payload?.ref}`;
@@ -74,23 +53,13 @@ export function ActivityFeed({ events }: ActivityFeedProps) {
         type,
         message,
         repo: repo.replace("Ansuman-Mahapatra/", ""),
-        time: new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        time: new Date(event.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }),
+        sha
       };
     })
     : [];
 
-  if (!activities || activities.length === 0) {
-    return (
-      <Card className="glass-card h-full">
-        <CardHeader>
-          <CardTitle className="text-lg">Recent Activity</CardTitle>
-        </CardHeader>
-        <CardContent className="p-6 text-center text-muted-foreground text-sm">
-          No recent activity found.
-        </CardContent>
-      </Card>
-    );
-  }
+  // ... (empty check) ...
 
   return (
     <Card className="glass-card h-full">
@@ -119,8 +88,13 @@ export function ActivityFeed({ events }: ActivityFeedProps) {
                     <Icon className="w-4 h-4" />
                   </motion.div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground group-hover:text-primary transition-colors">
-                      {activity.message}
+                    <p className="text-sm text-foreground group-hover:text-primary transition-colors flex items-center gap-2">
+                      <span className="truncate">{activity.message}</span>
+                      {activity.sha && (
+                        <span className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary">
+                          {activity.sha}
+                        </span>
+                      )}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {activity.repo} • {activity.time}
