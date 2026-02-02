@@ -8,8 +8,9 @@ GitTEnz is a modern web application that provides an enhanced interface for GitH
 
 *   **GitHub Integration**: Log in with GitHub to sync repositories and view stats.
 *   **Context-Aware AI Assistant**: Chat with an AI about your code. It automatically reads the `README.md` of the current repository to provide relevant answers.
-*   **Activity Insights**: Granular breakdown of your contribution history (Pushes, Pull Requests) and visual charts.
-*   **Local Starring**: Star repositories locally on GitTEnz without affecting your GitHub stars.
+*   **Activity Insights**: Granular breakdown of your contribution history (Pushes, Pull Requests) and visual charts available in the dedicated Activity tab.
+*   **Local Starring**: Star repositories within GitTEnz to create your own personalized list. These stars are saved locally in the app and do not affect your actual GitHub stars.
+*   **Customizable Dashboard**: View your top repositories and key statistics at a glance with a clean, full-width layout.
 *   **Code Editor**: Built-in code viewer and editor with syntax highlighting.
 *   **Modern UI**: Built with React, Tailwind CSS, and Shadcn UI.
 *   **Secure Auth**: OAuth2 login with JWT authentication for API security.
