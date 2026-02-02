@@ -332,68 +332,74 @@ export function DashboardPage() {
                       try {
                         // @ts-ignore - File System Access API
                         const dirHandle = await window.showDirectoryPicker();
-                        const newRepos: any[] = [];
 
-                        // Iterate through subdirectories
-                        // @ts-ignore
-                        for await (const entry of dirHandle.values()) {
-                          if (entry.kind === 'directory') {
-                            const repoName = entry.name;
-
-                            // Check for specific project files
-                            let language = "Unknown";
-                            let description = "Local Project";
-
-                            try {
-                              // Check for package.json (Node/JS/TS)
-                              // @ts-ignore
-                              const pkgHandle = await entry.getFileHandle('package.json').catch(() => null);
-                              if (pkgHandle) language = "JavaScript/TypeScript";
-
-                              // Check for pom.xml (Java)
-                              // @ts-ignore
-                              const pomHandle = await entry.getFileHandle('pom.xml').catch(() => null);
-                              if (pomHandle) language = "Java";
-
-                              // Check for requirements.txt (Python)
-                              // @ts-ignore
-                              const pyHandle = await entry.getFileHandle('requirements.txt').catch(() => null);
-                              if (pyHandle) language = "Python";
-
-                              // Check for Cargo.toml (Rust)
-                              // @ts-ignore
-                              const rustHandle = await entry.getFileHandle('Cargo.toml').catch(() => null);
-                              if (rustHandle) language = "Rust";
-
-                              // If we found a language indicator, treat as valid repo
-                              if (language !== "Unknown" || pkgHandle || pomHandle) {
-                                newRepos.push({
-                                  name: repoName,
-                                  description: `Local ${language} project`,
-                                  language: language,
-                                  visibility: "local",
-                                  stargazersCount: 0,
-                                  forksCount: 0,
-                                  updatedAt: new Date().toISOString(),
-                                  handle: entry // Store the handle!
-                                });
-                              }
-                            } catch (e) {
-                              console.error("Error determining repo type", e);
-                            }
-                          }
+                        // Check for .git directory to verify it is an initialized repo
+                        let isGit = false;
+                        try {
+                          // @ts-ignore
+                          await dirHandle.getDirectoryHandle('.git');
+                          isGit = true;
+                        } catch (e) {
+                          // Not found
                         }
 
-                        // @ts-ignore
-                        setLocalReposResults(newRepos);
+                        if (!isGit) {
+                          alert("The selected folder is not a git initialized repository. Please initialize git first.");
+                          return;
+                        }
 
-                      } catch (err) {
-                        console.error("User cancelled or API not supported", err);
+                        const repoName = dirHandle.name;
+                        // Check for specific project files
+                        let language = "Unknown";
+                        try {
+                          // Check for package.json (Node/JS/TS)
+                          // @ts-ignore
+                          const pkgHandle = await dirHandle.getFileHandle('package.json').catch(() => null);
+                          if (pkgHandle) language = "JavaScript/TypeScript";
+
+                          // Check for pom.xml (Java)
+                          // @ts-ignore
+                          const pomHandle = await dirHandle.getFileHandle('pom.xml').catch(() => null);
+                          if (pomHandle) language = "Java";
+
+                          // Check for requirements.txt (Python)
+                          // @ts-ignore
+                          const pyHandle = await dirHandle.getFileHandle('requirements.txt').catch(() => null);
+                          if (pyHandle) language = "Python";
+
+                          // Check for Cargo.toml (Rust)
+                          // @ts-ignore
+                          const rustHandle = await dirHandle.getFileHandle('Cargo.toml').catch(() => null);
+                          if (rustHandle) language = "Rust";
+                        } catch (e) { console.error(e); }
+
+                        const newRepo = {
+                          name: repoName,
+                          description: `Local ${language} project`,
+                          language: language,
+                          visibility: "local",
+                          stargazersCount: 0,
+                          forksCount: 0,
+                          updatedAt: new Date().toISOString(),
+                          handle: dirHandle
+                        };
+
+                        // @ts-ignore
+                        setLocalReposResults([newRepo]);
+                        // Auto select it? Maybe not. User can click it.
+
+                      } catch (err: any) {
+                        if (err.name === 'AbortError') {
+                          console.log("User cancelled selection");
+                        } else {
+                          console.error("Local repo error", err);
+                          alert("Failed to access folder. Browser may not support this feature.");
+                        }
                       }
                     }}
                   >
                     <FolderGit2 className="w-4 h-4" />
-                    Browse Folder
+                    Select Project Folder
                   </Button>
                 </CardContent>
               </Card>
