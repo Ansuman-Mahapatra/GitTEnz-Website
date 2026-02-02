@@ -18,8 +18,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileTree } from "@/components/dashboard/FileTree";
+import { StructureViewerModal } from "@/components/dashboard/StructureViewerModal";
 import { Badge } from "@/components/ui/badge";
-import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft } from "lucide-react";
+import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft, FileText } from "lucide-react";
 
 export function RepositoryDetailPage() {
     const { owner, repo } = useParams();
@@ -27,6 +28,7 @@ export function RepositoryDetailPage() {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("code");
     const [selectedBranch, setSelectedBranch] = useState("");
+    const [showStructureModal, setShowStructureModal] = useState(false);
     const [currentPath, setCurrentPath] = useState(""); // For tree navigation if nested
     const [selectedFile, setSelectedFile] = useState<{ path: string, sha: string } | null>(null);
 
@@ -229,6 +231,13 @@ export function RepositoryDetailPage() {
                 </div>
             )}
 
+            <StructureViewerModal
+                isOpen={showStructureModal}
+                onClose={() => setShowStructureModal(false)}
+                repoName={repo || "Project"}
+                files={fileTree?.tree || []}
+            />
+
             <div className="hidden lg:block">
                 <Sidebar activeTab="repositories" onTabChange={() => navigate('/dashboard')} />
             </div>
@@ -270,6 +279,17 @@ export function RepositoryDetailPage() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="hidden sm:flex"
+                                        onClick={() => setShowStructureModal(true)}
+                                    >
+                                        <FileText className="w-4 h-4 mr-2" />
+                                        Structure
+                                    </Button>
+
                                     {selectedFile && !isEditing && (
                                         <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>Edit</Button>
                                     )}
