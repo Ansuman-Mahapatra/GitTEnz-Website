@@ -18,10 +18,13 @@ public class UserController {
 
     private final GitHubService gitHubService;
     private final com.gitten.repository.UserRepository userRepository;
+    private final com.gitten.repository.RepositoryRepository repositoryRepository;
 
-    public UserController(GitHubService gitHubService, com.gitten.repository.UserRepository userRepository) {
+    public UserController(GitHubService gitHubService, com.gitten.repository.UserRepository userRepository,
+            com.gitten.repository.RepositoryRepository repositoryRepository) {
         this.gitHubService = gitHubService;
         this.userRepository = userRepository;
+        this.repositoryRepository = repositoryRepository;
     }
 
     @GetMapping("/me")
@@ -61,10 +64,10 @@ public class UserController {
     }
 
     @GetMapping("/starred")
-    public List<java.util.Map<String, Object>> getStarredRepositories(java.security.Principal principal) {
+    public List<Repository> getStarredRepositories(java.security.Principal principal) {
         User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
-        return gitHubService.getStarredRepositories(user.getUsername(), user.getAccessToken());
+        return repositoryRepository.findByLikedUserIdsContaining(user.getId());
     }
 
     @PostMapping("/onboarding")
