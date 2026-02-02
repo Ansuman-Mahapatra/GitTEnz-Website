@@ -1,4 +1,6 @@
-# Welcome to GitTEnz
+# GitTEnz Frontend
+
+This is the frontend application for GitTEnz, built with React, Vite, and Shadcn UI.
 
 ## Project Info
 
@@ -53,6 +55,7 @@ tHub**
 - Click on "New codespace" to launch a new Codespace environment.
 - Edit files directly within the Codespace and commit and push your changes once you're done.
 
+
 ## What technologies are used for this project?
 
 This project is built with:
@@ -62,15 +65,10 @@ This project is built with:
 - React
 - shadcn-ui
 - Tailwind CSS
+- Spring Boot (Backend)
+- MongoDB (Database)
 
 ## How can I deploy this project?
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Please refer to the detailed `DEPLOYMENT.md` file in the root directory for instructions on deploying both the frontend and backend.
 
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
