@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { LoginPage } from "./pages/LoginPage";
+import { SignupPage } from "./pages/SignupPage";
 import { DashboardPage } from "./pages/DashboardPage";
 import { RepositoryDetailPage } from "./pages/RepositoryDetailPage";
 import { AuthSuccessPage } from "./pages/AuthSuccessPage";
@@ -63,6 +64,14 @@ function AppRoutes() {
           element={
             <PublicRoute>
               <LoginPage />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/signup"
+          element={
+            <PublicRoute>
+              <SignupPage />
             </PublicRoute>
           }
         />

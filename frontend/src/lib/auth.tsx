@@ -14,6 +14,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signInWithGitHub: () => void;
+  signInWithEmail: (data: any) => Promise<void>;
+  signUpWithEmail: (data: any) => Promise<void>;
   signOut: () => void;
   token: string | null;
   setToken: (token: string) => void;
@@ -74,6 +76,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = `${API_URL}/oauth2/authorization/github`;
   };
 
+  const signInWithEmail = async (data: any) => {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Login failed");
+    }
+
+    const { token, user } = await res.json();
+    setToken(token);
+    setUser(user);
+  };
+
+  const signUpWithEmail = async (data: any) => {
+    const res = await fetch(`${API_URL}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "Signup failed");
+    }
+
+    const { token, user } = await res.json();
+    setToken(token);
+    setUser(user);
+  };
+
   const signOut = () => {
     localStorage.removeItem("token");
     setTokenState(null);
@@ -81,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signOut, token, setToken }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signInWithEmail, signUpWithEmail, signOut, token, setToken }}>
       {children}
     </AuthContext.Provider>
   );

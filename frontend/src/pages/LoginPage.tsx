@@ -1,126 +1,128 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Github, GitBranch, Sparkles } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
+import { Github, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export function LoginPage() {
-  const { signInWithGitHub, loading } = useAuth();
+  const { signInWithEmail, signInWithGitHub } = useAuth();
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    identifier: "",
+    password: ""
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      await signInWithEmail(formData);
+      toast.success("Welcome back!");
+      navigate("/dashboard");
+    } catch (error: any) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0, x: -20 }}
-      className="min-h-screen flex items-center justify-center bg-gradient-github p-4"
-    >
+    <div className="min-h-screen flex items-center justify-center bg-gradient-github p-4 relative overflow-hidden">
       {/* Background decorations */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 8, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.5, 0.3],
-          }}
-          transition={{ duration: 8, repeat: Infinity, delay: 4 }}
-        />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-30" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent/10 rounded-full blur-3xl opacity-30" />
       </div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20, scale: 0.95 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="w-full max-w-md relative z-10"
       >
-        <div className="glass-card rounded-2xl p-8 space-y-8">
-          {/* Logo */}
-          <motion.div
-            className="flex flex-col items-center gap-4"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <div className="relative">
-              <div className="absolute top-1 left-1 w-24 h-24 rounded-2xl bg-white/10 blur-xl" />
-              <motion.div
-                className="relative w-24 h-24 rounded-2xl bg-[#0d1117] flex items-center justify-center glow-green shadow-xl border border-white/10 overflow-hidden p-2"
-                whileHover={{ rotate: 5, scale: 1.05 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                <img src="/logo1.png" alt="GitTEnz Logo" className="w-full h-full object-contain" />
-              </motion.div>
-            </div>
-            <div className="text-center">
-              <h1 className="text-3xl font-bold text-gradient">GitTEnz</h1>
-              <p className="text-muted-foreground mt-1">
-                Commits, decoded
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Features */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.4 }}
-            className="space-y-3"
-          >
-            {[
-              "Manage repositories with ease",
-              "Track branches and commits",
-              "AI-powered code assistance",
-            ].map((feature, index) => (
-              <motion.div
-                key={feature}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.5 + index * 0.1 }}
-                className="flex items-center gap-3 text-sm text-muted-foreground"
-              >
-                <Sparkles className="w-4 h-4 text-primary shrink-0" />
-                {feature}
-              </motion.div>
-            ))}
-          </motion.div>
-
-          {/* Login Button */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7 }}
-          >
-            <Button
-              size="lg"
-              className="w-full gap-3 h-14 text-lg glow-green"
-              onClick={signInWithGitHub}
-              disabled={loading}
+        <div className="glass-card rounded-2xl p-8 space-y-6 border border-white/10 shadow-2xl bg-black/40 backdrop-blur-xl">
+          <div className="text-center space-y-2">
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="flex justify-center mb-4"
             >
-              <Github className="w-6 h-6" />
-              Continue with GitHub
-            </Button>
-            <p className="text-xs text-center text-muted-foreground mt-4">
-              By signing in, you agree to our Terms of Service and Privacy Policy
-            </p>
-          </motion.div>
-        </div>
+              <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center glow-green border border-white/10">
+                <img src="/logo1.png" alt="Logo" className="w-12 h-12 object-contain" />
+              </div>
+            </motion.div>
+            <h1 className="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/60">
+              Welcome Back
+            </h1>
+            <p className="text-muted-foreground">Log in to GitTEnz</p>
+          </div>
 
-        {/* Bottom decoration */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-          className="text-center text-xs text-muted-foreground mt-6"
-        >
-          &copy; {new Date().getFullYear()} GitTEnz. All rights reserved.
-        </motion.p>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email or Username</Label>
+              <Input
+                placeholder="name@example.com"
+                className="bg-black/20 border-white/10 focus:border-primary/50"
+                value={formData.identifier}
+                onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Password</Label>
+                <span className="text-xs text-primary cursor-pointer hover:underline">Forgot password?</span>
+              </div>
+              <Input
+                type="password"
+                placeholder="••••••••"
+                className="bg-black/20 border-white/10 focus:border-primary/50"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                required
+              />
+            </div>
+
+            <Button type="submit" className="w-full glow-green font-semibold" disabled={isLoading}>
+              {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Log In"}
+            </Button>
+          </form>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-background px-2 text-muted-foreground bg-black/40">
+                Or continue with
+              </span>
+            </div>
+          </div>
+
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-white/10 hover:bg-white/5"
+            onClick={signInWithGitHub}
+            type="button"
+          >
+            <Github className="w-4 h-4" />
+            GitHub
+          </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary hover:underline font-medium">
+              Sign up
+            </Link>
+          </p>
+        </div>
       </motion.div>
-    </motion.div>
+    </div>
   );
 }
