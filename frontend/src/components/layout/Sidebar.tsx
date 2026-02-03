@@ -10,7 +10,9 @@ import {
   History,
   Code2,
   LogOut,
-  Bell
+  Bell,
+  HelpCircle,
+  Shield
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -33,6 +35,8 @@ const menuItems = [
 
 const bottomItems = [
   { id: "notifications", icon: Bell, label: "Notifications" },
+  { id: "help", icon: HelpCircle, label: "Help & Feedback" },
+  { id: "privacy", icon: Shield, label: "Privacy Policy" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 
