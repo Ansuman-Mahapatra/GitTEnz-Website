@@ -18,6 +18,8 @@ import { Button } from "@/components/ui/button";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { LocalRepoViewer } from "@/components/dashboard/LocalRepoViewer";
+import { HelpSection } from "@/components/dashboard/HelpSection";
+import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
 
 export function DashboardPage() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -475,6 +477,22 @@ export function DashboardPage() {
           <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Activity</h2>
             <div className="max-w-2xl"><ActivityFeed events={activityEvents} /></div>
+          </motion.div>
+        );
+
+
+
+      case "help":
+        return (
+          <motion.div key="help" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <HelpSection />
+          </motion.div>
+        );
+
+      case "privacy":
+        return (
+          <motion.div key="privacy" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PrivacyPolicySection />
           </motion.div>
         );
 
