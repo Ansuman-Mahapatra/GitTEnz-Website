@@ -8,6 +8,7 @@ import com.gitten.repository.SystemConfigRepository;
 import com.gitten.repository.UserRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -86,6 +87,8 @@ public class AdminController {
         // Add other fields as needed
 
         userRepository.save(user);
+        return ResponseEntity.ok(user);
+    }
 
     @PutMapping("/users/{id}/password")
     public ResponseEntity<?> updateUserPassword(@PathVariable String id, @RequestBody Map<String, String> body,
