@@ -39,10 +39,10 @@ const userMenuItems = [
 ];
 
 const adminMenuItems = [
-  { id: "admin-overview", icon: Home, label: "Overview" },
+  { id: "admin-dashboard", icon: Home, label: "Dashboard" },
   { id: "admin-users", icon: Users, label: "Users" },
-  { id: "admin-feedback", icon: MessageSquare, label: "Feedback" },
-  { id: "admin-privacy", icon: Shield, label: "Privacy Policy" },
+  { id: "admin-feedbacks", icon: MessageSquare, label: "Feedbacks" },
+  { id: "admin-settings", icon: Settings, label: "Settings" },
 ];
 
 const bottomItems = [
