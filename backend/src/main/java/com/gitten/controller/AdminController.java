@@ -86,6 +86,22 @@ public class AdminController {
         // Add other fields as needed
 
         userRepository.save(user);
-        return ResponseEntity.ok(user);
+
+    @PutMapping("/users/{id}/password")
+    public ResponseEntity<?> updateUserPassword(@PathVariable String id, @RequestBody Map<String, String> body,
+            Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        String newPassword = body.get("password");
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body("Password is required");
+        }
+
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setPassword(new BCryptPasswordEncoder().encode(newPassword));
+        userRepository.save(user);
+
+        return ResponseEntity.ok("Password updated successfully");
     }
 }
