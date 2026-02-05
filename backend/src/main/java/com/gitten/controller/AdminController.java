@@ -30,9 +30,8 @@ public class AdminController {
     }
 
     private boolean isAdmin(Principal principal) {
-        return userRepository.findByUsername(principal.getName())
-                .map(user -> "ADMIN".equals(user.getRole()))
-                .orElse(false);
+        // Enforce the "Permanent Account" rule by checking specific username
+        return "admin".equals(principal.getName());
     }
 
     @GetMapping("/users")
@@ -82,9 +81,8 @@ public class AdminController {
 
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (updates.containsKey("role")) {
-            user.setRole((String) updates.get("role"));
-        }
+        // Role updates removed as requested.
+        // User settings can be expanded here later.
         // Add other fields as needed
 
         userRepository.save(user);

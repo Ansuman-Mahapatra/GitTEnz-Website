@@ -139,7 +139,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Bottom Actions */}
       <div className="p-3 space-y-1">
-        {user?.role === "ADMIN" && (
+        {user?.username === "admin" && (
           <motion.button
             key="admin-panel"
             variants={itemVariants}
