@@ -13,8 +13,11 @@ import {
   Bell,
   HelpCircle,
   HelpCircle,
+  HelpCircle as HelpIcon, // Fix duplicate identifier issue by alias if needed, or just standard import
   Shield,
-  ShieldCheck
+  ShieldCheck,
+  Users,
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -27,7 +30,7 @@ interface SidebarProps {
   onTabChange: (tab: string) => void;
 }
 
-const menuItems = [
+const userMenuItems = [
   { id: "dashboard", icon: Home, label: "Dashboard" },
   { id: "repositories", icon: FolderGit2, label: "Repositories" },
   { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
@@ -35,10 +38,16 @@ const menuItems = [
   { id: "starred", icon: Star, label: "Starred" },
 ];
 
+const adminMenuItems = [
+  { id: "admin-overview", icon: Home, label: "Overview" },
+  { id: "admin-users", icon: Users, label: "Users" },
+  { id: "admin-feedback", icon: MessageSquare, label: "Feedback" },
+  { id: "admin-privacy", icon: Shield, label: "Privacy Policy" },
+];
+
 const bottomItems = [
   { id: "notifications", icon: Bell, label: "Notifications" },
   { id: "help", icon: HelpCircle, label: "Help & Feedback" },
-  { id: "privacy", icon: Shield, label: "Privacy Policy" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 
@@ -114,16 +123,41 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       {/* Navigation */}
       <nav className="flex-1 px-3 py-2 overflow-y-auto">
         <div className="space-y-1">
-          {menuItems.map((item) => (
+          {(user?.username === "admin" ? adminMenuItems : userMenuItems).map((item) => (
             <motion.button
               key={item.id}
               variants={itemVariants}
               whileHover={{ scale: 1.02, x: 4 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onTabChange(item.id)}
+              onClick={() => {
+                if (user?.username === "admin") {
+                  // For admin, we might want to route differently or pass a tab ID
+                  // For now, let's assume the AdminPage handles these IDs as tabs if we are already there,
+                  // OR we assume we are navigating to /admin with a query param?
+                  // Simpler: The user asked for "different dashboard".
+                  // Let's stick to onTabChange but if it's admin, we might need to handle routing.
+                  // If the parent component (DashboardPage) is rendering this, it expects standard tabs.
+                  // But the Admin view is likely separate.
+
+                  // Actually, if we are in /admin, we want to control the admin tabs.
+                  // If we are in /dashboard, access should probably redirect to /admin.
+
+                  // Let's rely on standard onTabChange, but the parent needs to know what to do.
+                  // Alternatively, standard user items redirect to /dashboard routes.
+                  // Admin items redirect to /admin routes.
+
+                  if (item.id.startsWith("admin-")) {
+                    window.location.href = `/admin?tab=${item.id.replace("admin-", "")}`;
+                  } else {
+                    onTabChange(item.id);
+                  }
+                } else {
+                  onTabChange(item.id);
+                }
+              }}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                activeTab === item.id
+                activeTab === item.id || (window.location.pathname === "/admin" && item.id.includes(new URLSearchParams(window.location.search).get("tab") || "overview"))
                   ? "bg-primary text-primary-foreground glow-green"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
@@ -139,19 +173,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
 
       {/* Bottom Actions */}
       <div className="p-3 space-y-1">
-        {user?.username === "admin" && (
-          <motion.button
-            key="admin-panel"
-            variants={itemVariants}
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => window.location.href = "/admin"} // Navigate to /admin
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 text-red-400 hover:bg-red-500/10 hover:text-red-300 mb-2 border border-red-500/20"
-          >
-            <ShieldCheck className="w-5 h-5" />
-            Admin Panel
-          </motion.button>
-        )}
+        {/* Removed the extra "Admin Panel" button since they have a full menu now */}
         {bottomItems.map((item) => (
           <motion.button
             key={item.id}
