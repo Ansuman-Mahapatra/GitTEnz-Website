@@ -1,15 +1,43 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
-import { Mail, Linkedin, ExternalLink, MessageSquare } from "lucide-react";
+import { Mail, Linkedin, ExternalLink, MessageSquare, Star, Loader2, Send } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Label } from "@/components/ui/label";
 
 export function HelpSection() {
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [feedback, setFeedback] = useState("");
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    const handleSubmitFeedback = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (rating === 0) {
+            toast.error("Please select a star rating");
+            return;
+        }
+
+        setIsSubmitting(true);
+        // Simulate API call
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        console.log({ rating, feedback });
+        toast.success("Thank you for your feedback!");
+
+        setRating(0);
+        setFeedback("");
+        setIsSubmitting(false);
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="max-w-4xl mx-auto space-y-8"
+            className="max-w-4xl mx-auto space-y-8 pb-10"
         >
             <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">Help & Feedback</h2>
@@ -67,16 +95,79 @@ export function HelpSection() {
                 </Card>
             </div>
 
-            <div className="bg-gradient-to-br from-primary/5 to-purple-500/5 rounded-2xl p-8 border border-white/5 text-center space-y-4">
-                <div className="inline-flex p-3 rounded-full bg-primary/10 mb-2">
-                    <MessageSquare className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="text-xl font-semibold">Your Feedback Matters</h3>
-                <p className="text-muted-foreground max-w-2xl mx-auto">
-                    GitTEnz is actively developed. Your feedback helps shape the future of this tool.
-                    Don't hesitate to reach out if you have ideas for new features or improvements.
-                </p>
-            </div>
+            {/* Feedback Form */}
+            <Card className="glass-card border-primary/20 bg-gradient-to-br from-background to-primary/5">
+                <CardHeader>
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <MessageSquare className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle>Send Feedback</CardTitle>
+                            <CardDescription>
+                                Your feedback helps shape the future of GitTEnz. Let us know how we can improve!
+                            </CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <form onSubmit={handleSubmitFeedback} className="space-y-6">
+                        <div className="space-y-3">
+                            <Label>How would you rate your experience?</Label>
+                            <div className="flex gap-2">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                    <button
+                                        key={star}
+                                        type="button"
+                                        className="relative focus:outline-none transition-transform hover:scale-110"
+                                        onMouseEnter={() => setHoverRating(star)}
+                                        onMouseLeave={() => setHoverRating(0)}
+                                        onClick={() => setRating(star)}
+                                    >
+                                        <Star
+                                            className={`w-8 h-8 transition-colors ${(hoverRating || rating) >= star
+                                                    ? "fill-yellow-400 text-yellow-400"
+                                                    : "text-muted-foreground/30"
+                                                }`}
+                                        />
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            <Label htmlFor="feedback">What can we improve?</Label>
+                            <Textarea
+                                id="feedback"
+                                placeholder="Tell us what you like or what isn't working..."
+                                className="min-h-[120px] bg-black/20 focus:border-primary/50 resize-none"
+                                value={feedback}
+                                onChange={(e) => setFeedback(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="flex justify-end">
+                            <Button
+                                type="submit"
+                                className="glow-green gap-2 min-w-[140px]"
+                                disabled={isSubmitting}
+                            >
+                                {isSubmitting ? (
+                                    <>
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                        Sending...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Send className="w-4 h-4" />
+                                        Submit Feedback
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </form>
+                </CardContent>
+            </Card>
         </motion.div>
     );
 }
