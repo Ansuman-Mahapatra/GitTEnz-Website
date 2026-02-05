@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/lib/auth";
 
 export function HelpSection() {
+    const { token } = useAuth();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [feedback, setFeedback] = useState("");
@@ -21,15 +23,26 @@ export function HelpSection() {
         }
 
         setIsSubmitting(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/feedback`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ rating, comment: feedback })
+            });
 
-        console.log({ rating, feedback });
-        toast.success("Thank you for your feedback!");
+            if (!res.ok) throw new Error("Failed to submit");
 
-        setRating(0);
-        setFeedback("");
-        setIsSubmitting(false);
+            toast.success("Thank you for your feedback!");
+            setRating(0);
+            setFeedback("");
+        } catch (error) {
+            toast.error("Something went wrong. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (

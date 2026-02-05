@@ -1,9 +1,43 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Shield, Lock, FileText, Server } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, Loader2 } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
+import { useAuth } from "@/lib/auth";
 
 export function PrivacyPolicySection() {
+    const { token } = useAuth();
+    const [content, setContent] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchPolicy = async () => {
+            try {
+                // Determine if we are calling a public or protected endpoint.
+                // Based on previous step, I mapped it to /api/admin/privacy-policy
+                // and unchecked admin role for GET.
+                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/privacy-policy`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                if (res.ok) {
+                    const text = await res.text();
+                    setContent(text || "No privacy policy set.");
+                } else {
+                    setContent("Failed to load privacy policy.");
+                }
+            } catch (error) {
+                toast.error("Could not load privacy policy");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchPolicy();
+    }, [token]);
+
     return (
         <motion.div
             initial={{ opacity: 0, x: 20 }}
@@ -24,72 +58,15 @@ export function PrivacyPolicySection() {
             <Card className="glass-card">
                 <CardContent className="p-0">
                     <ScrollArea className="h-[calc(100vh-16rem)] p-6">
-                        <div className="space-y-8 text-sm text-foreground/80 leading-relaxed">
-
-                            <section className="space-y-3">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                                    <Lock className="w-5 h-5 text-primary" />
-                                    1. Data Collection and Usage
-                                </h3>
-                                <p>
-                                    GitTEnz respects your privacy. We collect minimal data necessary to provide our services.
-                                    When you authenticate with GitHub, we receive your public profile information and access tokens to
-                                    manage your repositories as authorized by you.
-                                </p>
-                            </section>
-
-                            <section className="space-y-3">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                                    <Server className="w-5 h-5 text-purple-500" />
-                                    2. Local Data Processing
-                                </h3>
-                                <p>
-                                    <strong>Your Code Stays Yours.</strong> GitTEnz includes powerful features for managing local repositories.
-                                    When you use the "Local Repos" feature:
-                                </p>
-                                <ul className="list-disc pl-6 space-y-1 text-muted-foreground">
-                                    <li>We do NOT upload your local source code to our servers.</li>
-                                    <li>All file scanning and editing happens locally within your browser using the File System Access API.</li>
-                                    <li>Local file metadata is processed in-memory and not persistently stored on any external backend.</li>
-                                </ul>
-                            </section>
-
-                            <section className="space-y-3">
-                                <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                                    <FileText className="w-5 h-5 text-blue-500" />
-                                    3. Cookies and Storage
-                                </h3>
-                                <p>
-                                    We use local storage and cookies solely for authentication persistency and saving your user preferences
-                                    (such as theme settings and dashboard layout). No third-party tracking cookies are used.
-                                </p>
-                            </section>
-
-                            <section className="space-y-3">
-                                <h3 className="text-lg font-semibold text-foreground">4. Third-Party Services</h3>
-                                <p>
-                                    Our application integrates with the GitHub API. Use of GitHub's services is subject to
-                                    <a href="https://docs.github.com/en/site-policy/privacy-policies/github-privacy-statement" target="_blank" rel="noreferrer" className="text-primary hover:underline ml-1">
-                                        GitHub's Privacy Statement
-                                    </a>.
-                                </p>
-                            </section>
-
-                            <section className="space-y-3">
-                                <h3 className="text-lg font-semibold text-foreground">5. Contact Us</h3>
-                                <p>
-                                    If you have any questions about this Privacy Policy, please contact us at
-                                    <a href="mailto:ansuman197463@gmail.com" className="text-primary hover:underline ml-1">
-                                        ansuman197463@gmail.com
-                                    </a>.
-                                </p>
-                            </section>
-
-                            <div className="pt-8 border-t border-white/10 text-xs text-center text-muted-foreground">
-                                <p>By using GitTEnz, you agree to the terms outlined in this policy.</p>
+                        {isLoading ? (
+                            <div className="flex justify-center items-center h-40">
+                                <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             </div>
-
-                        </div>
+                        ) : (
+                            <div className="prose prose-invert max-w-none text-sm leading-relaxed whitespace-pre-wrap">
+                                {content}
+                            </div>
+                        )}
                     </ScrollArea>
                 </CardContent>
             </Card>
