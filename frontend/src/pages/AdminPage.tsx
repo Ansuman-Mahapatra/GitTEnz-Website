@@ -21,7 +21,6 @@ interface UserData {
     id: string;
     username: string;
     email: string;
-    role: string;
     password?: string; // Hashed
 }
 
@@ -41,9 +40,8 @@ export function AdminPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Simple check: redirects happen in App.tsx or useAuth if not authenticated, 
-    // but here we check role visually.
-    if (user?.role !== "ADMIN") {
+    // Check for specific persistent admin account
+    if (user?.username !== "admin") {
         return (
             <div className="flex h-screen items-center justify-center">
                 <div className="text-center space-y-4">
@@ -147,7 +145,6 @@ export function AdminPage() {
                                     <TableRow className="hover:bg-white/5 border-white/10">
                                         <TableHead>User</TableHead>
                                         <TableHead>Email</TableHead>
-                                        <TableHead>Role</TableHead>
                                         <TableHead>Password Hash</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
@@ -157,11 +154,6 @@ export function AdminPage() {
                                         <TableRow key={u.id} className="hover:bg-white/5 border-white/10">
                                             <TableCell className="font-medium">{u.username}</TableCell>
                                             <TableCell>{u.email}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={u.role === "ADMIN" ? "default" : "secondary"}>
-                                                    {u.role}
-                                                </Badge>
-                                            </TableCell>
                                             <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[150px]">
                                                 {u.password || "N/A (OAuth)"}
                                             </TableCell>
