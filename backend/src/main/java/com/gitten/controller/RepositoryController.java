@@ -80,6 +80,9 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/branches")
     public ResponseEntity<?> getBranches(@PathVariable String owner, @PathVariable String repo,
             java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         Repository localRepo = findLocalRepo(owner, repo);
         if (localRepo != null) {
             return ResponseEntity.ok(localGitService.getBranches(localRepo.getLocalPath()));
@@ -92,6 +95,9 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/commits")
     public ResponseEntity<?> getCommits(@PathVariable String owner, @PathVariable String repo,
             @RequestParam(required = false) String branch, java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         Repository localRepo = findLocalRepo(owner, repo);
         if (localRepo != null) {
             return ResponseEntity.ok(localGitService.getCommits(localRepo.getLocalPath(), branch));
@@ -104,6 +110,9 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/tree/{sha}")
     public ResponseEntity<?> getTree(@PathVariable String owner, @PathVariable String repo, @PathVariable String sha,
             java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         Repository localRepo = findLocalRepo(owner, repo);
         if (localRepo != null) {
             return ResponseEntity.ok(localGitService.getFileTree(localRepo.getLocalPath(), sha));
@@ -116,6 +125,9 @@ public class RepositoryController {
     @GetMapping("/{owner}/{repo}/contents/**")
     public ResponseEntity<?> getContent(@PathVariable String owner, @PathVariable String repo,
             HttpServletRequest request, java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         // Extract path from pattern
         String fullPath = (String) request
                 .getAttribute(org.springframework.web.servlet.HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
@@ -135,6 +147,9 @@ public class RepositoryController {
     public ResponseEntity<?> updateContent(@PathVariable String owner, @PathVariable String repo,
             @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body,
             HttpServletRequest request, java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         String fullPath = (String) request
                 .getAttribute(org.springframework.web.servlet.HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
         String prefix = "/api/repos/" + owner + "/" + repo + "/contents/";
@@ -155,6 +170,9 @@ public class RepositoryController {
     public ResponseEntity<?> createBranch(@PathVariable String owner, @PathVariable String repo,
             @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, String> body,
             java.security.Principal principal) {
+        if (!principal.getName().equals(owner)) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).body("Access denied: you can only access your own repositories");
+        }
         Repository localRepo = findLocalRepo(owner, repo);
         if (localRepo != null) {
             return ResponseEntity.ok(
