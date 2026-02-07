@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { motion } from "framer-motion";
@@ -22,6 +23,8 @@ import { HelpSection } from "@/components/dashboard/HelpSection";
 import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
 
 export function DashboardPage() {
+  const { username } = useParams();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
@@ -40,6 +43,13 @@ export function DashboardPage() {
   // For now we just hide modal, next reload will be fine if backend updated.
 
   useEffect(() => {
+    // Validate username in URL
+    if (user && username && user.username !== username) {
+      // If user is trying to access another user's dashboard (which is private), redirect to their own
+      navigate(`/dashboard/${user.username}`, { replace: true });
+      return;
+    }
+
     // Check Onboarding via User Profile
     if (user && user.onboardingCompleted === false) {
       setShowOnboarding(true);

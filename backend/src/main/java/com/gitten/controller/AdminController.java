@@ -1,6 +1,5 @@
 package com.gitten.controller;
 
-import com.gitten.model.Feedback;
 import com.gitten.model.SystemConfig;
 import com.gitten.model.User;
 import com.gitten.repository.FeedbackRepository;
