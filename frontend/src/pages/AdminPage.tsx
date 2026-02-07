@@ -2,10 +2,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Navbar } from "@/components/layout/Navbar";
 import { HelpSection } from "@/components/dashboard/HelpSection";
 import { API_URL } from "@/config";
-import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle } from "lucide-react";
+import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -272,8 +271,15 @@ export function AdminPage() {
                     </motion.div>
                 </motion.div>
             )}
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Navbar onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="lg:hidden fixed top-4 left-4 z-40"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                    <Menu className="w-5 h-5" />
+                </Button>
                 <main className="flex-1 overflow-auto p-4 lg:p-6">
         <div className="p-8 space-y-8 max-w-7xl mx-auto min-h-screen bg-background text-foreground">
             <header className="flex items-center justify-between">
