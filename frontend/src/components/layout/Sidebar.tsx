@@ -172,24 +172,33 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
       {/* Bottom Actions */}
       <div className="p-3 space-y-1">
         {/* Removed the extra "Admin Panel" button since they have a full menu now */}
-        {bottomItems.map((item) => (
-          <motion.button
-            key={item.id}
-            variants={itemVariants}
-            whileHover={{ scale: 1.02, x: 4 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => onTabChange(item.id)}
-            className={cn(
-              "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-              activeTab === item.id
-                ? "bg-accent text-accent-foreground glow-purple"
-                : "text-sidebar-foreground hover:bg-sidebar-accent"
-            )}
-          >
-            <item.icon className="w-5 h-5" />
-            {item.label}
-          </motion.button>
-        ))}
+        {/* Removed the extra "Admin Panel" button since they have a full menu now */}
+        {bottomItems
+          .filter(item => {
+            if (user?.username === "admin") {
+              // Admin should not see Help or duplicate Settings in bottom bar
+              return item.id !== "help" && item.id !== "settings";
+            }
+            return true;
+          })
+          .map((item) => (
+            <motion.button
+              key={item.id}
+              variants={itemVariants}
+              whileHover={{ scale: 1.02, x: 4 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => onTabChange(item.id)}
+              className={cn(
+                "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
+                activeTab === item.id
+                  ? "bg-accent text-accent-foreground glow-purple"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+              )}
+            >
+              <item.icon className="w-5 h-5" />
+              {item.label}
+            </motion.button>
+          ))}
 
         <motion.div variants={itemVariants}>
           <Button
