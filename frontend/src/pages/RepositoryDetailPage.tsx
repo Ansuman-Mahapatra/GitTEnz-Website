@@ -24,7 +24,7 @@ import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft,
 
 export function RepositoryDetailPage() {
     const { owner, repo } = useParams();
-    const { token } = useAuth();
+    const { token, user } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState("code");
     const [selectedBranch, setSelectedBranch] = useState("");
@@ -239,7 +239,7 @@ export function RepositoryDetailPage() {
             />
 
             <div className="hidden lg:block">
-                <Sidebar activeTab="repositories" onTabChange={() => navigate('/dashboard')} />
+                <Sidebar activeTab="repositories" onTabChange={() => navigate(`/dashboard/${user?.username}`)} />
             </div>
 
             <div className="flex-1 flex flex-col overflow-hidden">
@@ -247,7 +247,7 @@ export function RepositoryDetailPage() {
 
                 <main className="flex-1 overflow-auto p-4 lg:p-6 space-y-6">
                     <div className="flex items-center gap-4 mb-6">
-                        <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
+                        <Button variant="ghost" size="icon" onClick={() => navigate(`/dashboard/${user?.username}`)}>
                             <ArrowLeft className="w-5 h-5" />
                         </Button>
                         <div>

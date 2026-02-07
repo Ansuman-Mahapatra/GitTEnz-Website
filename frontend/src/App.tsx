@@ -47,10 +47,17 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={`/dashboard/${user.username}`} replace />;
   }
 
   return <>{children}</>;
+}
+
+function DashboardRedirect() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/login" replace />;
+  return <Navigate to={`/dashboard/${user.username}`} replace />;
 }
 
 function AppRoutes() {
@@ -82,6 +89,10 @@ function AppRoutes() {
         />
         <Route
           path="/dashboard"
+          element={<DashboardRedirect />}
+        />
+        <Route
+          path="/dashboard/:username"
           element={
             <ProtectedRoute>
               <DashboardPage />
