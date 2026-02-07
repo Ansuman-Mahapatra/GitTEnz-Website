@@ -4,9 +4,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { motion } from "framer-motion";
-import { FolderGit2, GitBranch, GitCommit, Star } from "lucide-react";
+import { FolderGit2, GitBranch, GitCommit, Star, Menu } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { Navbar } from "@/components/layout/Navbar";
 import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
@@ -57,42 +56,45 @@ export function DashboardPage() {
       setShowOnboarding(false);
     }
 
-    // Check Streak
-    const storedStreak = localStorage.getItem("gitten_streak");
-    let currentStreak = storedStreak ? JSON.parse(storedStreak) : { count: 0, dates: [], lastLogin: null };
+    // Check Streak (per-user: each user has their own streak)
+    if (user) {
+      const streakKey = `gitten_streak_${user.username || user.id || "anonymous"}`;
+      const storedStreak = localStorage.getItem(streakKey);
+      let currentStreak = storedStreak ? JSON.parse(storedStreak) : { count: 0, dates: [], lastLogin: null };
 
-    const todayStr = new Date().toDateString();
-    const lastLoginDate = currentStreak.lastLogin ? new Date(currentStreak.lastLogin).toDateString() : null;
+      const todayStr = new Date().toDateString();
+      const lastLoginDate = currentStreak.lastLogin ? new Date(currentStreak.lastLogin).toDateString() : null;
 
-    // If first time login today
-    if (lastLoginDate !== todayStr) {
-      let newCount = currentStreak.count;
+      // If first time login today
+      if (lastLoginDate !== todayStr) {
+        let newCount = currentStreak.count;
 
-      if (lastLoginDate) {
-        const yesterday = new Date();
-        yesterday.setDate(yesterday.getDate() - 1);
-        if (yesterday.toDateString() === lastLoginDate) {
-          // Streak continues
-          newCount++;
+        if (lastLoginDate) {
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          if (yesterday.toDateString() === lastLoginDate) {
+            // Streak continues
+            newCount++;
+          } else {
+            // Streak broken
+            newCount = 1;
+          }
         } else {
-          // Streak broken
+          // First ever login
           newCount = 1;
         }
-      } else {
-        // First ever login
-        newCount = 1;
+
+        currentStreak = {
+          count: newCount,
+          dates: [...currentStreak.dates, new Date().toISOString()],
+          lastLogin: new Date().toISOString()
+        };
+
+        localStorage.setItem(streakKey, JSON.stringify(currentStreak));
       }
 
-      currentStreak = {
-        count: newCount,
-        dates: [...currentStreak.dates, new Date().toISOString()],
-        lastLogin: new Date().toISOString()
-      };
-
-      localStorage.setItem("gitten_streak", JSON.stringify(currentStreak));
+      setStreakData({ count: currentStreak.count, dates: currentStreak.dates });
     }
-
-    setStreakData({ count: currentStreak.count, dates: currentStreak.dates });
 
   }, [user]);
 
@@ -485,8 +487,9 @@ export function DashboardPage() {
       case "activity":
         return (
           <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
-            <h2 className="text-2xl font-bold">Activity</h2>
-            <div className="max-w-2xl"><ActivityFeed events={activityEvents} /></div>
+            <h2 className="text-2xl font-bold">Recent Activity</h2>
+            <p className="text-muted-foreground">Repositories you've recently used — pushes, pulls, PRs, and more</p>
+            <div className="max-w-3xl"><ActivityFeed events={activityEvents} /></div>
           </motion.div>
         );
 
@@ -547,8 +550,15 @@ export function DashboardPage() {
           </motion.div>
         </motion.div>
       )}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <Navbar onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <Button
+          variant="outline"
+          size="icon"
+          className="lg:hidden fixed top-4 left-4 z-40"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
         <main className="flex-1 overflow-auto p-4 lg:p-6">
           {renderContent()}
         </main>

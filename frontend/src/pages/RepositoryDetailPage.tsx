@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { Button } from "@/components/ui/button";
-import { Navbar } from "@/components/layout/Navbar";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import {
@@ -20,7 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FileTree } from "@/components/dashboard/FileTree";
 import { StructureViewerModal } from "@/components/dashboard/StructureViewerModal";
 import { Badge } from "@/components/ui/badge";
-import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft, FileText } from "lucide-react";
+import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft, FileText, Menu } from "lucide-react";
 
 export function RepositoryDetailPage() {
     const { owner, repo } = useParams();
@@ -242,8 +241,15 @@ export function RepositoryDetailPage() {
                 <Sidebar activeTab="repositories" onTabChange={() => navigate(`/dashboard/${user?.username}`)} />
             </div>
 
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <Navbar onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+            <div className="flex-1 flex flex-col overflow-hidden relative">
+                <Button
+                    variant="outline"
+                    size="icon"
+                    className="lg:hidden fixed top-4 left-4 z-40"
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                    <Menu className="w-5 h-5" />
+                </Button>
 
                 <main className="flex-1 overflow-auto p-4 lg:p-6 space-y-6">
                     <div className="flex items-center gap-4 mb-6">
