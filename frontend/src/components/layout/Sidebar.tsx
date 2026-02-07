@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { motion, Variants } from "framer-motion";
 import {
   GitBranch,
@@ -12,8 +13,7 @@ import {
   LogOut,
   Bell,
   HelpCircle,
-  HelpCircle,
-  HelpCircle as HelpIcon, // Fix duplicate identifier issue by alias if needed, or just standard import
+
   Shield,
   ShieldCheck,
   Users,
@@ -76,6 +76,7 @@ const itemVariants: Variants = {
 };
 
 export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
+  const navigate = useNavigate();
   const { user, signOut } = useAuth();
 
   return (
@@ -147,7 +148,13 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                   // Admin items redirect to /admin routes.
 
                   if (item.id.startsWith("admin-")) {
-                    window.location.href = `/admin?tab=${item.id.replace("admin-", "")}`;
+                    const tabMap: Record<string, string> = {
+                      "admin-dashboard": "overview",
+                      "admin-users": "users",
+                      "admin-feedbacks": "feedback",
+                      "admin-settings": "settings"
+                    };
+                    navigate(`/dashboard/admin?tab=${tabMap[item.id] || "overview"}`);
                   } else {
                     onTabChange(item.id);
                   }
@@ -157,7 +164,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               }}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                activeTab === item.id || (window.location.pathname === "/admin" && item.id.includes(new URLSearchParams(window.location.search).get("tab") || "overview"))
+                activeTab === item.id || (window.location.pathname === "/dashboard/admin" && (() => { const t = new URLSearchParams(window.location.search).get("tab") || "overview"; const m: Record<string, string> = { overview: "admin-dashboard", users: "admin-users", feedback: "admin-feedbacks", settings: "admin-settings" }; return item.id === m[t]; })())
                   ? "bg-primary text-primary-foreground glow-green"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}

@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock } from "lucide-react";
+import { Sidebar } from "@/components/layout/Sidebar";
+import { Navbar } from "@/components/layout/Navbar";
+import { HelpSection } from "@/components/dashboard/HelpSection";
+import { API_URL } from "@/config";
+import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     LineChart,
     Line,
@@ -17,9 +24,12 @@ import {
     Bar,
     PieChart,
     Pie,
-    Cell
+    Cell,
+    Legend
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface AnalyticsData {
     totalUsers: number;
@@ -28,14 +38,44 @@ interface AnalyticsData {
     userGrowth: Record<string, number>;
     activeUsers: { username: string; repoCount: number }[];
     feedbackRatings: Record<string, number>;
+    userStatus: Record<string, number>;
+    repoLanguages: Record<string, number>;
 }
 
 export function AdminPage() {
     const { token, user } = useAuth();
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+    const [usersList, setUsersList] = useState<any[]>([]);
+    const [feedbackList, setFeedbackList] = useState<any[]>([]);
+
     const [isLoading, setIsLoading] = useState(false);
+    const [isLoadingTab, setIsLoadingTab] = useState(false);
+
     const [newPassword, setNewPassword] = useState("");
     const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+    const [privacyPolicy, setPrivacyPolicy] = useState("");
+    const [termsOfService, setTermsOfService] = useState("");
+    const [isLoadingConfig, setIsLoadingConfig] = useState(false);
+    const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+    const [isSavingTerms, setIsSavingTerms] = useState(false);
+
+    const tabParam = searchParams.get("tab");
+    const [activeTab, setActiveTab] = useState(tabParam || "overview");
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    useEffect(() => {
+        if (tabParam) {
+            setActiveTab(tabParam);
+        }
+    }, [tabParam]);
+
+    const handleTabChange = (val: string) => {
+        setActiveTab(val);
+        setSearchParams({ tab: val });
+    };
 
     // Check for specific persistent admin account
     if (user?.username !== "admin") {
@@ -50,34 +90,78 @@ export function AdminPage() {
         );
     }
 
-    const fetchData = async () => {
+    const fetchAnalytics = async () => {
         setIsLoading(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/analytics`, {
+            const res = await fetch(`${API_URL}/api/admin/analytics`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-
-            if (res.ok) {
-                setAnalytics(await res.json());
-            } else {
-                toast.error("Failed to load analytics");
-            }
+            if (res.ok) setAnalytics(await res.json());
         } catch (error) {
-            toast.error("Error loading data");
+            toast.error("Failed to load analytics");
         } finally {
             setIsLoading(false);
         }
     };
 
+    const fetchUsers = async () => {
+        if (usersList.length > 0) return;
+        setIsLoadingTab(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/users`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) setUsersList(await res.json());
+        } catch (e) { toast.error("Failed to load users"); }
+        finally { setIsLoadingTab(false); }
+    };
+
+    const fetchFeedback = async () => {
+        if (feedbackList.length > 0) return;
+        setIsLoadingTab(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/feedback`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.ok) setFeedbackList(await res.json());
+        } catch (e) { toast.error("Failed to load feedback"); }
+        finally { setIsLoadingTab(false); }
+    };
+
+    const fetchConfig = async () => {
+        setIsLoadingConfig(true);
+        try {
+            const [privacyRes, termsRes] = await Promise.all([
+                fetch(`${API_URL}/api/admin/privacy-policy`, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(`${API_URL}/api/admin/terms-of-service`, { headers: { Authorization: `Bearer ${token}` } })
+            ]);
+            if (privacyRes.ok) {
+                const d = await privacyRes.json();
+                setPrivacyPolicy(d?.content ?? "");
+            }
+            if (termsRes.ok) {
+                const d = await termsRes.json();
+                setTermsOfService(d?.content ?? "");
+            }
+        } catch (e) {
+            toast.error("Failed to load configuration");
+        } finally {
+            setIsLoadingConfig(false);
+        }
+    };
+
     useEffect(() => {
-        fetchData();
-    }, [token]);
+        if (activeTab === "overview") fetchAnalytics();
+        if (activeTab === "users") fetchUsers();
+        if (activeTab === "feedback") fetchFeedback();
+        if (activeTab === "settings") fetchConfig();
+    }, [token, activeTab]);
 
     const handleChangePassword = async () => {
         if (!newPassword) return;
         setIsChangingPassword(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/change-password`, {
+            const res = await fetch(`${API_URL}/api/admin/change-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -99,150 +183,460 @@ export function AdminPage() {
         }
     };
 
+    const handleSavePrivacyPolicy = async () => {
+        setIsSavingPrivacy(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/privacy-policy`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: privacyPolicy })
+            });
+            if (res.ok) {
+                toast.success("Privacy Policy updated");
+            } else {
+                toast.error("Failed to update Privacy Policy");
+            }
+        } catch (e) {
+            toast.error("Error updating Privacy Policy");
+        } finally {
+            setIsSavingPrivacy(false);
+        }
+    };
+
+    const handleSaveTermsOfService = async () => {
+        setIsSavingTerms(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/terms-of-service`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ content: termsOfService })
+            });
+            if (res.ok) {
+                toast.success("Terms of Service updated");
+            } else {
+                toast.error("Failed to update Terms of Service");
+            }
+        } catch (e) {
+            toast.error("Error updating Terms of Service");
+        } finally {
+            setIsSavingTerms(false);
+        }
+    };
+
     // Transform data for charts
     const userGrowthData = analytics ? Object.entries(analytics.userGrowth)
         .map(([date, count]) => ({ date, count }))
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         : [];
+
     const feedbackData = analytics ? Object.entries(analytics.feedbackRatings).map(([rating, count]) => ({ name: `${rating} Stars`, value: count })) : [];
-    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
+
+    const userStatusData = analytics?.userStatus ? Object.entries(analytics.userStatus).map(([status, count]) => ({ name: status, value: count })) : [];
+
+    // Sort languages by usage
+    const languageData = analytics?.repoLanguages ? Object.entries(analytics.repoLanguages)
+        .map(([lang, count]) => ({ name: lang, value: count }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6) // Top 6 languages
+        : [];
+
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#ff6b6b'];
+    const STATUS_COLORS = ['#00C49F', '#FF8042']; // Active (Green), Pending (Orange)
 
     return (
-        <div className="p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="flex h-screen bg-background overflow-hidden relative">
+            <div className="hidden lg:block">
+                <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
+            </div>
+            {mobileMenuOpen && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="lg:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+                    onClick={() => setMobileMenuOpen(false)}
+                >
+                    <motion.div
+                        initial={{ x: -280 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: -280 }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <Sidebar activeTab={activeTab} onTabChange={(tab) => { handleTabChange(tab); setMobileMenuOpen(false); }} />
+                    </motion.div>
+                </motion.div>
+            )}
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <Navbar onMenuToggle={() => setMobileMenuOpen(!mobileMenuOpen)} />
+                <main className="flex-1 overflow-auto p-4 lg:p-6">
+        <div className="p-8 space-y-8 max-w-7xl mx-auto min-h-screen bg-background text-foreground">
             <header className="flex items-center justify-between">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center gap-3">
                         <Shield className="w-8 h-8 text-primary" />
                         Admin Dashboard
                     </h1>
-                    <p className="text-muted-foreground">Platform Analytics & Security</p>
+                    <p className="text-muted-foreground">Platform Analytics & Security Hub</p>
                 </div>
-                <Button onClick={fetchData} variant="outline" size="sm">
-                    Refresh Data
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={() => window.location.reload()} variant="outline" size="sm">
+                        Refresh
+                    </Button>
+                </div>
             </header>
 
-            {isLoading || !analytics ? (
-                <div className="flex justify-center py-20">
-                    <Loader2 className="w-10 h-10 animate-spin text-primary" />
-                </div>
-            ) : (
-                <div className="space-y-8">
-                    {/* Overview Cards */}
-                    <div className="grid gap-4 md:grid-cols-3">
-                        <Card className="glass-card border-white/10">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{analytics.totalUsers}</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="glass-card border-white/10">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
-                                <GitFork className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{analytics.totalRepos}</div>
-                            </CardContent>
-                        </Card>
-                        <Card className="glass-card border-white/10">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
-                                <Star className="h-4 w-4 text-muted-foreground" />
-                            </CardHeader>
-                            <CardContent>
-                                <div className="text-2xl font-bold">{analytics.totalFeedback}</div>
-                            </CardContent>
-                        </Card>
-                    </div>
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-8">
+                <TabsList className="bg-muted/50 border p-1 rounded-lg">
+                    <TabsTrigger value="overview" className="flex gap-2"><LayoutDashboard className="w-4 h-4" /> Overview</TabsTrigger>
+                    <TabsTrigger value="users" className="flex gap-2"><Users className="w-4 h-4" /> Users Management</TabsTrigger>
+                    <TabsTrigger value="feedback" className="flex gap-2"><MessageSquare className="w-4 h-4" /> User Feedback</TabsTrigger>
+                    <TabsTrigger value="settings" className="flex gap-2"><Settings className="w-4 h-4" /> System Settings</TabsTrigger>
+                    <TabsTrigger value="help" className="flex gap-2"><HelpCircle className="w-4 h-4" /> Help</TabsTrigger>
+                </TabsList>
 
-                    {/* Charts Section */}
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                        <Card className="col-span-4 glass-card border-white/10">
+                {/* OVERVIEW TAB */}
+                <TabsContent value="overview" className="space-y-8">
+                    {isLoading || !analytics ? (
+                        <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
+                    ) : (
+                        <>
+                            {/* Summary Cards */}
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <Card className="glass-card border-white/10 hover:border-primary/50 transition-colors">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                                        <Users className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-3xl font-bold">{analytics.totalUsers}</div>
+                                        <p className="text-xs text-muted-foreground">+ from last month</p>
+                                    </CardContent>
+                                </Card>
+                                <Card className="glass-card border-white/10 hover:border-primary/50 transition-colors">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
+                                        <GitFork className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-3xl font-bold">{analytics.totalRepos}</div>
+                                        <p className="text-xs text-muted-foreground">Across all users</p>
+                                    </CardContent>
+                                </Card>
+                                <Card className="glass-card border-white/10 hover:border-primary/50 transition-colors">
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
+                                        <Star className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-3xl font-bold">{analytics.totalFeedback}</div>
+                                        <p className="text-xs text-muted-foreground">Average Rating: 4.5</p>
+                                    </CardContent>
+                                </Card>
+                            </div>
+
+                            {/* Charts Grid */}
+                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {/* User Activation Pie Chart */}
+                                <Card className="glass-card border-white/10 col-span-1">
+                                    <CardHeader>
+                                        <CardTitle>User Activation</CardTitle>
+                                        <CardDescription>Onboarding Completion Status</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[250px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={userStatusData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        innerRadius={60}
+                                                        outerRadius={80}
+                                                        paddingAngle={5}
+                                                        dataKey="value"
+                                                    >
+                                                        {userStatusData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={STATUS_COLORS[index % STATUS_COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                                                    <Legend verticalAlign="bottom" height={36} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Repo Languages Pie Chart */}
+                                <Card className="glass-card border-white/10 col-span-1">
+                                    <CardHeader>
+                                        <CardTitle>Top Languages</CardTitle>
+                                        <CardDescription>Most used across platform</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[250px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={languageData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        outerRadius={80}
+                                                        fill="#8884d8"
+                                                        dataKey="value"
+                                                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                                    >
+                                                        {languageData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Feedback Ratings Pie Chart */}
+                                <Card className="glass-card border-white/10 col-span-1">
+                                    <CardHeader>
+                                        <CardTitle>Satisfaction</CardTitle>
+                                        <CardDescription>User Feedback Ratings</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[250px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                    <Pie
+                                                        data={feedbackData}
+                                                        cx="50%"
+                                                        cy="50%"
+                                                        outerRadius={80}
+                                                        fill="#8884d8"
+                                                        dataKey="value"
+                                                    >
+                                                        {feedbackData.map((entry, index) => (
+                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                        ))}
+                                                    </Pie>
+                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                                                    <Legend verticalAlign="bottom" height={36} />
+                                                </PieChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+
+                                {/* User Growth Line Chart */}
+                                <Card className="glass-card border-white/10 col-span-full">
+                                    <CardHeader>
+                                        <CardTitle>User Growth Trend</CardTitle>
+                                        <CardDescription>Daily new user registrations</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="h-[300px]">
+                                            <ResponsiveContainer width="100%" height="100%">
+                                                <LineChart data={userGrowthData}>
+                                                    <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                                                    <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                                    <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} itemStyle={{ color: '#fff' }} />
+                                                    <Line type="monotone" dataKey="count" stroke="#adfa1d" strokeWidth={3} activeDot={{ r: 8 }} />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        </>
+                    )}
+                </TabsContent>
+
+                {/* USERS TAB */}
+                <TabsContent value="users">
+                    <div className="grid gap-6">
+                        {/* Top Active Users Chart */}
+                        <Card className="glass-card border-white/10">
                             <CardHeader>
-                                <CardTitle>User Growth</CardTitle>
-                                <CardDescription>New user registrations over time</CardDescription>
+                                <CardTitle>Top Contributors</CardTitle>
+                                <CardDescription>Users with distinct repositories</CardDescription>
                             </CardHeader>
-                            <CardContent className="pl-2">
+                            <CardContent>
                                 <div className="h-[300px]">
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <LineChart data={userGrowthData}>
-                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Line type="monotone" dataKey="count" stroke="#adfa1d" strokeWidth={2} activeDot={{ r: 8 }} />
-                                        </LineChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-
-                        <Card className="col-span-3 glass-card border-white/10">
-                            <CardHeader>
-                                <CardTitle>Feedback Ratings</CardTitle>
-                                <CardDescription>User satisfaction distribution</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-[300px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={feedbackData}
-                                                cx="50%"
-                                                cy="50%"
-                                                labelLine={false}
-                                                outerRadius={80}
-                                                fill="#8884d8"
-                                                dataKey="value"
-                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                                            >
-                                                {feedbackData.map((entry, index) => (
-                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                ))}
-                                            </Pie>
-                                            <Tooltip
-                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <Card className="glass-card border-white/10">
-                            <CardHeader>
-                                <CardTitle>Top Active Users</CardTitle>
-                                <CardDescription>Users with the most repositories</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-[300px]">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={analytics.activeUsers} layout="vertical">
+                                        <BarChart data={analytics?.activeUsers || []} layout="vertical" margin={{ left: 20 }}>
                                             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff20" />
                                             <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                             <YAxis dataKey="username" type="category" width={100} stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <Tooltip
-                                                cursor={{ fill: 'transparent' }}
-                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                                                itemStyle={{ color: '#fff' }}
-                                            />
-                                            <Bar dataKey="repoCount" fill="#adfa1d" radius={[0, 4, 4, 0]} />
+                                            <Tooltip cursor={{ fill: 'transparent' }} contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} itemStyle={{ color: '#fff' }} />
+                                            <Bar dataKey="repoCount" fill="#adfa1d" radius={[0, 4, 4, 0]} barSize={20} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </CardContent>
                         </Card>
 
+                        {/* Full Users List Table */}
+                        <Card className="glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle>All Users</CardTitle>
+                                <CardDescription>Manage registered users</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                {isLoadingTab ? (
+                                    <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                                ) : (
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                <TableHead>Username</TableHead>
+                                                <TableHead>Email</TableHead>
+                                                <TableHead>Joined</TableHead>
+                                                <TableHead>Status</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {usersList.map((u: any) => (
+                                                <TableRow key={u.id}>
+                                                    <TableCell className="font-medium">{u.username}</TableCell>
+                                                    <TableCell>{u.email}</TableCell>
+                                                    <TableCell>{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        {u.onboardingCompleted ?
+                                                            <Badge className="bg-green-500/20 text-green-500">Active</Badge> :
+                                                            <Badge variant="outline" className="text-orange-500">Pending</Badge>
+                                                        }
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                )}
+                            </CardContent>
+                        </Card>
+                    </div>
+                </TabsContent>
+
+                {/* FEEDBACK TAB */}
+                <TabsContent value="feedback">
+                    <Card className="glass-card border-white/10">
+                        <CardHeader>
+                            <CardTitle>User Feedback</CardTitle>
+                            <CardDescription>Recent feedback submissions</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {isLoadingTab ? (
+                                <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                            ) : (
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[100px]">Rating</TableHead>
+                                            <TableHead>Message</TableHead>
+                                            <TableHead>User</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {feedbackList.map((f: any, i: number) => (
+                                            <TableRow key={i}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-1">
+                                                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                                        {f.rating}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell>{f.message}</TableCell>
+                                                <TableCell className="text-muted-foreground text-sm">
+                                                    {/* Assuming backend returns user info or null */}
+                                                    Anonymous
+                                                </TableCell>
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            )}
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
+                {/* SETTINGS TAB */}
+                <TabsContent value="settings" className="space-y-6">
+                    <div className="grid gap-6 max-w-4xl">
+                        {/* Privacy Policy */}
+                        <Card className="glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-primary" />
+                                    Privacy Policy
+                                </CardTitle>
+                                <CardDescription>Manage the privacy policy content shown to users</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {isLoadingConfig ? (
+                                    <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                                ) : (
+                                    <>
+                                        <Textarea
+                                            value={privacyPolicy}
+                                            onChange={(e) => setPrivacyPolicy(e.target.value)}
+                                            placeholder="Enter privacy policy content..."
+                                            className="min-h-[200px] bg-black/20 font-mono text-sm"
+                                        />
+                                        <Button
+                                            onClick={handleSavePrivacyPolicy}
+                                            disabled={isSavingPrivacy}
+                                            className="glow-green"
+                                        >
+                                            {isSavingPrivacy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            <Save className="w-4 h-4 mr-2" />
+                                            Save Privacy Policy
+                                        </Button>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Terms of Service */}
+                        <Card className="glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <FileText className="w-5 h-5 text-primary" />
+                                    Terms of Service
+                                </CardTitle>
+                                <CardDescription>Manage the terms of service content</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                {isLoadingConfig ? (
+                                    <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
+                                ) : (
+                                    <>
+                                        <Textarea
+                                            value={termsOfService}
+                                            onChange={(e) => setTermsOfService(e.target.value)}
+                                            placeholder="Enter terms of service content..."
+                                            className="min-h-[200px] bg-black/20 font-mono text-sm"
+                                        />
+                                        <Button
+                                            onClick={handleSaveTermsOfService}
+                                            disabled={isSavingTerms}
+                                            className="glow-green"
+                                        >
+                                            {isSavingTerms && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                            <Save className="w-4 h-4 mr-2" />
+                                            Save Terms of Service
+                                        </Button>
+                                    </>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Admin Security */}
                         <Card className="glass-card border-white/10">
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -267,7 +661,7 @@ export function AdminPage() {
                                 <Button
                                     onClick={handleChangePassword}
                                     disabled={!newPassword || isChangingPassword}
-                                    className="w-full"
+                                    className="w-full glow-green"
                                 >
                                     {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                     Change Password
@@ -275,8 +669,16 @@ export function AdminPage() {
                             </CardContent>
                         </Card>
                     </div>
-                </div>
-            )}
+                </TabsContent>
+
+                {/* HELP TAB */}
+                <TabsContent value="help" className="space-y-8">
+                    <HelpSection />
+                </TabsContent>
+            </Tabs>
+        </div>
+                </main>
+            </div>
         </div>
     );
 }
