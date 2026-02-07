@@ -4,39 +4,33 @@ import { Shield, Loader2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { useAuth } from "@/lib/auth";
+import { API_URL } from "@/config";
 
 export function PrivacyPolicySection() {
-    const { token } = useAuth();
     const [content, setContent] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchPolicy = async () => {
             try {
-                // Determine if we are calling a public or protected endpoint.
-                // Based on previous step, I mapped it to /api/admin/privacy-policy
-                // and unchecked admin role for GET.
-                const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/privacy-policy`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                // Use public endpoint - works for both authenticated and unauthenticated users
+                const res = await fetch(`${API_URL}/api/public/privacy-policy`);
                 if (res.ok) {
-                    const text = await res.text();
-                    setContent(text || "No privacy policy set.");
+                    const data = await res.json();
+                    setContent(data?.content || "No privacy policy set.");
                 } else {
                     setContent("Failed to load privacy policy.");
                 }
             } catch (error) {
                 toast.error("Could not load privacy policy");
+                setContent("Failed to load privacy policy.");
             } finally {
                 setIsLoading(false);
             }
         };
 
         fetchPolicy();
-    }, [token]);
+    }, []);
 
     return (
         <motion.div

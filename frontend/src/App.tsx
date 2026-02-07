@@ -92,18 +92,18 @@ function AppRoutes() {
           element={<DashboardRedirect />}
         />
         <Route
-          path="/dashboard/:username"
+          path="/dashboard/admin"
           element={
             <ProtectedRoute>
-              <DashboardPage />
+              <AdminPage />
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin"
+          path="/dashboard/:username"
           element={
             <ProtectedRoute>
-              <AdminPage />
+              <DashboardPage />
             </ProtectedRoute>
           }
         />

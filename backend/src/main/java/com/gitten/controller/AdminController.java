@@ -46,8 +46,7 @@ public class AdminController {
         long totalRepos = repositoryRepository.count();
         long totalFeedback = feedbackRepository.count();
 
-        // User Growth (Simulated for now if createdAt is mostly null/new)
-        // Group by createdAt date
+        // User Growth
         Map<String, Long> userGrowth = userRepository.findAll().stream()
                 .filter(u -> u.getCreatedAt() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
@@ -55,7 +54,6 @@ public class AdminController {
                         java.util.stream.Collectors.counting()));
 
         // Active Users (Users with most Repos)
-        // This is inefficient for large datasets but fine for now
         List<Map<String, Object>> activeUsers = userRepository.findAll().stream()
                 .map(user -> {
                     long repoCount = repositoryRepository.findByOwner(user).size();
@@ -71,13 +69,28 @@ public class AdminController {
                         f -> f.getRating(),
                         java.util.stream.Collectors.counting()));
 
+        // User Activation Status (Onboarded vs Not)
+        Map<String, Long> userStatus = new java.util.HashMap<>();
+        long onboardedCount = userRepository.findAll().stream().filter(User::isOnboardingCompleted).count();
+        userStatus.put("Active", onboardedCount);
+        userStatus.put("Pending", totalUsers - onboardedCount);
+
+        // Repo Languages
+        Map<String, Long> repoLanguages = repositoryRepository.findAll().stream()
+                .filter(r -> r.getLanguage() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        r -> r.getLanguage(),
+                        java.util.stream.Collectors.counting()));
+
         return ResponseEntity.ok(Map.of(
                 "totalUsers", totalUsers,
                 "totalRepos", totalRepos,
                 "totalFeedback", totalFeedback,
                 "userGrowth", userGrowth,
                 "activeUsers", activeUsers,
-                "feedbackRatings", feedbackRatings));
+                "feedbackRatings", feedbackRatings,
+                "userStatus", userStatus,
+                "repoLanguages", repoLanguages));
     }
 
     @PostMapping("/change-password")
@@ -117,13 +130,9 @@ public class AdminController {
 
     @GetMapping("/privacy-policy")
     public ResponseEntity<?> getPrivacyPolicy() {
-        // Publicly accessible? Or admin only? Probably public, but editing is admin.
-        // For this controller, we'll keep it general.
-        // Actually, the user asked for "admin setting... can see set privacy policy".
-        // Reading it should probably be public, but let's put it here for Admin
-        // viewing/editing.
-        return ResponseEntity.ok(systemConfigRepository.findByKey("privacy_policy")
-                .map(SystemConfig::getValue).orElse("Default Privacy Policy"));
+        String content = systemConfigRepository.findByKey("privacy_policy")
+                .map(SystemConfig::getValue).orElse("Default Privacy Policy");
+        return ResponseEntity.ok(Map.of("content", content));
     }
 
     @PostMapping("/privacy-policy")
@@ -132,12 +141,37 @@ public class AdminController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
         String content = body.get("content");
+        if (content == null)
+            content = "";
         SystemConfig config = systemConfigRepository.findByKey("privacy_policy")
                 .orElse(new SystemConfig("privacy_policy", ""));
         config.setValue(content);
         systemConfigRepository.save(config);
 
-        return ResponseEntity.ok("Privacy Policy updated");
+        return ResponseEntity.ok(Map.of("message", "Privacy Policy updated"));
+    }
+
+    @GetMapping("/terms-of-service")
+    public ResponseEntity<?> getTermsOfService() {
+        String content = systemConfigRepository.findByKey("terms_of_service")
+                .map(SystemConfig::getValue).orElse("Default Terms of Service");
+        return ResponseEntity.ok(Map.of("content", content));
+    }
+
+    @PostMapping("/terms-of-service")
+    public ResponseEntity<?> updateTermsOfService(@RequestBody Map<String, String> body, Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        String content = body.get("content");
+        if (content == null)
+            content = "";
+        SystemConfig config = systemConfigRepository.findByKey("terms_of_service")
+                .orElse(new SystemConfig("terms_of_service", ""));
+        config.setValue(content);
+        systemConfigRepository.save(config);
+
+        return ResponseEntity.ok(Map.of("message", "Terms of Service updated"));
     }
 
     @PutMapping("/users/{id}")
