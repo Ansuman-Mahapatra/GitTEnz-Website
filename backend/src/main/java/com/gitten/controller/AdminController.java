@@ -22,17 +22,84 @@ public class AdminController {
     private final UserRepository userRepository;
     private final FeedbackRepository feedbackRepository;
     private final SystemConfigRepository systemConfigRepository;
+    private final com.gitten.repository.RepositoryRepository repositoryRepository;
 
     public AdminController(UserRepository userRepository, FeedbackRepository feedbackRepository,
-            SystemConfigRepository systemConfigRepository) {
+            SystemConfigRepository systemConfigRepository,
+            com.gitten.repository.RepositoryRepository repositoryRepository) {
         this.userRepository = userRepository;
         this.feedbackRepository = feedbackRepository;
         this.systemConfigRepository = systemConfigRepository;
+        this.repositoryRepository = repositoryRepository;
     }
 
     private boolean isAdmin(Principal principal) {
         // Enforce the "Permanent Account" rule by checking specific username
         return "admin".equals(principal.getName());
+    }
+
+    @GetMapping("/analytics")
+    public ResponseEntity<?> getAnalytics(Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        long totalUsers = userRepository.count();
+        long totalRepos = repositoryRepository.count();
+        long totalFeedback = feedbackRepository.count();
+
+        // User Growth (Simulated for now if createdAt is mostly null/new)
+        // Group by createdAt date
+        Map<String, Long> userGrowth = userRepository.findAll().stream()
+                .filter(u -> u.getCreatedAt() != null)
+                .collect(java.util.stream.Collectors.groupingBy(
+                        u -> u.getCreatedAt().toLocalDate().toString(),
+                        java.util.stream.Collectors.counting()));
+
+        // Active Users (Users with most Repos)
+        // This is inefficient for large datasets but fine for now
+        List<Map<String, Object>> activeUsers = userRepository.findAll().stream()
+                .map(user -> {
+                    long repoCount = repositoryRepository.findByOwner(user).size();
+                    return Map.of("username", user.getUsername(), "repoCount", (Object) repoCount);
+                })
+                .sorted((a, b) -> Long.compare((Long) b.get("repoCount"), (Long) a.get("repoCount"))) // Descending
+                .limit(5)
+                .collect(java.util.stream.Collectors.toList());
+
+        // Feedback Ratings
+        Map<Integer, Long> feedbackRatings = feedbackRepository.findAll().stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        f -> f.getRating(),
+                        java.util.stream.Collectors.counting()));
+
+        return ResponseEntity.ok(Map.of(
+                "totalUsers", totalUsers,
+                "totalRepos", totalRepos,
+                "totalFeedback", totalFeedback,
+                "userGrowth", userGrowth,
+                "activeUsers", activeUsers,
+                "feedbackRatings", feedbackRatings));
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changeMyPassword(@RequestBody Map<String, String> body, Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        String newPassword = body.get("password");
+        if (newPassword == null || newPassword.isEmpty()) {
+            return ResponseEntity.badRequest().body("Password is required");
+        }
+
+        User admin = userRepository.findByUsername("admin").orElse(null); // Assuming "admin" is unique and exists
+        if (admin == null) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Admin user not found");
+        }
+
+        admin.setPassword(new BCryptPasswordEncoder().encode(newPassword));
+        userRepository.save(admin);
+
+        return ResponseEntity.ok("Password updated successfully");
     }
 
     @GetMapping("/users")
