@@ -1,44 +1,41 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Users, FileText, MessageSquare, Shield, Loader2, Save } from "lucide-react";
+import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+    LineChart,
+    Line,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell
+} from "recharts";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-interface UserData {
-    id: string;
-    username: string;
-    email: string;
-    password?: string; // Hashed
-}
-
-interface FeedbackData {
-    id: string;
-    username: string;
-    rating: number;
-    comment: string;
-    createdAt: string;
+interface AnalyticsData {
+    totalUsers: number;
+    totalRepos: number;
+    totalFeedback: number;
+    userGrowth: Record<string, number>;
+    activeUsers: { username: string; repoCount: number }[];
+    feedbackRatings: Record<string, number>;
 }
 
 export function AdminPage() {
     const { token, user } = useAuth();
-    const [users, setUsers] = useState<UserData[]>([]);
-    const [feedbacks, setFeedbacks] = useState<FeedbackData[]>([]);
-    const [privacyPolicy, setPrivacyPolicy] = useState("");
+    const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+    const [newPassword, setNewPassword] = useState("");
+    const [isChangingPassword, setIsChangingPassword] = useState(false);
 
     // Check for specific persistent admin account
     if (user?.username !== "admin") {
@@ -56,24 +53,17 @@ export function AdminPage() {
     const fetchData = async () => {
         setIsLoading(true);
         try {
-            const [usersRes, feedbackRes, privacyRes] = await Promise.all([
-                fetch(`${import.meta.env.VITE_API_URL}/api/admin/users`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                fetch(`${import.meta.env.VITE_API_URL}/api/admin/feedback`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                fetch(`${import.meta.env.VITE_API_URL}/api/admin/privacy-policy`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            ]);
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/analytics`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
 
-            if (usersRes.ok) setUsers(await usersRes.json());
-            if (feedbackRes.ok) setFeedbacks(await feedbackRes.json());
-            if (privacyRes.ok) setPrivacyPolicy(await privacyRes.text()); // Assuming text response
-
+            if (res.ok) {
+                setAnalytics(await res.json());
+            } else {
+                toast.error("Failed to load analytics");
+            }
         } catch (error) {
-            toast.error("Failed to load admin data");
+            toast.error("Error loading data");
         } finally {
             setIsLoading(false);
         }
@@ -83,26 +73,39 @@ export function AdminPage() {
         fetchData();
     }, [token]);
 
-    const handleSavePrivacy = async () => {
-        setIsSaving(true);
+    const handleChangePassword = async () => {
+        if (!newPassword) return;
+        setIsChangingPassword(true);
         try {
-            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/privacy-policy`, {
+            const res = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/change-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`
                 },
-                body: JSON.stringify({ content: privacyPolicy })
+                body: JSON.stringify({ password: newPassword })
             });
 
-            if (res.ok) toast.success("Privacy Policy updated");
-            else toast.error("Failed to update policy");
+            if (res.ok) {
+                toast.success("Password updated successfully");
+                setNewPassword("");
+            } else {
+                toast.error("Failed to update password");
+            }
         } catch (e) {
-            toast.error("Error saving policy");
+            toast.error("Error updating password");
         } finally {
-            setIsSaving(false);
+            setIsChangingPassword(false);
         }
     };
+
+    // Transform data for charts
+    const userGrowthData = analytics ? Object.entries(analytics.userGrowth)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+        : [];
+    const feedbackData = analytics ? Object.entries(analytics.feedbackRatings).map(([rating, count]) => ({ name: `${rating} Stars`, value: count })) : [];
+    const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
     return (
         <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -112,107 +115,167 @@ export function AdminPage() {
                         <Shield className="w-8 h-8 text-primary" />
                         Admin Dashboard
                     </h1>
-                    <p className="text-muted-foreground">Manage users, settings, and feedback from one place.</p>
+                    <p className="text-muted-foreground">Platform Analytics & Security</p>
                 </div>
                 <Button onClick={fetchData} variant="outline" size="sm">
                     Refresh Data
                 </Button>
             </header>
 
-            {isLoading ? (
+            {isLoading || !analytics ? (
                 <div className="flex justify-center py-20">
                     <Loader2 className="w-10 h-10 animate-spin text-primary" />
                 </div>
             ) : (
-                <Tabs defaultValue="users" className="space-y-6">
-                    <TabsList className="bg-black/20 border border-white/10">
-                        <TabsTrigger value="users" className="gap-2">
-                            <Users className="w-4 h-4" /> Users
-                        </TabsTrigger>
-                        <TabsTrigger value="privacy" className="gap-2">
-                            <FileText className="w-4 h-4" /> Privacy Policy
-                        </TabsTrigger>
-                        <TabsTrigger value="feedback" className="gap-2">
-                            <MessageSquare className="w-4 h-4" /> Feedback
-                        </TabsTrigger>
-                    </TabsList>
+                <div className="space-y-8">
+                    {/* Overview Cards */}
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <Card className="glass-card border-white/10">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                                <Users className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.totalUsers}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="glass-card border-white/10">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Repositories</CardTitle>
+                                <GitFork className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.totalRepos}</div>
+                            </CardContent>
+                        </Card>
+                        <Card className="glass-card border-white/10">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium">Total Feedback</CardTitle>
+                                <Star className="h-4 w-4 text-muted-foreground" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold">{analytics.totalFeedback}</div>
+                            </CardContent>
+                        </Card>
+                    </div>
 
-                    {/* Users Tab */}
-                    <TabsContent value="users">
-                        <div className="glass-card rounded-xl border border-white/10 overflow-hidden">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="hover:bg-white/5 border-white/10">
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Email</TableHead>
-                                        <TableHead>Password Hash</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {users.map((u) => (
-                                        <TableRow key={u.id} className="hover:bg-white/5 border-white/10">
-                                            <TableCell className="font-medium">{u.username}</TableCell>
-                                            <TableCell>{u.email}</TableCell>
-                                            <TableCell className="font-mono text-xs text-muted-foreground truncate max-w-[150px]">
-                                                {u.password || "N/A (OAuth)"}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <Button size="sm" variant="ghost" disabled>Edit</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </div>
-                    </TabsContent>
-
-                    {/* Privacy Policy Tab */}
-                    <TabsContent value="privacy">
-                        <div className="glass-card p-6 rounded-xl space-y-6">
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-semibold">Edit Privacy Policy</h3>
-                                <p className="text-sm text-muted-foreground">Markdown is supported.</p>
-                            </div>
-                            <Textarea
-                                value={privacyPolicy}
-                                onChange={(e) => setPrivacyPolicy(e.target.value)}
-                                className="min-h-[400px] font-mono text-sm bg-black/40 border-white/10"
-                            />
-                            <div className="flex justify-end">
-                                <Button onClick={handleSavePrivacy} disabled={isSaving} className="gap-2 glow-green">
-                                    {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    <Save className="w-4 h-4" /> Save Changes
-                                </Button>
-                            </div>
-                        </div>
-                    </TabsContent>
-
-                    {/* Feedback Tab */}
-                    <TabsContent value="feedback">
-                        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                            {feedbacks.map((f) => (
-                                <div key={f.id} className="glass-card p-6 rounded-xl space-y-4 border border-white/10">
-                                    <div className="flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold">
-                                                {f.username[0].toUpperCase()}
-                                            </div>
-                                            <span className="font-medium">{f.username}</span>
-                                        </div>
-                                        <Badge variant="outline" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">
-                                            {f.rating} ★
-                                        </Badge>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground">{f.comment}</p>
-                                    <p className="text-xs text-muted-foreground opacity-50">
-                                        {new Date(f.createdAt).toLocaleDateString()}
-                                    </p>
+                    {/* Charts Section */}
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                        <Card className="col-span-4 glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle>User Growth</CardTitle>
+                                <CardDescription>New user registrations over time</CardDescription>
+                            </CardHeader>
+                            <CardContent className="pl-2">
+                                <div className="h-[300px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={userGrowthData}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                            <Line type="monotone" dataKey="count" stroke="#adfa1d" strokeWidth={2} activeDot={{ r: 8 }} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
-                            ))}
-                        </div>
-                    </TabsContent>
-                </Tabs>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="col-span-3 glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle>Feedback Ratings</CardTitle>
+                                <CardDescription>User satisfaction distribution</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[300px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={feedbackData}
+                                                cx="50%"
+                                                cy="50%"
+                                                labelLine={false}
+                                                outerRadius={80}
+                                                fill="#8884d8"
+                                                dataKey="value"
+                                                label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                                            >
+                                                {feedbackData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                                                ))}
+                                            </Pie>
+                                            <Tooltip
+                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                        <Card className="glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle>Top Active Users</CardTitle>
+                                <CardDescription>Users with the most repositories</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="h-[300px]">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analytics.activeUsers} layout="vertical">
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff20" />
+                                            <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis dataKey="username" type="category" width={100} stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <Tooltip
+                                                cursor={{ fill: 'transparent' }}
+                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                                                itemStyle={{ color: '#fff' }}
+                                            />
+                                            <Bar dataKey="repoCount" fill="#adfa1d" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <Card className="glass-card border-white/10">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Lock className="w-5 h-5 text-primary" />
+                                    Admin Security
+                                </CardTitle>
+                                <CardDescription>Change your administrator password</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                        New Password
+                                    </label>
+                                    <Input
+                                        type="password"
+                                        value={newPassword}
+                                        onChange={(e) => setNewPassword(e.target.value)}
+                                        placeholder="Enter new password"
+                                        className="bg-black/20"
+                                    />
+                                </div>
+                                <Button
+                                    onClick={handleChangePassword}
+                                    disabled={!newPassword || isChangingPassword}
+                                    className="w-full"
+                                >
+                                    {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Change Password
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
             )}
         </div>
     );
