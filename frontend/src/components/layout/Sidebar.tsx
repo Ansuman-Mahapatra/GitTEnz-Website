@@ -1,21 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import { motion, Variants } from "framer-motion";
 import {
-  GitBranch,
   Home,
   FolderGit2,
-  GitCommit,
   Settings,
-  Bot,
   Star,
   History,
-  Code2,
   LogOut,
   Bell,
-  HelpCircle,
-
-  Shield,
-  ShieldCheck,
   Users,
   MessageSquare
 } from "lucide-react";
@@ -36,6 +28,7 @@ const userMenuItems = [
   { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
   { id: "activity", icon: History, label: "Activity" },
   { id: "starred", icon: Star, label: "Starred" },
+  { id: "settings", icon: Settings, label: "Settings" },
 ];
 
 const adminMenuItems = [
@@ -47,8 +40,6 @@ const adminMenuItems = [
 
 const bottomItems = [
   { id: "notifications", icon: Bell, label: "Notifications" },
-  { id: "help", icon: HelpCircle, label: "Help & Feedback" },
-  { id: "settings", icon: Settings, label: "Settings" },
 ];
 
 const sidebarVariants: Variants = {

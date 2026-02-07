@@ -1,5 +1,7 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { API_URL } from "@/config";
+
+const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
 
 export interface User {
   username: string;
@@ -27,6 +29,38 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const signOut = useCallback(() => {
+    localStorage.removeItem("token");
+    setTokenState(null);
+    setUser(null);
+    window.location.href = "/login";
+  }, []);
+
+  // 5-minute inactivity auto-logout
+  useEffect(() => {
+    if (!user || !token) return;
+
+    const resetTimer = () => {
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      inactivityTimerRef.current = setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.alert("Session expired. You have been logged out due to 5 minutes of inactivity. Please log in again.");
+        }
+        signOut();
+      }, INACTIVITY_TIMEOUT_MS);
+    };
+
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    resetTimer();
+
+    events.forEach((ev) => window.addEventListener(ev, resetTimer));
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
+      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+    };
+  }, [user, token, signOut]);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -108,12 +142,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { token, user } = await res.json();
     setToken(token);
     setUser(user);
-  };
-
-  const signOut = () => {
-    localStorage.removeItem("token");
-    setTokenState(null);
-    setUser(null);
   };
 
   return (
