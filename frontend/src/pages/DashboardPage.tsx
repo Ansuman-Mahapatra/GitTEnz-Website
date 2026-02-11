@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { motion } from "framer-motion";
-import { FolderGit2, GitBranch, GitCommit, Star, Menu } from "lucide-react";
+import { FolderGit2, GitBranch, GitCommit, Star, Menu, Search } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
@@ -14,6 +14,7 @@ import { CodeEditor } from "@/components/editor/CodeEditor";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
@@ -29,6 +30,7 @@ export function DashboardPage() {
   const [localPath, setLocalPath] = useState("C:/Users/ansum/OneDrive/Desktop");
   const [localReposResults, setLocalReposResults] = useState<any[]>([]);
   const [selectedLocalRepo, setSelectedLocalRepo] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Onboarding & Streak State
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -246,6 +248,46 @@ export function DashboardPage() {
     ? activityEvents.filter((e: any) => e.type === "PullRequestEvent").length
     : 0;
 
+  // Filter Data based on Search Query
+  const filteredRepos = displayRepos.filter((repo: any) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return (
+      repo.name?.toLowerCase().includes(query) ||
+      repo.description?.toLowerCase().includes(query) ||
+      repo.language?.toLowerCase().includes(query)
+    );
+  });
+
+  const filteredActivity = activityEvents ? activityEvents.filter((event: any) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+
+    // Check repo name
+    if (event.repo?.name?.toLowerCase().includes(query)) return true;
+
+    // Check commit messages
+    if (event.type === "PushEvent" && event.payload?.commits) {
+      if (event.payload.commits.some((c: any) => c.message.toLowerCase().includes(query))) return true;
+    }
+
+    // Check PR/Issue titles
+    if (event.type === "PullRequestEvent" && event.payload?.pull_request) {
+      if (event.payload.pull_request.title?.toLowerCase().includes(query)) return true;
+    }
+    if (event.type === "IssuesEvent" && event.payload?.issue) {
+      if (event.payload.issue.title?.toLowerCase().includes(query)) return true;
+    }
+
+    return false;
+  }) : [];
+
+  const filteredLocalRepos = localReposResults.filter((repo: any) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+    return repo.name.toLowerCase().includes(query);
+  });
+
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
     { title: "Total Pushes", value: totalPushes, icon: GitCommit, trend: "Recent Activity", trendUp: totalPushes > 0 },
@@ -298,11 +340,12 @@ export function DashboardPage() {
             </div>
 
             {/* Main Content */}
-            {/* Main Content */}
             <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Recent Repositories</h2>
+              <h2 className="text-lg font-semibold">
+                {searchQuery ? "Search Results" : "Recent Repositories"}
+              </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {displayRepos.slice(0, 4).map((repo: any, index: number) => (
+                {filteredRepos.slice(0, 4).map((repo: any, index: number) => (
                   <RepositoryCard key={repo.id} repository={repo} index={index} />
                 ))}
               </div>
@@ -419,9 +462,9 @@ export function DashboardPage() {
               </Card>
             </div>
 
-            {localReposResults.length > 0 ? (
+            {filteredLocalRepos.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {localReposResults.map((repo: any, index: number) => (
+                {filteredLocalRepos.map((repo: any, index: number) => (
                   <div key={repo.name + index} onClick={() => setSelectedLocalRepo(repo)} className="cursor-pointer hover:scale-[1.01] transition-transform">
                     <RepositoryCard repository={repo} index={index} />
                   </div>
@@ -454,7 +497,7 @@ export function DashboardPage() {
               <h2 className="text-2xl font-bold">Repositories</h2>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {displayRepos.map((repo: any, index: number) => (
+              {filteredRepos.map((repo: any, index: number) => (
                 <RepositoryCard key={repo.id} repository={repo} index={index} />
               ))}
             </div>
@@ -489,7 +532,7 @@ export function DashboardPage() {
           <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
             <h2 className="text-2xl font-bold">Recent Activity</h2>
             <p className="text-muted-foreground">Repositories you've recently used — pushes, pulls, PRs, and more</p>
-            <div className="max-w-3xl"><ActivityFeed events={activityEvents} /></div>
+            <div className="max-w-3xl"><ActivityFeed events={filteredActivity} /></div>
           </motion.div>
         );
 
@@ -560,6 +603,17 @@ export function DashboardPage() {
           <Menu className="w-5 h-5" />
         </Button>
         <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search repositories, commits, or activity..."
+                className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
           {renderContent()}
         </main>
       </div>
