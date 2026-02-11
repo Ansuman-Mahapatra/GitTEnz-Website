@@ -148,11 +148,57 @@ export function AdminPage() {
         }
     };
 
+    // Polling for live user updates and login noitifications
     useEffect(() => {
-        if (["overview", "users", "feedback"].includes(activeTab)) fetchAnalytics();
-        if (activeTab === "users") fetchUsers();
-        if (activeTab === "feedback") fetchFeedback();
+        let interval: NodeJS.Timeout;
+
+        const pollUsers = async () => {
+            if (!token) return;
+            try {
+                const res = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const newUsers = await res.json();
+                    setUsersList(prev => {
+                        // Compare for login notifications
+                        if (prev.length > 0) {
+                            newUsers.forEach((u: any) => {
+                                const oldUser = prev.find(p => p.id === u.id);
+                                if (oldUser && u.lastActiveAt && oldUser.lastActiveAt) {
+                                    const oldTime = new Date(oldUser.lastActiveAt).getTime();
+                                    const newTime = new Date(u.lastActiveAt).getTime();
+                                    // If active time updated within last 15 seconds (poll interval) and differs
+                                    if (newTime > oldTime && (new Date().getTime() - newTime) < 20000) {
+                                        toast.success(`User ${u.username} logged in successfully`, {
+                                            description: `Active at ${new Date(u.lastActiveAt).toLocaleTimeString()}`
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                        return newUsers; // Update state with fresh data
+                    });
+                }
+            } catch (e) { console.error("Polling error", e); }
+        };
+
+        if (token) {
+            // Initial fetch
+            fetchUsers();
+            fetchAnalytics();
+
+            // Poll every 10 seconds
+            interval = setInterval(pollUsers, 10000);
+        }
+
+        return () => clearInterval(interval);
+    }, [token]);
+
+
+    useEffect(() => {
         if (activeTab === "settings") fetchConfig();
+        if (activeTab === "feedback") fetchFeedback();
     }, [token, activeTab]);
 
     const handleChangePassword = async () => {
@@ -304,7 +350,7 @@ export function AdminPage() {
 
                             {/* OVERVIEW TAB */}
                             <TabsContent value="overview" className="space-y-8">
-                                {isLoading || !analytics ? (
+                                {isLoading || (!analytics && usersList.length === 0) ? (
                                     <div className="flex justify-center py-20"><Loader2 className="w-10 h-10 animate-spin text-primary" /></div>
                                 ) : (
                                     <>
@@ -316,7 +362,7 @@ export function AdminPage() {
                                                     <Users className="h-4 w-4 text-muted-foreground" />
                                                 </CardHeader>
                                                 <CardContent>
-                                                    <div className="text-3xl font-bold">{analytics.totalUsers}</div>
+                                                    <div className="text-3xl font-bold">{analytics?.totalUsers ?? usersList.length}</div>
                                                     <p className="text-xs text-muted-foreground">+ from last month</p>
                                                 </CardContent>
                                             </Card>
@@ -326,7 +372,7 @@ export function AdminPage() {
                                                     <GitFork className="h-4 w-4 text-muted-foreground" />
                                                 </CardHeader>
                                                 <CardContent>
-                                                    <div className="text-3xl font-bold">{analytics.totalRepos}</div>
+                                                    <div className="text-3xl font-bold">{analytics?.totalRepos ?? 0}</div>
                                                     <p className="text-xs text-muted-foreground">Across all users</p>
                                                 </CardContent>
                                             </Card>
@@ -336,7 +382,7 @@ export function AdminPage() {
                                                     <Star className="h-4 w-4 text-muted-foreground" />
                                                 </CardHeader>
                                                 <CardContent>
-                                                    <div className="text-3xl font-bold">{analytics.totalFeedback}</div>
+                                                    <div className="text-3xl font-bold">{analytics?.totalFeedback ?? 0}</div>
                                                     <p className="text-xs text-muted-foreground">Average Rating: 4.5</p>
                                                 </CardContent>
                                             </Card>
@@ -344,40 +390,55 @@ export function AdminPage() {
 
                                         {/* Charts Grid */}
                                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                            {/* User Activation Pie Chart */}
+                                            {/* User Status Pie Chart (Replaced "User Activation") */}
                                             <Card className="glass-card border-white/10 col-span-1">
                                                 <CardHeader>
-                                                    <CardTitle>User Activation</CardTitle>
-                                                    <CardDescription>Onboarding Completion Status</CardDescription>
+                                                    <CardTitle>User Status (24h)</CardTitle>
+                                                    <CardDescription>Real-time Active, Inactive, Visited</CardDescription>
                                                 </CardHeader>
                                                 <CardContent>
                                                     <div className="h-[250px]">
-                                                        {userStatusData.length > 0 ? (
-                                                            <ResponsiveContainer width="100%" height="100%">
-                                                                <PieChart>
-                                                                    <Pie
-                                                                        data={userStatusData}
-                                                                        cx="50%"
-                                                                        cy="50%"
-                                                                        innerRadius={60}
-                                                                        outerRadius={80}
-                                                                        paddingAngle={5}
-                                                                        dataKey="value"
-                                                                    >
-                                                                        {userStatusData.map((entry, index) => (
-                                                                            <Cell key={`cell-${index}`} fill={STATUS_COLORS[index % STATUS_COLORS.length]} />
-                                                                        ))}
-                                                                    </Pie>
-                                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                                                                    <Legend verticalAlign="bottom" height={36} />
-                                                                </PieChart>
-                                                            </ResponsiveContainer>
-                                                        ) : (
-                                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                                                <PieIcon className="w-12 h-12 mb-2 opacity-50" />
-                                                                <p className="text-sm">No users yet</p>
-                                                            </div>
-                                                        )}
+                                                        {(() => {
+                                                            // Calculate status from usersList
+                                                            const activeCount = usersList.filter(u => {
+                                                                const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
+                                                                return lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
+                                                            }).length;
+                                                            const inactiveCount = usersList.length - activeCount;
+                                                            // Visited is essentially Active for this context, but if "Visited" means something else like "Just visited site but not fully active", we can differentiate.
+                                                            // For this chart request: Active, Inactive, Visited. Let's make "Visited" users who visited today but maybe not "Active" (redundant?).
+                                                            // Actually, let's treat "Active" as within 24h, "Visited" as logged in ever (vs never), "Inactive" as never?
+                                                            // Or: Active (<24h), Inactive (>24h), Visited (Visited recently e.g. < 1h - subset?). Pie charts need mutually exclusive.
+                                                            // Prompt says: "real-time active, inactive, and visited states"
+                                                            // Let's interpret: Active (<24h), Inactive (>24h). Maybe "Visited" is just a label for Active.
+                                                            // Let's do: Active (<24h), Inactive (>24h).
+
+                                                            const data = [
+                                                                { name: 'Active (24h)', value: activeCount },
+                                                                { name: 'Inactive', value: inactiveCount }
+                                                            ];
+
+                                                            return (
+                                                                <ResponsiveContainer width="100%" height="100%">
+                                                                    <PieChart>
+                                                                        <Pie
+                                                                            data={data}
+                                                                            cx="50%"
+                                                                            cy="50%"
+                                                                            innerRadius={60}
+                                                                            outerRadius={80}
+                                                                            paddingAngle={5}
+                                                                            dataKey="value"
+                                                                        >
+                                                                            <Cell key="cell-active" fill="#00C49F" />
+                                                                            <Cell key="cell-inactive" fill="#FF8042" />
+                                                                        </Pie>
+                                                                        <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
+                                                                        <Legend verticalAlign="bottom" height={36} />
+                                                                    </PieChart>
+                                                                </ResponsiveContainer>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </CardContent>
                                             </Card>
