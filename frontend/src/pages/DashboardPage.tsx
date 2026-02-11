@@ -342,13 +342,37 @@ export function DashboardPage() {
             {/* Main Content */}
             <div className="space-y-4">
               <h2 className="text-lg font-semibold">
-                {searchQuery ? "Search Results" : "Recent Repositories"}
+                {searchQuery ? "Matching Repositories" : "Recent Repositories"}
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {filteredRepos.slice(0, 4).map((repo: any, index: number) => (
-                  <RepositoryCard key={repo.id} repository={repo} index={index} />
-                ))}
-              </div>
+              {filteredRepos.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {filteredRepos.slice(0, 4).map((repo: any, index: number) => (
+                    <RepositoryCard key={repo.id} repository={repo} index={index} />
+                  ))}
+                </div>
+              ) : searchQuery ? (
+                <p className="text-muted-foreground text-sm">No matching repositories found.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {filteredRepos.slice(0, 4).map((repo: any, index: number) => (
+                    <RepositoryCard key={repo.id} repository={repo} index={index} />
+                  ))}
+                </div>
+              )}
+
+              {/* Show matching commits/activity if searching */}
+              {searchQuery && (
+                <div className="space-y-4 pt-4">
+                  <h2 className="text-lg font-semibold">Matching Commits & Activity</h2>
+                  {filteredActivity.length > 0 ? (
+                    <div className="max-w-3xl">
+                      <ActivityFeed events={filteredActivity.slice(0, 5)} />
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">No matching commits or activity found.</p>
+                  )}
+                </div>
+              )}
             </div>
           </motion.div>
         );
@@ -607,7 +631,7 @@ export function DashboardPage() {
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search repositories, commits, or activity..."
+                placeholder="Search repositories, commits..."
                 className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
