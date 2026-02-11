@@ -35,8 +35,8 @@ export function StreakCalendar({ loginDates, streakCount }: StreakCalendarProps)
             </div>
 
             <div className="grid grid-cols-7 gap-1 text-center text-sm">
-                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map(d => (
-                    <div key={d} className="text-muted-foreground text-xs py-1">{d}</div>
+                {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+                    <div key={d + i} className="text-muted-foreground text-xs py-1">{d}</div>
                 ))}
                 {paddingDays.map((_, i) => (
                     <div key={`pad-${i}`} />
