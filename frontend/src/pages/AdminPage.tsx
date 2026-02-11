@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { HelpSection } from "@/components/dashboard/HelpSection";
 import { API_URL } from "@/config";
 import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -577,12 +576,11 @@ export function AdminPage() {
                                                 <TableBody>
                                                     {usersList.map((u: any) => {
                                                         const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
-                                                        const isRecent = lastActive && (new Date().getTime() - lastActive.getTime()) < (30 * 24 * 60 * 60 * 1000); // 30 days
-                                                        let statusBadge;
+                                                        // Active if within last 24 hours
+                                                        const isActive = lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
 
-                                                        if (!u.onboardingCompleted) {
-                                                            statusBadge = <Badge variant="outline" className="text-orange-500 border-orange-500/20">Pending</Badge>;
-                                                        } else if (isRecent) {
+                                                        let statusBadge;
+                                                        if (isActive) {
                                                             statusBadge = <Badge className="bg-green-500/20 text-green-500 hover:bg-green-500/30">Active</Badge>;
                                                         } else {
                                                             statusBadge = <Badge variant="secondary" className="text-muted-foreground">Inactive</Badge>;
@@ -830,10 +828,7 @@ export function AdminPage() {
                                 </div>
                             </TabsContent>
 
-                            {/* HELP TAB */}
-                            <TabsContent value="help" className="space-y-8">
-                                <HelpSection />
-                            </TabsContent>
+
                         </Tabs>
                     </div>
                 </main>

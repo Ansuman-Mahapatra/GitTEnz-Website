@@ -9,8 +9,7 @@ import {
   LogOut,
   Bell,
   Users,
-  MessageSquare,
-  HelpCircle
+  MessageSquare
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -37,7 +36,6 @@ const adminMenuItems = [
   { id: "admin-users", icon: Users, label: "Users" },
   { id: "admin-feedbacks", icon: MessageSquare, label: "Feedbacks" },
   { id: "admin-settings", icon: Settings, label: "Settings" },
-  { id: "admin-help", icon: HelpCircle, label: "Help" },
 ];
 
 const bottomItems = [
@@ -145,8 +143,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
                       "admin-dashboard": "overview",
                       "admin-users": "users",
                       "admin-feedbacks": "feedback",
-                      "admin-settings": "settings",
-                      "admin-help": "help"
+                      "admin-settings": "settings"
                     };
                     navigate(`/dashboard/admin?tab=${tabMap[item.id] || "overview"}`);
                   } else {
@@ -158,7 +155,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               }}
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
-                activeTab === item.id || (window.location.pathname === "/dashboard/admin" && (() => { const t = new URLSearchParams(window.location.search).get("tab") || "overview"; const m: Record<string, string> = { overview: "admin-dashboard", users: "admin-users", feedback: "admin-feedbacks", settings: "admin-settings", help: "admin-help" }; return item.id === m[t]; })())
+                activeTab === item.id || (window.location.pathname === "/dashboard/admin" && (() => { const t = new URLSearchParams(window.location.search).get("tab") || "overview"; const m: Record<string, string> = { overview: "admin-dashboard", users: "admin-users", feedback: "admin-feedbacks", settings: "admin-settings" }; return item.id === m[t]; })())
                   ? "bg-primary text-primary-foreground glow-green"
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
