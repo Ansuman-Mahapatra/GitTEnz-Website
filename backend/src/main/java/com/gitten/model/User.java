@@ -105,4 +105,13 @@ public class User {
         this.createdAt = createdAt;
     }
 
+    private java.time.LocalDateTime lastActiveAt;
+
+    public java.time.LocalDateTime getLastActiveAt() {
+        return lastActiveAt;
+    }
+
+    public void setLastActiveAt(java.time.LocalDateTime lastActiveAt) {
+        this.lastActiveAt = lastActiveAt;
+    }
 }

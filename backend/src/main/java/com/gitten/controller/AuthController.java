@@ -44,6 +44,8 @@ public class AuthController {
         user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.getName()); // Default avatar
 
         User savedUser = userRepository.save(user);
+        savedUser.setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(savedUser);
 
         // Generate Token
         String token = jwtService.generateToken(new HashMap<>(), savedUser.getUsername());
@@ -66,6 +68,9 @@ public class AuthController {
         if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return ResponseEntity.badRequest().body("Error: Invalid credentials");
         }
+
+        user.setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(user);
 
         String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
         return ResponseEntity.ok(new AuthResponse(token, user));
