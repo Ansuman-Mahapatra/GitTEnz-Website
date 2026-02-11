@@ -447,32 +447,262 @@ export function DashboardPage() {
                 </div>
               )}
               {/* Show matching commits/activity if searching */}
+              {/* Show matching commits/activity if searching */}
               {searchQuery && (
-            )}
-              <div className="flex-1 flex flex-col overflow-hidden relative">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="lg:hidden fixed top-4 left-4 z-40"
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                >
-                  <Menu className="w-5 h-5" />
-                </Button>
-                <main className="flex-1 overflow-auto p-4 lg:p-6">
-                  <div className="mb-6 flex items-center gap-4">
-                    <div className="relative flex-1 max-w-md">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search repositories, commits..."
-                        className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                      />
+                <div className="space-y-4 pt-4">
+                  <h2 className="text-lg font-semibold">Matching Commits & Activity</h2>
+                  {filteredActivity.length > 0 ? (
+                    <div className="max-w-3xl">
+                      <ActivityFeed events={filteredActivity.slice(0, 5)} />
                     </div>
-                  </div>
-                  {renderContent()}
-                </main>
-              </div>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">No matching commits or activity found.</p>
+                  )}
+                </div>
+              )}
             </div>
-            );
+          </motion.div>
+        );
+
+      case "local-repos":
+        return (
+          <motion.div
+            key="local-repos"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="space-y-6"
+          >
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold">Local Repositories</h2>
+                {localReposResults.length > 0 && (
+                  <div className="text-sm text-muted-foreground">
+                    Found {localReposResults.length} projects
+                  </div>
+                )}
+              </div>
+
+              <Card className="glass-card border-dashed border-2 border-muted-foreground/20">
+                <CardContent className="flex flex-col items-center justify-center py-12 text-center space-y-4">
+                  <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                    <FolderGit2 className="w-8 h-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold">Select your Projects Folder</h3>
+                  <p className="text-muted-foreground max-w-md">
+                    Select a directory to scan for local projects. We'll look for package.json, pom.xml, and other indicators.
+                    <br /><span className="text-xs opacity-70">(Your files stay on your device)</span>
+                  </p>
+                  <Button
+                    size="lg"
+                    className="glow-green gap-2"
+                    onClick={async () => {
+                      try {
+                        // @ts-ignore - File System Access API
+                        const dirHandle = await window.showDirectoryPicker();
+
+                        // Check for .git directory to verify it is an initialized repo
+                        let isGit = false;
+                        try {
+                          // @ts-ignore
+                          await dirHandle.getDirectoryHandle('.git');
+                          isGit = true;
+                        } catch (e) {
+                          // Not found
+                        }
+
+                        if (!isGit) {
+                          alert("The selected folder is not a git initialized repository. Please initialize git first.");
+                          return;
+                        }
+
+                        const repoName = dirHandle.name;
+                        // Check for specific project files
+                        let language = "Unknown";
+                        try {
+                          // Check for package.json (Node/JS/TS)
+                          // @ts-ignore
+                          const pkgHandle = await dirHandle.getFileHandle('package.json').catch(() => null);
+                          if (pkgHandle) language = "JavaScript/TypeScript";
+
+                          // Check for pom.xml (Java)
+                          // @ts-ignore
+                          const pomHandle = await dirHandle.getFileHandle('pom.xml').catch(() => null);
+                          if (pomHandle) language = "Java";
+
+                          // Check for requirements.txt (Python)
+                          // @ts-ignore
+                          const pyHandle = await dirHandle.getFileHandle('requirements.txt').catch(() => null);
+                          if (pyHandle) language = "Python";
+
+                          // Check for Cargo.toml (Rust)
+                          // @ts-ignore
+                          const rustHandle = await dirHandle.getFileHandle('Cargo.toml').catch(() => null);
+                          if (rustHandle) language = "Rust";
+                        } catch (e) { console.error(e); }
+
+                        const newRepo = {
+                          name: repoName,
+                          description: `Local ${language} project`,
+                          language: language,
+                          visibility: "local",
+                          stargazersCount: 0,
+                          forksCount: 0,
+                          updatedAt: new Date().toISOString(),
+                          handle: dirHandle
+                        };
+
+                        // @ts-ignore
+                        setLocalReposResults([newRepo]);
+                      } catch (err: any) {
+                        if (err.name === 'AbortError') {
+                          console.log("User cancelled selection");
+                        } else {
+                          console.error("Local repo error", err);
+                          alert("Failed to access folder. Browser may not support this feature.");
+                        }
+                      }
+                    }}
+                  >
+                    <FolderGit2 className="w-4 h-4" />
+                    Select Project Folder
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {filteredLocalRepos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredLocalRepos.map((repo: any, index: number) => (
+                  <div key={repo.name + index} onClick={() => setSelectedLocalRepo(repo)} className="cursor-pointer hover:scale-[1.01] transition-transform">
+                    <RepositoryCard repository={repo} index={index} />
+                  </div>
+                ))}
+              </div>
+            ) : null}
+
+            {selectedLocalRepo && (
+              <LocalRepoViewer
+                isOpen={!!selectedLocalRepo}
+                onClose={() => setSelectedLocalRepo(null)}
+                repoName={selectedLocalRepo.name}
+                dirHandle={selectedLocalRepo.handle}
+              />
+            )}
+          </motion.div>
+        );
+
+      case "editor":
+      case "branches":
+      case "commits":
+        return (
+          <motion.div
+            key="editor"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="h-full"
+          >
+            <CodeEditor initialCode="// Select a file to view code" />
+          </motion.div>
+        );
+
+      case "settings":
+        return (
+          <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <h2 className="text-2xl font-bold mb-6">Settings</h2>
+            <SettingsPanel />
+          </motion.div>
+        );
+
+      case "activity":
+        return (
+          <motion.div key="activity" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+            <h2 className="text-2xl font-bold">Recent Activity</h2>
+            <p className="text-muted-foreground">Repositories you've recently used — pushes, pulls, PRs, and more</p>
+            <div className="max-w-3xl"><ActivityFeed events={filteredActivity} /></div>
+          </motion.div>
+        );
+
+      case "help":
+        return (
+          <motion.div key="help" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <HelpSection />
+          </motion.div>
+        );
+
+      case "privacy":
+        return (
+          <motion.div key="privacy" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <PrivacyPolicySection />
+          </motion.div>
+        );
+
+      case "starred":
+        return (
+          <motion.div key="starred" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+            <h2 className="text-2xl font-bold">Starred Repositories</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {starredRepos?.map((repo: any, index: number) => (
+                <RepositoryCard key={repo.id} repository={repo} index={index} />
+              ))}
+            </div>
+          </motion.div>
+        );
+
+      default:
+        return null;
     }
+  };
+
+  return (
+    <div className="flex h-screen bg-background overflow-hidden relative">
+      <AIAssistant />
+      <div className="hidden lg:block">
+        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+      {mobileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="lg:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        >
+          <motion.div
+            initial={{ x: -280 }}
+            animate={{ x: 0 }}
+            exit={{ x: -280 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} />
+          </motion.div>
+        </motion.div>
+      )}
+      <div className="flex-1 flex flex-col overflow-hidden relative">
+        <Button
+          variant="outline"
+          size="icon"
+          className="lg:hidden fixed top-4 left-4 z-40"
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
+          <Menu className="w-5 h-5" />
+        </Button>
+        <main className="flex-1 overflow-auto p-4 lg:p-6">
+          <div className="mb-6 flex items-center gap-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                placeholder="Search repositories, commits..."
+                className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+          {renderContent()}
+        </main>
+      </div>
+    </div>
+  );
+}
