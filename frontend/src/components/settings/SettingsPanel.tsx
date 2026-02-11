@@ -33,6 +33,15 @@ export function SettingsPanel() {
         email: user.email || "",
         avatarUrl: user.avatarUrl || "",
       });
+
+      if (user.notificationPreferences) {
+        setPreferences((prev) => ({
+          ...prev,
+          pushNotifications: user.notificationPreferences!.pushNotifications,
+          emailNotifications: user.notificationPreferences!.emailAlerts,
+          commitAlerts: user.notificationPreferences!.commitActivityAlerts,
+        }));
+      }
     }
   }, [user]);
 
@@ -57,11 +66,6 @@ export function SettingsPanel() {
       if (!response.ok) throw new Error("Failed to update profile");
 
       const updatedUser = await response.json();
-
-      // Update local storage or trigger auth re-fetch
-      // Ideally useAuth should have a method to update user, but for now we can rely on a page refresh 
-      // or if setToken triggers a fetch. 
-      // A quick hack is to reload the page or just show success for now.
 
       toast({
         title: "Profile Updated",
@@ -102,16 +106,41 @@ export function SettingsPanel() {
     setPreferences(prev => ({ ...prev, darkMode: theme === "dark" }));
   }, [theme]);
 
-  const handleToggle = (id: string) => {
+  const handleToggle = async (id: string) => {
     if (id === "darkMode") {
       setTheme(theme === "dark" ? "light" : "dark");
       return;
     }
-    setPreferences(prev => ({ ...prev, [id]: !prev[id] }));
-    toast({
-      title: "Setting Updated",
-      description: "Your preference has been saved locally.",
-    });
+
+    const newValue = !preferences[id];
+    setPreferences(prev => ({ ...prev, [id]: newValue }));
+
+    // Sync Notification Preferences with Backend
+    if (["pushNotifications", "emailNotifications", "commitAlerts"].includes(id)) {
+      const payload = {
+        notificationPreferences: {
+          pushNotifications: id === "pushNotifications" ? newValue : preferences.pushNotifications,
+          emailAlerts: id === "emailNotifications" ? newValue : preferences.emailNotifications,
+          commitActivityAlerts: id === "commitAlerts" ? newValue : preferences.commitAlerts,
+        }
+      };
+
+      try {
+        await fetch(`${API_URL}/api/user/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        toast({ title: "Saved", description: "Notification preferences updated." });
+      } catch (e) {
+        toast({ title: "Error", description: "Failed to save preferences", variant: "destructive" });
+      }
+    } else {
+      toast({
+        title: "Setting Updated",
+        description: "Your preference has been saved locally.",
+      });
+    }
   };
 
   const settingsSections = [

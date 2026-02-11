@@ -10,6 +10,11 @@ export interface User {
   avatarUrl?: string;
   id?: string;
   onboardingCompleted?: boolean;
+  notificationPreferences?: {
+    emailAlerts: boolean;
+    pushNotifications: boolean;
+    commitActivityAlerts: boolean;
+  };
 }
 
 interface AuthContextType {

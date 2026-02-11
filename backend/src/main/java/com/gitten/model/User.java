@@ -114,4 +114,44 @@ public class User {
     public void setLastActiveAt(java.time.LocalDateTime lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
     }
+
+    private NotificationPreferences notificationPreferences = new NotificationPreferences();
+
+    public NotificationPreferences getNotificationPreferences() {
+        return notificationPreferences;
+    }
+
+    public void setNotificationPreferences(NotificationPreferences notificationPreferences) {
+        this.notificationPreferences = notificationPreferences;
+    }
+
+    public static class NotificationPreferences {
+        private boolean emailAlerts = true;
+        private boolean pushNotifications = true;
+        private boolean commitActivityAlerts = true;
+
+        public boolean isEmailAlerts() {
+            return emailAlerts;
+        }
+
+        public void setEmailAlerts(boolean emailAlerts) {
+            this.emailAlerts = emailAlerts;
+        }
+
+        public boolean isPushNotifications() {
+            return pushNotifications;
+        }
+
+        public void setPushNotifications(boolean pushNotifications) {
+            this.pushNotifications = pushNotifications;
+        }
+
+        public boolean isCommitActivityAlerts() {
+            return commitActivityAlerts;
+        }
+
+        public void setCommitActivityAlerts(boolean commitActivityAlerts) {
+            this.commitActivityAlerts = commitActivityAlerts;
+        }
+    }
 }
