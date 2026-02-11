@@ -188,14 +188,16 @@ export function DashboardPage() {
         else if (latestEvent.type === "IssuesEvent") eventType = "New Issue";
         else if (latestEvent.type === "CreateEvent") eventType = "New Repository/Branch";
 
-        toast.info(eventType, {
-          description: `Detected in ${latestEvent.repo?.name || 'repository'}`,
-        });
+        if (user?.notificationPreferences?.pushNotifications !== false) {
+          toast.info(eventType, {
+            description: `Detected in ${latestEvent.repo?.name || 'repository'}`,
+          });
+        }
 
         setPrevEventCount(activityEvents.length);
       }
     }
-  }, [activityEvents, prevEventCount]);
+  }, [activityEvents, prevEventCount, user]);
 
   const { data: starredRepos } = useQuery({
     queryKey: ["starred-repositories"],
@@ -446,68 +448,31 @@ export function DashboardPage() {
               )}
               {/* Show matching commits/activity if searching */}
               {searchQuery && (
-                <div className="space-y-4 pt-4">
-                  <h2 className="text-lg font-semibold">Matching Commits & Activity</h2>
-                  {filteredActivity.length > 0 ? (
-                    <div className="max-w-3xl">
-                      <ActivityFeed events={filteredActivity.slice(0, 5)} />
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No matching commits or activity found.</p>
-                  )}
-                </div>
-              )}
-          </motion.div>
-        );
-
-        return (
-          <div className="flex h-screen bg-background overflow-hidden relative">
-            <AIAssistant />
-            <div className="hidden lg:block">
-              <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-            </div>
-            {mobileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="lg:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <motion.div
-                  initial={{ x: -280 }}
-                  animate={{ x: 0 }}
-                  exit={{ x: -280 }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} />
-                </motion.div>
-              </motion.div>
             )}
-            <div className="flex-1 flex flex-col overflow-hidden relative">
-              <Button
-                variant="outline"
-                size="icon"
-                className="lg:hidden fixed top-4 left-4 z-40"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                <Menu className="w-5 h-5" />
-              </Button>
-              <main className="flex-1 overflow-auto p-4 lg:p-6">
-                <div className="mb-6 flex items-center gap-4">
-                  <div className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search repositories, commits..."
-                      className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+              <div className="flex-1 flex flex-col overflow-hidden relative">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="lg:hidden fixed top-4 left-4 z-40"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                >
+                  <Menu className="w-5 h-5" />
+                </Button>
+                <main className="flex-1 overflow-auto p-4 lg:p-6">
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="relative flex-1 max-w-md">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search repositories, commits..."
+                        className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                {renderContent()}
-              </main>
+                  {renderContent()}
+                </main>
+              </div>
             </div>
-          </div>
-        );
+            );
     }

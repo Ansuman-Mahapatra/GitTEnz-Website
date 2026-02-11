@@ -47,6 +47,8 @@ public class UserController {
             user.setEmail(userUpdates.getEmail());
         if (userUpdates.getAvatarUrl() != null)
             user.setAvatarUrl(userUpdates.getAvatarUrl());
+        if (userUpdates.getNotificationPreferences() != null)
+            user.setNotificationPreferences(userUpdates.getNotificationPreferences());
 
         return userRepository.save(user);
     }
