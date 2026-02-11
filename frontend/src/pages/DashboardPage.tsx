@@ -426,41 +426,20 @@ export function DashboardPage() {
               </div>
             )}
 
-            {/* Main Content: All Repositories */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">
-                {searchQuery ? "Matching Repositories" : "All Repositories"}
-              </h2>
-              {filteredRepos.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {filteredRepos.slice(0, 8).map((repo: any, index: number) => (
-                    <RepositoryCard key={repo.id} repository={repo} index={index} />
-                  ))}
-                </div>
-              ) : searchQuery ? (
-                <p className="text-muted-foreground text-sm">No matching repositories found.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {filteredRepos.slice(0, 8).map((repo: any, index: number) => (
-                    <RepositoryCard key={repo.id} repository={repo} index={index} />
-                  ))}
-                </div>
-              )}
-              {/* Show matching commits/activity if searching */}
-              {/* Show matching commits/activity if searching */}
-              {searchQuery && (
-                <div className="space-y-4 pt-4">
-                  <h2 className="text-lg font-semibold">Matching Commits & Activity</h2>
-                  {filteredActivity.length > 0 ? (
-                    <div className="max-w-3xl">
-                      <ActivityFeed events={filteredActivity.slice(0, 5)} />
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">No matching commits or activity found.</p>
-                  )}
-                </div>
-              )}
-            </div>
+            {/* Main Content: All Repositories removed from Dashboard, moved to Repositories tab */}
+            {/* Show matching commits/activity if searching */}
+            {searchQuery && (
+              <div className="space-y-4 pt-4">
+                <h2 className="text-lg font-semibold">Matching Commits & Activity</h2>
+                {filteredActivity.length > 0 ? (
+                  <div className="max-w-3xl">
+                    <ActivityFeed events={filteredActivity.slice(0, 5)} />
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground text-sm">No matching commits or activity found.</p>
+                )}
+              </div>
+            )}
           </motion.div>
         );
 
