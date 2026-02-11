@@ -31,12 +31,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  const fetchUser = useCallback(async (authToken: string) => {
+    try {
+      const response = await fetch(`${API_URL}/api/user/me`, {
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem("token");
+        setTokenState(null);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+    }
+  }, []);
+
   const signOut = useCallback(() => {
     localStorage.removeItem("token");
     setTokenState(null);
     setUser(null);
     window.location.href = "/login";
   }, []);
+
+  // Sync authentication state across tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "token") {
+        const newToken = e.newValue;
+        if (newToken) {
+          setTokenState(newToken);
+          fetchUser(newToken);
+        } else {
+          setTokenState(null);
+          setUser(null);
+          window.location.href = "/login";
+        }
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+    return () => window.removeEventListener("storage", handleStorageChange);
+  }, [fetchUser]);
 
   // 5-minute inactivity auto-logout
   useEffect(() => {
@@ -67,43 +104,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedToken = localStorage.getItem("token");
       if (storedToken) {
         setTokenState(storedToken);
-        try {
-          // Verify token and get user details from backend
-          const response = await fetch(`${API_URL}/api/user/me`, {
-            headers: {
-              Authorization: `Bearer ${storedToken}`,
-            },
-          });
-
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-          } else {
-            // Token invalid or expired
-            localStorage.removeItem("token");
-            setTokenState(null);
-            setUser(null);
-          }
-        } catch (error) {
-          console.error("Failed to fetch user:", error);
-          localStorage.removeItem("token");
-          setTokenState(null);
-        }
+        await fetchUser(storedToken);
       }
       setLoading(false);
     };
 
     initAuth();
-  }, []);
+  }, [fetchUser]);
 
   const setToken = (newToken: string) => {
     localStorage.setItem("token", newToken);
     setTokenState(newToken);
-    // Optionally trigger a user fetch here or rely on page reload/effect
-    // For smoother UX, we can manually fetch user immediately
-    fetch(`${API_URL}/api/user/me`, {
-      headers: { Authorization: `Bearer ${newToken}` }
-    }).then(res => res.json()).then(data => setUser(data)).catch(() => { });
+    fetchUser(newToken);
   };
 
   const signInWithGitHub = () => {
