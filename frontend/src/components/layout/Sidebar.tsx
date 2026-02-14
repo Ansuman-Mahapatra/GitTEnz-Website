@@ -10,7 +10,8 @@ import {
   Bell,
   Users,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Info
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -29,6 +30,7 @@ const userMenuItems = [
   { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
   { id: "activity", icon: History, label: "Activity" },
   { id: "starred", icon: Star, label: "Starred" },
+  { id: "about", icon: Info, label: "About" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 

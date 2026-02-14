@@ -21,6 +21,7 @@ import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { LocalRepoViewer } from "@/components/dashboard/LocalRepoViewer";
 import { HelpSection } from "@/components/dashboard/HelpSection";
 import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
+import { AboutSection } from "@/components/about/AboutSection";
 import { toast } from "sonner";
 import { EtheralShadow } from "@/components/ui/etheral-shadow";
 import { Particles } from "@/components/ui/particles";
@@ -616,6 +617,13 @@ export function DashboardPage() {
             className="h-full"
           >
             <CodeEditor initialCode="// Select a file to view code" />
+          </motion.div>
+        );
+
+      case "about":
+        return (
+          <motion.div key="about" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
+            <AboutSection />
           </motion.div>
         );
 
