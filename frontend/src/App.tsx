@@ -14,6 +14,7 @@ import { RepositoryDetailPage } from "./pages/RepositoryDetailPage";
 import { AuthSuccessPage } from "./pages/AuthSuccessPage";
 import { HomePage } from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
+import { DemoOne } from "@/components/ui/demo";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +114,14 @@ function AppRoutes() {
             <ProtectedRoute>
               <RepositoryDetailPage />
             </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/etheral"
+          element={
+            <div className="w-full h-screen">
+              <DemoOne />
+            </div>
           }
         />
         <Route path="*" element={<NotFound />} />

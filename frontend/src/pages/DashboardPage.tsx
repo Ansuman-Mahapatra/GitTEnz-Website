@@ -22,6 +22,7 @@ import { LocalRepoViewer } from "@/components/dashboard/LocalRepoViewer";
 import { HelpSection } from "@/components/dashboard/HelpSection";
 import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
 import { toast } from "sonner";
+import { EtheralShadow } from "@/components/ui/etheral-shadow";
 
 export function DashboardPage() {
   const { username } = useParams();
@@ -665,52 +666,62 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden relative">
-      <AIAssistant />
-      <div className="hidden lg:block">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="flex h-screen bg-black overflow-hidden relative">
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
+        <EtheralShadow
+          color="#10b981"
+          animation={{ scale: 80, speed: 40 }}
+          noise={{ opacity: 0.5, scale: 1 }}
+          showTitle={false}
+        />
       </div>
-      {mobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="lg:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
-          onClick={() => setMobileMenuOpen(false)}
-        >
+      <div className="relative z-10 flex w-full h-full">
+        <AIAssistant />
+        <div className="hidden lg:block">
+          <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        </div>
+        {mobileMenuOpen && (
           <motion.div
-            initial={{ x: -280 }}
-            animate={{ x: 0 }}
-            exit={{ x: -280 }}
-            onClick={(e) => e.stopPropagation()}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="lg:hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm"
+            onClick={() => setMobileMenuOpen(false)}
           >
-            <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} />
+            <motion.div
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Sidebar activeTab={activeTab} onTabChange={(tab) => { setActiveTab(tab); setMobileMenuOpen(false); }} />
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-      <div className="flex-1 flex flex-col overflow-hidden relative">
-        <Button
-          variant="outline"
-          size="icon"
-          className="lg:hidden fixed top-4 left-4 z-40"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          <Menu className="w-5 h-5" />
-        </Button>
-        <main className="flex-1 overflow-auto p-4 lg:p-6">
-          <div className="mb-6 flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search repositories, commits..."
-                className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+        )}
+        <div className="flex-1 flex flex-col overflow-hidden relative">
+          <Button
+            variant="outline"
+            size="icon"
+            className="lg:hidden fixed top-4 left-4 z-40"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            <Menu className="w-5 h-5" />
+          </Button>
+          <main className="flex-1 overflow-auto p-4 lg:p-6">
+            <div className="mb-6 flex items-center gap-4">
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search repositories, commits..."
+                  className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
             </div>
-          </div>
-          {renderContent()}
-        </main>
+            {renderContent()}
+          </main>
+        </div>
       </div>
     </div>
   );

@@ -22,14 +22,17 @@ public class AdminController {
     private final FeedbackRepository feedbackRepository;
     private final SystemConfigRepository systemConfigRepository;
     private final com.gitten.repository.RepositoryRepository repositoryRepository;
+    private final com.gitten.service.EmailService emailService;
 
     public AdminController(UserRepository userRepository, FeedbackRepository feedbackRepository,
             SystemConfigRepository systemConfigRepository,
-            com.gitten.repository.RepositoryRepository repositoryRepository) {
+            com.gitten.repository.RepositoryRepository repositoryRepository,
+            com.gitten.service.EmailService emailService) {
         this.userRepository = userRepository;
         this.feedbackRepository = feedbackRepository;
         this.systemConfigRepository = systemConfigRepository;
         this.repositoryRepository = repositoryRepository;
+        this.emailService = emailService;
     }
 
     private boolean isAdmin(Principal principal) {
@@ -207,4 +210,92 @@ public class AdminController {
 
         return ResponseEntity.ok("Password updated successfully");
     }
+
+    @PostMapping("/email/request-change")
+    public ResponseEntity<?> requestEmailChange(@RequestBody Map<String, String> body, Principal principal) {
+        if (!isAdmin(principal)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+        }
+
+        String newEmail = body.get("email");
+        if (newEmail == null || newEmail.isEmpty()) {
+            return ResponseEntity.badRequest().body("Email is required");
+        }
+
+        // Check if email is already in use
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+            return ResponseEntity.badRequest().body("Email is already in use");
+        }
+
+        User admin = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (admin == null) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+
+        // Generate verification token
+        String verificationToken = String.format("%06d", new java.util.Random().nextInt(999999));
+
+        // Store pending email and verification token
+        admin.setPendingEmail(newEmail);
+        admin.setEmailVerificationToken(verificationToken);
+        admin.setEmailVerificationExpiry(java.time.LocalDateTime.now().plusMinutes(10));
+        userRepository.save(admin);
+
+        // Send verification email to NEW email address
+        try {
+            emailService.sendEmailVerification(newEmail, verificationToken);
+            return ResponseEntity.ok(Map.of(
+                    "message", "Verification code sent to " + newEmail,
+                    "pendingEmail", newEmail));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to send verification email: " + e.getMessage());
+        }
+    }
+
+    @PostMapping("/email/verify-change")
+    public ResponseEntity<?> verifyEmailChange(@RequestBody Map<String, String> body, Principal principal) {
+        if (!isAdmin(principal)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+        }
+
+        String verificationCode = body.get("code");
+        if (verificationCode == null || verificationCode.isEmpty()) {
+            return ResponseEntity.badRequest().body("Verification code is required");
+        }
+
+        User admin = userRepository.findByUsername(principal.getName()).orElse(null);
+        if (admin == null) {
+            return ResponseEntity.badRequest().body("User not found");
+        }
+
+        // Check if there's a pending email change
+        if (admin.getPendingEmail() == null) {
+            return ResponseEntity.badRequest().body("No pending email change request");
+        }
+
+        // Verify the code
+        if (!verificationCode.equals(admin.getEmailVerificationToken())) {
+            return ResponseEntity.badRequest().body("Invalid verification code");
+        }
+
+        // Check if code is expired
+        if (admin.getEmailVerificationExpiry() == null ||
+                admin.getEmailVerificationExpiry().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Verification code has expired");
+        }
+
+        // Update email
+        String newEmail = admin.getPendingEmail();
+        admin.setEmail(newEmail);
+        admin.setPendingEmail(null);
+        admin.setEmailVerificationToken(null);
+        admin.setEmailVerificationExpiry(null);
+        userRepository.save(admin);
+
+        return ResponseEntity.ok(Map.of(
+                "message", "Email updated successfully",
+                "email", newEmail));
+    }
+
 }
