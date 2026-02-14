@@ -14,7 +14,6 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
 import ThemeSwitch from "@/components/ui/theme-switch";
-import ThemeSwitchFlowGlass from "@/components/ui/theme-switch-flow-glass";
 
 export function SettingsPanel() {
   const { user, token, setToken } = useAuth(); // Assuming setToken can trigger re-fetch or we manually re-fetch
@@ -260,7 +259,7 @@ export function SettingsPanel() {
         </Card>
       </motion.div>
 
-      {/* Theme Toggle Card - Dynamic based on animations */}
+      {/* Theme Toggle Card - Simplified */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -272,10 +271,10 @@ export function SettingsPanel() {
               <Palette className="w-5 h-5 text-primary" />
               Appearance
             </CardTitle>
-            <CardDescription>Choose your interface theme</CardDescription>
+            <CardDescription>Choose between light and dark mode</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Dynamic Theme Switch */}
+            {/* Simple Theme Switch */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -288,19 +287,11 @@ export function SettingsPanel() {
                 <div>
                   <Label className="text-base font-semibold">Theme Mode</Label>
                   <p className="text-sm text-muted-foreground">
-                    {preferences.animations
-                      ? "Premium WebGL-powered toggle with shader effects"
-                      : "Clean, minimal theme toggle"
-                    }
+                    Currently using <span className="font-bold text-primary">{theme === "dark" ? "Dark" : "Light"}</span> mode
                   </p>
                 </div>
               </div>
-              {/* Show advanced switch when animations are ON, simple when OFF */}
-              {preferences.animations ? (
-                <ThemeSwitchFlowGlass intensity={1.2} />
-              ) : (
-                <ThemeSwitch />
-              )}
+              <ThemeSwitch />
             </div>
           </CardContent>
         </Card>
