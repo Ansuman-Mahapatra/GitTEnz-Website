@@ -38,7 +38,7 @@ const NotFound = () => {
 
         {/* Floating orbs */}
         <motion.div
-          className="absolute top-20 left-20 w-72 h-72 bg-purple-500/10 rounded-full blur-[100px]"
+          className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-[100px]"
           animate={{
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3],
@@ -50,7 +50,7 @@ const NotFound = () => {
           }}
         />
         <motion.div
-          className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px]"
+          className="absolute bottom-20 right-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px]"
           animate={{
             scale: [1.2, 1, 1.2],
             opacity: [0.5, 0.3, 0.5],

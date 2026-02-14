@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { GitBranch, Code2, Bot, Zap, Shield, Globe, Star, Users, TrendingUp, Lock, Mail, BarChart } from "lucide-react";
 import { useEffect, useState } from "react";
 import AetherHero from "@/components/aether-hero";
+import { Particles } from "@/components/ui/particles";
 
 export function HomePage() {
     const { scrollY } = useScroll();
@@ -39,8 +40,8 @@ export function HomePage() {
                     }}
                     transition={{ type: "spring", damping: 30, stiffness: 200 }}
                 />
-                <div className="absolute top-20 right-20 w-72 h-72 bg-purple-500/10 rounded-full blur-[100px] animate-pulse" />
-                <div className="absolute bottom-20 left-20 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
+                <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+                <div className="absolute bottom-20 left-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
             </div>
 
             {/* Navbar */}
@@ -71,19 +72,58 @@ export function HomePage() {
                 </div>
             </nav>
 
-            {/* Hero Section with Aether Shader */}
-            <AetherHero
-                title="Commits, Decoded. Development, Evolved."
-                subtitle="Experience a revolutionary way to manage your repositories. Visualize branches, analyze code with AI, and streamline your workflow with powerful admin tools and real-time insights."
-                ctaLabel="Start for Free"
-                ctaHref="/login"
-                secondaryCtaLabel="Explore Features"
-                secondaryCtaHref="#features"
-                align="center"
-                height="100vh"
-                textColor="hsl(var(--foreground))"
-                overlayGradient="linear-gradient(180deg, hsl(var(--background) / 0.6), hsl(var(--background) / 0.3) 40%, transparent)"
-            />
+            {/* Global Tile Background with Lightning */}
+            <div className="fixed inset-0 z-0 opacity-50">
+                <AetherHero
+                    title=""
+                    subtitle=""
+                    ctaLabel=""
+                    ctaHref=""
+                    align="center"
+                    height="100vh"
+                    textColor="transparent"
+                    overlayGradient="radial-gradient(circle at center, transparent, hsl(var(--background)))"
+                />
+            </div>
+
+            {/* Hero Section Content */}
+            <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden min-h-screen flex items-center">
+                <div className="container mx-auto px-6 relative z-10 text-center">
+                    <motion.h1
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-5xl lg:text-7xl font-bold mb-6 tracking-tight font-['Space_Grotesk'] text-gradient"
+                    >
+                        Commits, Decoded.<br />Development, Evolved.
+                    </motion.h1>
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto"
+                    >
+                        Experience a revolutionary way to manage your repositories. Visualize branches, analyze code with AI, and streamline your workflow with powerful admin tools and real-time insights.
+                    </motion.p>
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="flex flex-col sm:flex-row items-center justify-center gap-4"
+                    >
+                        <Link to="/login">
+                            <Button size="lg" className="glow-green px-8 h-14 rounded-xl text-lg font-bold transition-all hover:scale-105">
+                                Start for Free
+                            </Button>
+                        </Link>
+                        <a href="#features">
+                            <Button size="lg" variant="outline" className="px-8 h-14 rounded-xl text-lg font-semibold border-white/10 hover:bg-white/5 transition-all">
+                                Explore Features
+                            </Button>
+                        </a>
+                    </motion.div>
+                </div>
+                <Particles count={40} className="z-10" />
+            </div>
 
             {/* Features Section */}
             <section id="features" className="py-24 bg-muted/30 relative">
