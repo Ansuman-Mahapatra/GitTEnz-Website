@@ -260,7 +260,7 @@ export function SettingsPanel() {
         </Card>
       </motion.div>
 
-      {/* Theme Toggle Card - Enhanced with Premium Switches */}
+      {/* Theme Toggle Card - Dynamic based on animations */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -272,74 +272,35 @@ export function SettingsPanel() {
               <Palette className="w-5 h-5 text-primary" />
               Appearance
             </CardTitle>
-            <CardDescription>Choose your interface theme and visual style</CardDescription>
+            <CardDescription>Choose your interface theme</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Premium Flow Glass Switch */}
+          <CardContent className="space-y-4">
+            {/* Dynamic Theme Switch */}
             <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Palette className="w-5 h-5 text-primary" />
+                  {theme === "dark" ? (
+                    <Moon className="w-5 h-5 text-primary" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-primary" />
+                  )}
                 </div>
                 <div>
-                  <Label className="text-base font-semibold">Flow Glass Theme Switch</Label>
+                  <Label className="text-base font-semibold">Theme Mode</Label>
                   <p className="text-sm text-muted-foreground">
-                    Premium WebGL-powered toggle with dynamic shader effects
+                    {preferences.animations
+                      ? "Premium WebGL-powered toggle with shader effects"
+                      : "Clean, minimal theme toggle"
+                    }
                   </p>
                 </div>
               </div>
-              <ThemeSwitchFlowGlass intensity={1.2} />
-            </div>
-
-            <Separator className="bg-primary/10" />
-
-            {/* Simple Matrix Switch */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
-              <div className="flex items-center gap-4">
-                {theme === "dark" ? (
-                  <Moon className="w-5 h-5 text-primary" />
-                ) : (
-                  <Sun className="w-5 h-5 text-primary" />
-                )}
-                <div>
-                  <Label className="text-base font-semibold">Matrix Theme Switch</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Clean, minimal toggle - Currently using <span className="font-bold text-primary">{theme === "dark" ? "dark" : "light"}</span> mode
-                  </p>
-                </div>
-              </div>
-              <ThemeSwitch />
-            </div>
-
-            {/* Classic Button Toggle (Fallback) */}
-            <div className="flex items-center justify-between p-4 rounded-xl border border-border">
-              <div className="flex items-center gap-4">
-                <Code className="w-5 h-5 text-muted-foreground" />
-                <div>
-                  <Label className="text-base font-semibold">Classic Toggle</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Traditional button-based theme selector
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant={theme === "light" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTheme("light")}
-                  className={theme === "light" ? "glow-green" : ""}
-                >
-                  <Sun className="w-4 h-4 mr-1" /> Light
-                </Button>
-                <Button
-                  variant={theme === "dark" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setTheme("dark")}
-                  className={theme === "dark" ? "glow-green" : ""}
-                >
-                  <Moon className="w-4 h-4 mr-1" /> Dark
-                </Button>
-              </div>
+              {/* Show advanced switch when animations are ON, simple when OFF */}
+              {preferences.animations ? (
+                <ThemeSwitchFlowGlass intensity={1.2} />
+              ) : (
+                <ThemeSwitch />
+              )}
             </div>
           </CardContent>
         </Card>
