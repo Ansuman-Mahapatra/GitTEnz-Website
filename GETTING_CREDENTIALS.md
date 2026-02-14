@@ -44,6 +44,35 @@ You are currently using a hardcoded connection string. To use your own:
 7.  Replace `<password>` with your database user's password.
 8.  Paste it into your `backend/.env` file to replace the default `SPRING_DATA_MONGODB_URI`.
 
+## 4. Gmail SMTP (For OTP Emails)
+To enable email-based OTP for admin authentication:
+
+1.  **Enable 2-Step Verification** on your Google Account:
+    *   Go to **[Google Account Security](https://myaccount.google.com/security)**.
+    *   Enable **2-Step Verification** if not already enabled.
+
+2.  **Generate App Password**:
+    *   Go to **[App Passwords](https://myaccount.google.com/apppasswords)**.
+    *   Select **"Mail"** and **"Other (Custom name)"**.
+    *   Name it "GitTEnz" or similar.
+    *   Click **"Generate"**.
+    *   Copy the 16-character password (no spaces).
+
+3.  **Configure .env**:
+    ```env
+    SPRING_MAIL_USERNAME=your_email@gmail.com
+    SPRING_MAIL_PASSWORD=your_16_char_app_password
+    ADMIN_INITIAL_EMAIL=admin_email@example.com
+    ```
+    *   `SPRING_MAIL_USERNAME`: Your Gmail address (sender)
+    *   `SPRING_MAIL_PASSWORD`: The 16-character app password
+    *   `ADMIN_INITIAL_EMAIL`: Email where admin will receive OTP
+
+4.  **Security Note**: 
+    *   Never commit the `.env` file to Git.
+    *   The app password is different from your Gmail password.
+    *   For detailed email system documentation, see `EMAIL_SYSTEM_GUIDE.md`.
+
 ---
 
 ### Important:

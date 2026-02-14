@@ -24,6 +24,7 @@ The application follows a classic **Client-Server** architecture with a separate
 *   **Redis**: High-speed caching layer ensuring fast response times for frequent GitHub API requests.
 *   **GitHub API**: Source of truth for repositories and user data.
 *   **OpenAI API**: Powering the "Chat with Repo" intelligent assistant.
+*   **Gmail SMTP**: Email delivery service for OTP and verification codes.
 
 ---
 
@@ -51,16 +52,28 @@ The application follows a classic **Client-Server** architecture with a separate
 ## 4. Key Functional Modules
 
 ### **Authentication Module**
-*   **Flow**: Uses **GitHub OAuth2**.
+*   **Flow**: Uses **GitHub OAuth2** for regular users and **Email OTP** for admin.
     1.  User clicks "Login" -> Redirects to GitHub.
     2.  GitHub calls back backend (`/login/oauth2/code/github`) with a code.
     3.  Backend exchanges code for an access token.
     4.  Backend creates/updates user in MongoDB.
     5.  Backend issues a **JWT** to the frontend (stored in LocalStorage/Context).
     6.  Frontend attaches this JWT as `Authorization: Bearer <token>` header for subsequent API calls.
+*   **Admin Authentication**: 
+    1.  Admin logs in with username/password.
+    2.  Backend generates 6-digit OTP and sends via Gmail SMTP.
+    3.  Admin enters OTP to complete authentication.
+    4.  Backend verifies OTP and issues JWT token.
+*   **Email Change Verification**:
+    1.  Admin requests email change from settings.
+    2.  Backend sends verification code to new email.
+    3.  Admin verifies code to confirm email change.
+    4.  Email updated in database with security validation.
 *   **Key Files**:
     *   `src/lib/auth.tsx` (Frontend): Auth context provider and token management.
     *   `SecurityConfig.java` (Backend): Configures HTTP security chains and OAuth providers.
+    *   `EmailService.java` (Backend): Handles OTP and verification email sending.
+    *   `AuthController.java` (Backend): Manages admin login and OTP verification.
 
 ### **Dashboard & Repository Management**
 *   **Function**: Fetches user's repositories, displays stats (stars, forks, languages).
