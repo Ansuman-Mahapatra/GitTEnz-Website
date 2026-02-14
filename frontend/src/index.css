@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -24,7 +25,7 @@
     --muted: 220 14% 94%;
     --muted-foreground: 220 10% 46%;
 
-    --accent: 265 89% 66%;
+    --accent: 142 76% 36%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -38,13 +39,13 @@
 
     /* GitTEnz custom tokens */
     --github-green: 142 76% 36%;
-    --github-purple: 265 89% 66%;
-    --github-blue: 212 92% 56%;
-    --github-orange: 32 95% 55%;
-    --github-red: 0 84% 60%;
+    --github-purple: 142 76% 30%;
+    --github-blue: 142 76% 25%;
+    --github-orange: 142 76% 36%;
+    --github-red: 142 76% 40%;
 
     --glow-green: 142 76% 36%;
-    --glow-purple: 265 89% 66%;
+    --glow-purple: 142 76% 36%;
 
     --sidebar-background: 220 16% 98%;
     --sidebar-foreground: 220 20% 20%;
@@ -75,7 +76,7 @@
     --muted: 220 20% 14%;
     --muted-foreground: 220 14% 65%;
 
-    --accent: 265 89% 70%;
+    --accent: 142 76% 46%;
     --accent-foreground: 220 20% 6%;
 
     --destructive: 0 72% 51%;
@@ -86,13 +87,13 @@
     --ring: 142 76% 46%;
 
     --github-green: 142 76% 46%;
-    --github-purple: 265 89% 70%;
-    --github-blue: 212 92% 62%;
-    --github-orange: 32 95% 60%;
-    --github-red: 0 72% 55%;
+    --github-purple: 142 76% 40%;
+    --github-blue: 142 76% 35%;
+    --github-orange: 142 76% 46%;
+    --github-red: 142 76% 50%;
 
     --glow-green: 142 76% 46%;
-    --glow-purple: 265 89% 70%;
+    --glow-purple: 142 76% 46%;
 
     --sidebar-background: 220 20% 8%;
     --sidebar-foreground: 220 14% 90%;
@@ -119,23 +120,23 @@
 @layer utilities {
   .glow-green {
     box-shadow: 0 0 20px hsl(var(--glow-green) / 0.3),
-                0 0 40px hsl(var(--glow-green) / 0.1);
+      0 0 40px hsl(var(--glow-green) / 0.1);
   }
 
   .glow-purple {
     box-shadow: 0 0 20px hsl(var(--glow-purple) / 0.3),
-                0 0 40px hsl(var(--glow-purple) / 0.1);
+      0 0 40px hsl(var(--glow-purple) / 0.1);
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--github-green)), hsl(var(--github-purple)));
+    background: linear-gradient(135deg, hsl(var(--github-green)), hsl(var(--github-green) / 0.6));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
   .bg-gradient-github {
-    background: linear-gradient(135deg, hsl(var(--github-green) / 0.1), hsl(var(--github-purple) / 0.1));
+    background: linear-gradient(135deg, hsl(var(--github-green) / 0.1), hsl(var(--background)));
   }
 
   .glass {
@@ -176,6 +177,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
@@ -185,6 +187,7 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

@@ -36,33 +36,55 @@ uniform vec2 resolution;
 #define FC gl_FragCoord.xy
 #define R resolution
 #define T time
-#define S smoothstep
-#define MN min(R.x,R.y)
-float pattern(vec2 uv) {
-  float d=.0;
-  for (float i=.0; i<3.; i++) {
-    uv.x+=sin(T*(1.+i)+uv.y*1.5)*.2;
-    d+=.005/abs(uv.x);
-  }
-  return d;	
+
+// Hash function for random pulses
+float hash(vec2 p) {
+    p = fract(p * vec2(123.34, 456.21));
+    p += dot(p, p + 45.32);
+    return fract(p.x * p.y);
 }
-vec3 scene(vec2 uv) {
-  vec3 col=vec3(0);
-  uv=vec2(atan(uv.x,uv.y)*2./6.28318,-log(length(uv))+T);
-  for (float i=.0; i<3.; i++) {
-    int k=int(mod(i,3.));
-    col[k]+=pattern(uv+i*6./MN);
-  }
-  return col;
-}
+
 void main() {
-  vec2 uv=(FC-.5*R)/MN;
-  vec3 col=vec3(0);
-  float s=12., e=9e-4;
-  col+=e/(sin(uv.x*s)*cos(uv.y*s));
-  uv.y+=R.x>R.y?.5:.5*(R.y/R.x);
-  col+=scene(uv);
-  O=vec4(col,1.);
+    vec2 uv = (FC - 0.5 * R) / min(R.x, R.y);
+    vec3 col = vec4(0.0).rgb;
+    
+    // Tile scale
+    float s = 15.0;
+    vec2 gv = fract(uv * s) - 0.5;
+    vec2 id = floor(uv * s);
+    
+    // Square distance
+    float d = max(abs(gv.x), abs(gv.y));
+    
+    // Tile color (Dark base)
+    col += vec3(0.02, 0.05, 0.02);
+    
+    // Gaps/Lightning logic
+    float gap = 0.48;
+    float edge = smoothstep(gap, gap + 0.02, d);
+    
+    // Lightning pulse / Beaming effect
+    float h = hash(id);
+    float pulse = sin(T * 2.0 + h * 6.28) * 0.5 + 0.5;
+    
+    // Horizontal lightning
+    float hLightning = smoothstep(0.02, 0.0, abs(gv.y)) * step(fract(uv.x * 2.0 - T * 0.5), 0.1);
+    // Vertical lightning
+    float vLightning = smoothstep(0.02, 0.0, abs(gv.x)) * step(fract(uv.y * 2.0 + T * 0.3), 0.1);
+    
+    vec3 lightCol = vec3(0.0, 0.8, 0.4); // Emerald Green
+    
+    // Apply lightning to gaps
+    col += edge * lightCol * pulse * 2.0;
+    
+    // Add "Beams" traveling in gaps
+    float beam = (hLightning + vLightning) * edge;
+    col += beam * lightCol * 3.0;
+    
+    // Subtle tile center highlight
+    col += (1.0 - edge) * vec3(0.0, 0.1, 0.05) * (sin(T + h*10.)*0.5+0.5);
+
+    O = vec4(col, 1.0);
 }`;
 
 /* Minimal passthrough vertex shader */
@@ -221,11 +243,6 @@ export default function AetherHero({
       style={{ height, position: 'relative', overflow: 'hidden' }}
       aria-label="Hero"
     >
-      {/* Font import (Space Grotesk) */}
-      <style jsx global>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
-      `}</style>
-
       {/* Shader canvas (background) */}
       <canvas
         ref={canvasRef}
