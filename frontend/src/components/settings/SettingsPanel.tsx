@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Bell, Palette, Shield, Code, Globe, Moon, Sun, Loader2, Save } from "lucide-react";
+import { User, Bell, Palette, Shield, Code, Globe, Loader2, Save } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -11,13 +11,10 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
-import ThemeSwitch from "@/components/ui/theme-switch";
 
 export function SettingsPanel() {
   const { user, token, setToken } = useAuth(); // Assuming setToken can trigger re-fetch or we manually re-fetch
-  const { theme, setTheme } = useTheme();
   const { toast } = useToast();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +86,6 @@ export function SettingsPanel() {
   };
 
   const [preferences, setPreferences] = useState<Record<string, boolean>>({
-    darkMode: theme === "dark",
     animations: true,
     compactMode: false,
     pushNotifications: false,
@@ -103,16 +99,7 @@ export function SettingsPanel() {
     betaFeatures: false
   });
 
-  useEffect(() => {
-    setPreferences(prev => ({ ...prev, darkMode: theme === "dark" }));
-  }, [theme]);
-
   const handleToggle = async (id: string) => {
-    if (id === "darkMode") {
-      setTheme(theme === "dark" ? "light" : "dark");
-      return;
-    }
-
     const newValue = !preferences[id];
     setPreferences(prev => ({ ...prev, [id]: newValue }));
 
@@ -254,44 +241,6 @@ export function SettingsPanel() {
                   </Button>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Theme Toggle Card - Simplified */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-      >
-        <Card className="glass-card border-primary/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Palette className="w-5 h-5 text-primary" />
-              Appearance
-            </CardTitle>
-            <CardDescription>Choose between light and dark mode</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Simple Theme Switch */}
-            <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                  {theme === "dark" ? (
-                    <Moon className="w-5 h-5 text-primary" />
-                  ) : (
-                    <Sun className="w-5 h-5 text-primary" />
-                  )}
-                </div>
-                <div>
-                  <Label className="text-base font-semibold">Theme Mode</Label>
-                  <p className="text-sm text-muted-foreground">
-                    Currently using <span className="font-bold text-primary">{theme === "dark" ? "Dark" : "Light"}</span> mode
-                  </p>
-                </div>
-              </div>
-              <ThemeSwitch />
             </div>
           </CardContent>
         </Card>
