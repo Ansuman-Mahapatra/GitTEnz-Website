@@ -13,6 +13,8 @@ import { API_URL } from "@/config";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
+import ThemeSwitch from "@/components/ui/theme-switch";
+import ThemeSwitchFlowGlass from "@/components/ui/theme-switch-flow-glass";
 
 export function SettingsPanel() {
   const { user, token, setToken } = useAuth(); // Assuming setToken can trigger re-fetch or we manually re-fetch
@@ -258,25 +260,65 @@ export function SettingsPanel() {
         </Card>
       </motion.div>
 
-      {/* Theme Toggle Card */}
+      {/* Theme Toggle Card - Enhanced with Premium Switches */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
       >
-        <Card className="glass-card">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
+        <Card className="glass-card border-primary/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Palette className="w-5 h-5 text-primary" />
+              Appearance
+            </CardTitle>
+            <CardDescription>Choose your interface theme and visual style</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Premium Flow Glass Switch */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-br from-primary/5 to-transparent border border-primary/10">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Palette className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <Label className="text-base font-semibold">Flow Glass Theme Switch</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Premium WebGL-powered toggle with dynamic shader effects
+                  </p>
+                </div>
+              </div>
+              <ThemeSwitchFlowGlass intensity={1.2} />
+            </div>
+
+            <Separator className="bg-primary/10" />
+
+            {/* Simple Matrix Switch */}
+            <div className="flex items-center justify-between p-4 rounded-xl bg-muted/30">
               <div className="flex items-center gap-4">
                 {theme === "dark" ? (
-                  <Moon className="w-5 h-5 text-accent" />
+                  <Moon className="w-5 h-5 text-primary" />
                 ) : (
-                  <Sun className="w-5 h-5 text-github-orange" />
+                  <Sun className="w-5 h-5 text-primary" />
                 )}
                 <div>
-                  <Label className="text-base font-medium">Theme</Label>
+                  <Label className="text-base font-semibold">Matrix Theme Switch</Label>
                   <p className="text-sm text-muted-foreground">
-                    Currently using {theme === "dark" ? "dark" : "light"} mode
+                    Clean, minimal toggle - Currently using <span className="font-bold text-primary">{theme === "dark" ? "dark" : "light"}</span> mode
+                  </p>
+                </div>
+              </div>
+              <ThemeSwitch />
+            </div>
+
+            {/* Classic Button Toggle (Fallback) */}
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border">
+              <div className="flex items-center gap-4">
+                <Code className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <Label className="text-base font-semibold">Classic Toggle</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Traditional button-based theme selector
                   </p>
                 </div>
               </div>
@@ -285,6 +327,7 @@ export function SettingsPanel() {
                   variant={theme === "light" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTheme("light")}
+                  className={theme === "light" ? "glow-green" : ""}
                 >
                   <Sun className="w-4 h-4 mr-1" /> Light
                 </Button>
@@ -292,6 +335,7 @@ export function SettingsPanel() {
                   variant={theme === "dark" ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTheme("dark")}
+                  className={theme === "dark" ? "glow-green" : ""}
                 >
                   <Moon className="w-4 h-4 mr-1" /> Dark
                 </Button>
