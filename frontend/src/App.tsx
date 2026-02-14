@@ -13,7 +13,6 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { RepositoryDetailPage } from "./pages/RepositoryDetailPage";
 import { AuthSuccessPage } from "./pages/AuthSuccessPage";
 import { HomePage } from "./pages/HomePage";
-import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 import { DemoOne } from "@/components/ui/demo";
 
@@ -125,7 +124,6 @@ function AppRoutes() {
             </div>
           }
         />
-        <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>
