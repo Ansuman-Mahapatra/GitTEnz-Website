@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { GitBranch, Code2, Bot, Zap, Shield, Globe, Star, Users, TrendingUp, Lock, Mail, BarChart } from "lucide-react";
 import { useEffect, useState } from "react";
+import AetherHero from "@/components/aether-hero";
 
 export function HomePage() {
     const { scrollY } = useScroll();
@@ -70,104 +71,19 @@ export function HomePage() {
                 </div>
             </nav>
 
-            {/* Hero Section */}
-            <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-                <motion.div style={{ y: y1, opacity }} className="container px-6 mx-auto relative z-10 text-center">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.8 }}
-                        className="max-w-4xl mx-auto space-y-8"
-                    >
-                        <motion.div
-                            initial={{ scale: 0.9 }}
-                            animate={{ scale: 1 }}
-                            transition={{ duration: 0.5 }}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4"
-                        >
-                            <Star className="w-4 h-4 text-primary animate-pulse" />
-                            <span className="text-sm font-medium">Trusted by 10,000+ developers</span>
-                        </motion.div>
-
-                        <h1 className="text-5xl lg:text-7xl font-bold tracking-tight">
-                            <motion.span
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                            >
-                                Commits, <span className="text-gradient">Decoded</span>.
-                            </motion.span>
-                            <br />
-                            <motion.span
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 }}
-                            >
-                                Development, <span className="text-primary">Evolved</span>.
-                            </motion.span>
-                        </h1>
-
-                        <motion.p
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.6 }}
-                            className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-                        >
-                            Experience a revolutionary way to manage your repositories. Visualize branches, analyze code with AI,
-                            and streamline your workflow with powerful admin tools and real-time insights.
-                        </motion.p>
-
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.8 }}
-                            className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4"
-                        >
-                            <Link to="/login">
-                                <Button size="lg" className="h-12 px-8 text-lg glow-green w-full sm:w-auto group">
-                                    <span>Start for Free</span>
-                                    <Zap className="ml-2 w-4 h-4 group-hover:animate-pulse" />
-                                </Button>
-                            </Link>
-                            <a href="#features">
-                                <Button size="lg" variant="outline" className="h-12 px-8 text-lg w-full sm:w-auto hover:bg-white/5">
-                                    Explore Features
-                                </Button>
-                            </a>
-                        </motion.div>
-
-                        {/* Stats */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 1 }}
-                            className="grid grid-cols-3 gap-8 max-w-2xl mx-auto pt-12"
-                        >
-                            <StatCard number="10K+" label="Active Users" icon={Users} />
-                            <StatCard number="50K+" label="Repositories" icon={GitBranch} />
-                            <StatCard number="99.9%" label="Uptime" icon={TrendingUp} />
-                        </motion.div>
-                    </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0, y: 40 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.3, duration: 0.8 }}
-                        style={{ y: y2 }}
-                        className="mt-20 relative mx-auto max-w-5xl rounded-xl border border-border/50 bg-background/50 shadow-2xl overflow-hidden backdrop-blur-sm"
-                    >
-                        <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 via-transparent to-purple-500/10 opacity-50" />
-                        <div className="p-2 bg-muted/50 border-b border-border/50 flex gap-2">
-                            <div className="w-3 h-3 rounded-full bg-red-500/50 animate-pulse" />
-                            <div className="w-3 h-3 rounded-full bg-yellow-500/50 animate-pulse" style={{ animationDelay: "0.2s" }} />
-                            <div className="w-3 h-3 rounded-full bg-green-500/50 animate-pulse" style={{ animationDelay: "0.4s" }} />
-                        </div>
-                        <div className="w-full bg-zinc-950/80 overflow-hidden">
-                            <img src="/logo.png" alt="App Dashboard Preview" className="w-full h-auto" />
-                        </div>
-                    </motion.div>
-                </motion.div>
-            </section>
+            {/* Hero Section with Aether Shader */}
+            <AetherHero
+                title="Commits, Decoded. Development, Evolved."
+                subtitle="Experience a revolutionary way to manage your repositories. Visualize branches, analyze code with AI, and streamline your workflow with powerful admin tools and real-time insights."
+                ctaLabel="Start for Free"
+                ctaHref="/login"
+                secondaryCtaLabel="Explore Features"
+                secondaryCtaHref="#features"
+                align="center"
+                height="100vh"
+                textColor="hsl(var(--foreground))"
+                overlayGradient="linear-gradient(180deg, hsl(var(--background) / 0.6), hsl(var(--background) / 0.3) 40%, transparent)"
+            />
 
             {/* Features Section */}
             <section id="features" className="py-24 bg-muted/30 relative">
