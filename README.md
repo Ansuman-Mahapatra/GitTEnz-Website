@@ -2,7 +2,7 @@
 
 [![Deploy Status](https://img.shields.io/badge/Status-Live-green)](https://gittenz.netlify.app)
 
-GitTEnz is a modern, full-stack web application that provides an enhanced interface for GitHub, featuring an admin dashboard with email OTP authentication, AI-powered code assistance, and comprehensive repository management. Built with React, Spring Boot, and MongoDB.
+GitTEnz is a high-performance, full-stack web application designed with a futuristic **Matrix Green** aesthetic. It provides a living, interactive experience for GitHub developers, featuring a **Tiled Lightning** background, AI-powered assistance, secure OTP authentication, and comprehensive repository insights. Built with React (WebGL), Spring Boot, and MongoDB.
 
 ## 🚀 Features
 
@@ -24,11 +24,14 @@ GitTEnz is a modern, full-stack web application that provides an enhanced interf
 *   **Privacy Policy**: Manage and update privacy policy and terms of service
 *   **System Configuration**: Configure application settings and email preferences
 
-### **UI/UX**
-*   **Modern Design**: Built with React, Tailwind CSS, and Shadcn UI components
-*   **Dark Mode**: Full dark mode support with theme persistence
-*   **Responsive**: Mobile-friendly design that works on all devices
-*   **Real-time Updates**: Auto-refresh for activity feeds and repository data
+### **UI/UX & Aesthetics**
+*   **Matrix Green Theme**: A unified, high-contrast emerald and black design system with neon accents.
+*   **Tiled Lightning Surface**: A custom WebGL (GLSL) shader background featuring a grid of dark tiles with dynamic lightning pulses in the gaps.
+*   **Premium Glassmorphism**: High-blur content cards and interfaces for a secondary tactile feel.
+*   **Fluid Animations**: Powered by Framer Motion for smooth state transitions and interactions.
+*   **Living Particle System**: Dynamic floating particles that add depth and life to every page.
+*   **Dark Mode Native**: Immersive dark environment by default, optimized for developers.
+*   **Mobile Optimized**: Fully responsive grid system that brings the Matrix experience to any device.
 
 ## 🛠️ Tech Stack
 
@@ -39,7 +42,9 @@ GitTEnz is a modern, full-stack web application that provides an enhanced interf
 *   **Shadcn UI** - Beautiful, accessible components
 *   **TanStack Query** - Server state management
 *   **React Router** - Client-side routing
-*   **Framer Motion** - Smooth animations
+*   **Framer Motion** - Smooth UI animations
+*   **Three.js & GLSL** - High-performance WebGL shaders for the background
+*   **Lucide React** - Beautiful, consistent iconography
 
 ### **Backend**
 *   **Spring Boot 3** (Java 17+)
