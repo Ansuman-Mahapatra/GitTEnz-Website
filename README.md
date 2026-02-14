@@ -7,6 +7,9 @@ GitTEnz is a modern web application that provides an enhanced interface for GitH
 ## 🚀 Features
 
 *   **GitHub Integration**: Log in with GitHub to sync repositories and view stats.
+*   **Admin Dashboard**: Comprehensive admin panel with user management, analytics, and system configuration.
+*   **Email OTP Authentication**: Secure two-factor authentication for admin login via Gmail.
+*   **Email Change Verification**: Admins can change their email with two-step verification process.
 *   **Context-Aware AI Assistant**: Chat with an AI about your code. It automatically reads the `README.md` of the current repository to provide relevant answers.
 *   **Activity Insights**: Granular breakdown of your contribution history (Pushes, Pull Requests) and visual charts available in the dedicated Activity tab.
 *   **Local Starring**: Star repositories within GitTEnz to create your own personalized list. These stars are saved locally in the app and do not affect your actual GitHub stars.
@@ -60,9 +63,15 @@ The backend requires several API keys to function securely.
     # Redis (Optional/Cloud)
     SPRING_DATA_REDIS_HOST=localhost
     SPRING_DATA_REDIS_PORT=6379
+    
+    # Email Configuration (Gmail SMTP)
+    SPRING_MAIL_USERNAME=your_email@gmail.com
+    SPRING_MAIL_PASSWORD=your_16_char_app_password
+    ADMIN_INITIAL_EMAIL=admin_email@example.com
     ```
     
     > **Note**: For a detailed guide on obtaining these credentials, refer to `GETTING_CREDENTIALS.md` in the project root.
+    > **Email Setup**: See `EMAIL_SYSTEM_GUIDE.md` for complete email configuration instructions.
 
 ### 3. Frontend Setup (`/frontend`)
 
