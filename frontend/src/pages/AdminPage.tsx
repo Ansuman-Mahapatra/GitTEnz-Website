@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { API_URL } from "@/config";
-import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu } from "lucide-react";
+import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -59,6 +59,14 @@ export function AdminPage() {
     const [isLoadingConfig, setIsLoadingConfig] = useState(false);
     const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
     const [isSavingTerms, setIsSavingTerms] = useState(false);
+
+    // Email change states
+    const [newEmail, setNewEmail] = useState("");
+    const [verificationCode, setVerificationCode] = useState("");
+    const [pendingEmail, setPendingEmail] = useState("");
+    const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
+    const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
+    const [showVerificationInput, setShowVerificationInput] = useState(false);
 
     const tabParam = searchParams.get("tab");
     const [activeTab, setActiveTab] = useState(tabParam || "overview");
@@ -224,6 +232,68 @@ export function AdminPage() {
             toast.error("Error updating password");
         } finally {
             setIsChangingPassword(false);
+        }
+    };
+
+    const handleRequestEmailChange = async () => {
+        if (!newEmail) return;
+        setIsRequestingEmailChange(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/email/request-change`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ email: newEmail })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success(data.message || "Verification code sent to your new email");
+                setPendingEmail(data.pendingEmail);
+                setShowVerificationInput(true);
+            } else {
+                toast.error(data || "Failed to send verification code");
+            }
+        } catch (e) {
+            toast.error("Error requesting email change");
+        } finally {
+            setIsRequestingEmailChange(false);
+        }
+    };
+
+    const handleVerifyEmailChange = async () => {
+        if (!verificationCode) return;
+        setIsVerifyingEmail(true);
+        try {
+            const res = await fetch(`${API_URL}/api/admin/email/verify-change`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify({ code: verificationCode })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success(data.message || "Email updated successfully");
+                setNewEmail("");
+                setVerificationCode("");
+                setPendingEmail("");
+                setShowVerificationInput(false);
+                // Refresh user data
+                window.location.reload();
+            } else {
+                toast.error(data || "Invalid verification code");
+            }
+        } catch (e) {
+            toast.error("Error verifying email change");
+        } finally {
+            setIsVerifyingEmail(false);
         }
     };
 
@@ -854,6 +924,24 @@ export function AdminPage() {
                                         </CardContent>
                                     </Card>
 
+                                    {/* Admin Email / OTP Info */}
+                                    <Card className="glass-card border-white/10">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <Shield className="w-5 h-5 text-primary" />
+                                                Two-Factor Authentication
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Secure OTP is sent to your registered email: <span className="text-primary font-mono">{user?.email}</span>
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm text-muted-foreground">
+                                                To change your admin email, please contact system support or update via database directly for security.
+                                            </p>
+                                        </CardContent>
+                                    </Card>
+
                                     {/* Admin Security */}
                                     <Card className="glass-card border-white/10">
                                         <CardHeader>
@@ -884,6 +972,98 @@ export function AdminPage() {
                                                 {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                 Change Password
                                             </Button>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Email Change Card */}
+                                    <Card className="glass-card border-white/10">
+                                        <CardHeader>
+                                            <CardTitle className="flex items-center gap-2">
+                                                <Mail className="w-5 h-5 text-primary" />
+                                                Admin Email
+                                            </CardTitle>
+                                            <CardDescription>
+                                                Change your administrator email address
+                                                {user?.email && (
+                                                    <div className="mt-2 text-sm">
+                                                        Current: <span className="text-primary font-medium">{user.email}</span>
+                                                    </div>
+                                                )}
+                                            </CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="space-y-4">
+                                            {!showVerificationInput ? (
+                                                <>
+                                                    <div className="space-y-2">
+                                                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                            New Email Address
+                                                        </label>
+                                                        <Input
+                                                            type="email"
+                                                            value={newEmail}
+                                                            onChange={(e) => setNewEmail(e.target.value)}
+                                                            placeholder="Enter new email address"
+                                                            className="bg-black/20"
+                                                        />
+                                                        <p className="text-xs text-muted-foreground">
+                                                            A verification code will be sent to this email
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        onClick={handleRequestEmailChange}
+                                                        disabled={!newEmail || isRequestingEmailChange}
+                                                        className="w-full glow-green"
+                                                    >
+                                                        {isRequestingEmailChange && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                        Send Verification Code
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                                                        <p className="text-sm">
+                                                            Verification code sent to: <span className="font-medium text-primary">{pendingEmail}</span>
+                                                        </p>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            Code expires in 10 minutes
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                                                            Verification Code
+                                                        </label>
+                                                        <Input
+                                                            type="text"
+                                                            value={verificationCode}
+                                                            onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                                                            placeholder="Enter 6-digit code"
+                                                            className="bg-black/20 text-center text-2xl tracking-widest"
+                                                            maxLength={6}
+                                                        />
+                                                    </div>
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            onClick={handleVerifyEmailChange}
+                                                            disabled={verificationCode.length !== 6 || isVerifyingEmail}
+                                                            className="flex-1 glow-green"
+                                                        >
+                                                            {isVerifyingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                                            Verify & Update Email
+                                                        </Button>
+                                                        <Button
+                                                            onClick={() => {
+                                                                setShowVerificationInput(false);
+                                                                setVerificationCode("");
+                                                                setPendingEmail("");
+                                                            }}
+                                                            variant="outline"
+                                                            className="border-white/10"
+                                                        >
+                                                            Cancel
+                                                        </Button>
+                                                    </div>
+                                                </>
+                                            )}
                                         </CardContent>
                                     </Card>
                                 </div>

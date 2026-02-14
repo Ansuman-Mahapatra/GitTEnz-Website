@@ -9,7 +9,8 @@ import {
   LogOut,
   Bell,
   Users,
-  MessageSquare
+  MessageSquare,
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -40,6 +41,7 @@ const adminMenuItems = [
 
 const bottomItems = [
   { id: "notifications", icon: Bell, label: "Notifications" },
+  { id: "help", icon: HelpCircle, label: "Help & Feedback" },
 ];
 
 const sidebarVariants: Variants = {

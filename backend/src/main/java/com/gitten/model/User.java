@@ -115,6 +115,62 @@ public class User {
         this.lastActiveAt = lastActiveAt;
     }
 
+    private String role = "USER";
+    private String otp;
+    private java.time.LocalDateTime otpExpiry;
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getOtp() {
+        return otp;
+    }
+
+    public void setOtp(String otp) {
+        this.otp = otp;
+    }
+
+    public java.time.LocalDateTime getOtpExpiry() {
+        return otpExpiry;
+    }
+
+    public void setOtpExpiry(java.time.LocalDateTime otpExpiry) {
+        this.otpExpiry = otpExpiry;
+    }
+
+    private String pendingEmail;
+    private String emailVerificationToken;
+    private java.time.LocalDateTime emailVerificationExpiry;
+
+    public String getPendingEmail() {
+        return pendingEmail;
+    }
+
+    public void setPendingEmail(String pendingEmail) {
+        this.pendingEmail = pendingEmail;
+    }
+
+    public String getEmailVerificationToken() {
+        return emailVerificationToken;
+    }
+
+    public void setEmailVerificationToken(String emailVerificationToken) {
+        this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public java.time.LocalDateTime getEmailVerificationExpiry() {
+        return emailVerificationExpiry;
+    }
+
+    public void setEmailVerificationExpiry(java.time.LocalDateTime emailVerificationExpiry) {
+        this.emailVerificationExpiry = emailVerificationExpiry;
+    }
+
     private NotificationPreferences notificationPreferences = new NotificationPreferences();
 
     public NotificationPreferences getNotificationPreferences() {

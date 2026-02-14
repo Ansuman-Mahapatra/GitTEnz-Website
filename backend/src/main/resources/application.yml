@@ -1,6 +1,6 @@
 spring:
   config:
-    import: optional:file:.env   # 🔥 VERY IMPORTANT
+    import: optional:file:.env # 🔥 VERY IMPORTANT
 
   application:
     name: gitten-backend
@@ -15,6 +15,18 @@ spring:
       username: ${SPRING_DATA_REDIS_USERNAME:default}
       password: ${SPRING_DATA_REDIS_PASSWORD:}
 
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD} # App Password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
   security:
     oauth2:
       client:
@@ -27,6 +39,10 @@ spring:
 
   main:
     allow-bean-definition-overriding: true
+
+admin:
+  initial:
+    email: ${ADMIN_INITIAL_EMAIL}
 
 logging:
   level:

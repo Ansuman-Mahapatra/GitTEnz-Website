@@ -18,12 +18,15 @@ public class AuthController {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final com.gitten.service.EmailService emailService;
     // Simple encoder for now. In prod, define a Bean.
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public AuthController(UserRepository userRepository, JwtService jwtService) {
+    public AuthController(UserRepository userRepository, JwtService jwtService,
+            com.gitten.service.EmailService emailService) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.emailService = emailService;
     }
 
     @PostMapping("/signup")
@@ -69,10 +72,56 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Invalid credentials");
         }
 
+        // Admin OTP Check
+        if ("ADMIN".equalsIgnoreCase(user.getRole()) || "admin".equalsIgnoreCase(user.getUsername())) {
+            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+            user.setOtp(otp);
+            user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(5));
+            userRepository.save(user);
+
+            // Send OTP via Email
+            emailService.sendOtp(user.getEmail(), otp);
+            System.out.println(">>> OTP SENT TO EMAIL: " + user.getEmail());
+
+            // Return response indicating OTP required
+            return ResponseEntity.ok(new AuthResponse(null, user, true));
+        }
+
         user.setLastActiveAt(java.time.LocalDateTime.now());
         userRepository.save(user);
 
         String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
-        return ResponseEntity.ok(new AuthResponse(token, user));
+        return ResponseEntity.ok(new AuthResponse(token, user, false));
+    }
+
+    @PostMapping("/verify-otp")
+    public ResponseEntity<?> verifyOtp(@RequestBody com.gitten.dto.OtpVerificationRequest request) {
+        Optional<User> userOpt = userRepository.findByEmail(request.getIdentifier());
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findByUsername(request.getIdentifier());
+        }
+
+        if (userOpt.isEmpty()) {
+            return ResponseEntity.badRequest().body("Error: User not found");
+        }
+
+        User user = userOpt.get();
+
+        if (user.getOtp() == null || !user.getOtp().equals(request.getOtp())) {
+            return ResponseEntity.badRequest().body("Error: Invalid OTP");
+        }
+
+        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Error: OTP Expired");
+        }
+
+        // Clear OTP
+        user.setOtp(null);
+        user.setOtpExpiry(null);
+        user.setLastActiveAt(java.time.LocalDateTime.now());
+        userRepository.save(user);
+
+        String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
+        return ResponseEntity.ok(new AuthResponse(token, user, false));
     }
 }
