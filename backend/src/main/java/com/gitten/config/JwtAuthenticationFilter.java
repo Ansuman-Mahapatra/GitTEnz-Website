@@ -1,5 +1,7 @@
 package com.gitten.config;
 
+import com.gitten.model.User;
+import com.gitten.repository.UserRepository;
 import com.gitten.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,10 +25,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService,
+            UserRepository userRepository) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -56,6 +61,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     authToken.setDetails(
                             new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                    // Update lastActiveAt for authenticated users
+                    updateUserActivity(username);
                 }
             }
         } catch (Exception e) {
@@ -63,5 +71,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private void updateUserActivity(String username) {
+        try {
+            userRepository.findByUsername(username).ifPresent(user -> {
+                // Only update if last activity was more than 1 minute ago to reduce DB writes
+                if (user.getLastActiveAt() == null ||
+                        java.time.Duration.between(user.getLastActiveAt(), java.time.LocalDateTime.now())
+                                .toMinutes() >= 1) {
+                    user.setLastActiveAt(java.time.LocalDateTime.now());
+                    userRepository.save(user);
+                }
+            });
+        } catch (Exception e) {
+            // Log but don't fail the request if activity update fails
+            System.err.println("Failed to update user activity: " + e.getMessage());
+        }
     }
 }
