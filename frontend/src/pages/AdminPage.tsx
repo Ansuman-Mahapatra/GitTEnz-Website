@@ -652,8 +652,8 @@ export function AdminPage() {
                                             <Users className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{analytics?.totalUsers ?? usersList.length}</div>
-                                            <p className="text-xs text-muted-foreground">Registered accounts</p>
+                                            <div className="text-2xl font-bold">{analytics?.totalUsers ? analytics.totalUsers - 1 : usersList.filter(u => u.username !== 'admin').length}</div>
+                                            <p className="text-xs text-muted-foreground">Registered accounts (excluding admin)</p>
                                         </CardContent>
                                     </Card>
                                     <Card className="glass-card border-white/10">
@@ -711,7 +711,7 @@ export function AdminPage() {
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle>All Users</CardTitle>
-                                        <CardDescription>Manage registered users</CardDescription>
+                                        <CardDescription>Manage registered users (excluding admin)</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {isLoadingTab ? (
@@ -728,7 +728,7 @@ export function AdminPage() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {usersList.map((u: any) => {
+                                                    {usersList.filter((u: any) => u.username !== 'admin').map((u: any) => {
                                                         const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
                                                         // Active if within last 24 hours
                                                         const isActive = lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
