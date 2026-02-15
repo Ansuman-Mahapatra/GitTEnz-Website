@@ -343,10 +343,23 @@ export function AdminPage() {
         }
     };
 
-    // Transform data for charts
-    const userGrowthData = analytics ? Object.entries(analytics.userGrowth)
-        .map(([date, count]) => ({ date, count }))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    // Transform data for charts - Use real analytics data
+    const userGrowthData = analytics?.userGrowth && Object.keys(analytics.userGrowth).length > 0
+        ? Object.entries(analytics.userGrowth)
+            .map(([date, count]) => ({
+                date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                count: Number(count)
+            }))
+            .sort((a, b) => {
+                // Sort by actual date
+                const dateA = new Date(Object.entries(analytics.userGrowth).find(([d]) =>
+                    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === a.date
+                )?.[0] || 0);
+                const dateB = new Date(Object.entries(analytics.userGrowth).find(([d]) =>
+                    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === b.date
+                )?.[0] || 0);
+                return dateA.getTime() - dateB.getTime();
+            })
         : [];
 
     const feedbackData = analytics ? Object.entries(analytics.feedbackRatings).map(([rating, count]) => ({ name: `${rating} Stars`, value: count })) : [];
@@ -464,28 +477,38 @@ export function AdminPage() {
                                             <Card className="glass-card border-white/10 col-span-1">
                                                 <CardHeader>
                                                     <CardTitle>User Status (24h)</CardTitle>
-                                                    <CardDescription>Real-time Active, Inactive, Visited</CardDescription>
+                                                    <CardDescription>Active vs Inactive users (excluding admin)</CardDescription>
                                                 </CardHeader>
                                                 <CardContent>
                                                     <div className="h-[250px]">
                                                         {(() => {
-                                                            // Calculate status from usersList
-                                                            const activeCount = usersList.filter(u => {
-                                                                const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
-                                                                return lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
+                                                            // Calculate status from usersList - EXCLUDE ADMIN
+                                                            const regularUsers = usersList.filter(u => u.username !== 'admin');
+
+                                                            const now = new Date().getTime();
+                                                            const last24h = 24 * 60 * 60 * 1000;
+
+                                                            const activeCount = regularUsers.filter(u => {
+                                                                if (!u.lastActiveAt) return false;
+                                                                const lastActive = new Date(u.lastActiveAt).getTime();
+                                                                return (now - lastActive) < last24h;
                                                             }).length;
-                                                            const inactiveCount = usersList.length - activeCount;
-                                                            // Visited is essentially Active for this context, but if "Visited" means something else like "Just visited site but not fully active", we can differentiate.
-                                                            // For this chart request: Active, Inactive, Visited. Let's make "Visited" users who visited today but maybe not "Active" (redundant?).
-                                                            // Actually, let's treat "Active" as within 24h, "Visited" as logged in ever (vs never), "Inactive" as never?
-                                                            // Or: Active (<24h), Inactive (>24h), Visited (Visited recently e.g. < 1h - subset?). Pie charts need mutually exclusive.
-                                                            // Prompt says: "real-time active, inactive, and visited states"
-                                                            // Let's interpret: Active (<24h), Inactive (>24h). Maybe "Visited" is just a label for Active.
-                                                            // Let's do: Active (<24h), Inactive (>24h).
+
+                                                            const inactiveCount = regularUsers.length - activeCount;
+
+                                                            // Only show chart if there are regular users
+                                                            if (regularUsers.length === 0) {
+                                                                return (
+                                                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
+                                                                        <Users className="w-16 h-16 mb-4 opacity-50" />
+                                                                        <p>No users registered yet</p>
+                                                                    </div>
+                                                                );
+                                                            }
 
                                                             const data = [
-                                                                { name: 'Active (24h)', value: activeCount },
-                                                                { name: 'Inactive', value: inactiveCount }
+                                                                { name: `Active (24h)`, value: activeCount },
+                                                                { name: 'Inactive (>24h)', value: inactiveCount }
                                                             ];
 
                                                             return (
