@@ -781,28 +781,61 @@ export function AdminPage() {
                                     </Card>
                                 </div>
 
-                                {/* Feedback Ratings Chart */}
+
+                                {/* Feedback Ratings Chart - Histogram */}
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
-                                            <Star className="w-5 h-5 text-yellow-500" />
-                                            Feedback Ratings Distribution
+                                            <BarChart3 className="w-5 h-5 text-primary" />
+                                            Feedback Ratings Distribution (Histogram)
                                         </CardTitle>
                                         <CardDescription>User satisfaction ratings across all feedback</CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="h-[280px]">
-                                            {analytics?.feedbackRatings && Object.keys(analytics.feedbackRatings).length > 0 ? (
-                                                <ResponsiveContainer width="100%" height="100%">
-                                                    <BarChart data={feedbackData} layout="vertical" margin={{ left: 20 }}>
-                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff20" />
-                                                        <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <YAxis dataKey="name" type="category" width={100} stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                                        <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} itemStyle={{ color: '#fff' }} />
-                                                        <Bar dataKey="value" fill="#adfa1d" radius={[0, 4, 4, 0]} barSize={24} />
-                                                    </BarChart>
-                                                </ResponsiveContainer>
-                                            ) : (
+                                        <div className="h-[300px]">
+                                            {analytics?.feedbackRatings && Object.keys(analytics.feedbackRatings).length > 0 ? (() => {
+                                                // Convert feedback ratings object to histogram data
+                                                const feedbackData = Object.entries(analytics.feedbackRatings)
+                                                    .map(([rating, count]) => ({
+                                                        rating: `${rating} ⭐`,
+                                                        count: Number(count)
+                                                    }))
+                                                    .sort((a, b) => parseInt(a.rating) - parseInt(b.rating));
+
+                                                return (
+                                                    <ResponsiveContainer width="100%" height="100%">
+                                                        <BarChart data={feedbackData} margin={{ bottom: 20, left: 10, right: 10 }}>
+                                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
+                                                            <XAxis
+                                                                dataKey="rating"
+                                                                stroke="#888888"
+                                                                fontSize={12}
+                                                                tickLine={false}
+                                                                axisLine={false}
+                                                                interval={0}
+                                                            />
+                                                            <YAxis
+                                                                stroke="#888888"
+                                                                fontSize={12}
+                                                                tickLine={false}
+                                                                axisLine={false}
+                                                                label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { fill: '#888888' } }}
+                                                            />
+                                                            <Tooltip
+                                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
+                                                                itemStyle={{ color: '#fff' }}
+                                                                cursor={{ fill: 'rgba(173, 250, 29, 0.1)' }}
+                                                            />
+                                                            <Bar
+                                                                dataKey="count"
+                                                                fill="#adfa1d"
+                                                                radius={[4, 4, 0, 0]}
+                                                                barSize={60}
+                                                            />
+                                                        </BarChart>
+                                                    </ResponsiveContainer>
+                                                );
+                                            })() : (
                                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                                     <BarChart3 className="w-16 h-16 mb-4 opacity-50" />
                                                     <p>No feedback data yet</p>
@@ -816,18 +849,19 @@ export function AdminPage() {
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle>User Feedback</CardTitle>
-                                        <CardDescription>Recent feedback submissions</CardDescription>
+                                        <CardDescription>Recent feedback submissions with user information</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {isLoadingTab ? (
                                             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
-                                        ) : (
+                                        ) : feedbackList.length > 0 ? (
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="w-[100px]">Rating</TableHead>
                                                         <TableHead>Message</TableHead>
-                                                        <TableHead>User</TableHead>
+                                                        <TableHead className="w-[150px]">User</TableHead>
+                                                        <TableHead className="w-[120px]">Date</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -836,18 +870,38 @@ export function AdminPage() {
                                                             <TableCell>
                                                                 <div className="flex items-center gap-1">
                                                                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                                                    {f.rating}
+                                                                    <span className="font-semibold">{f.rating}</span>
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell>{f.message}</TableCell>
+                                                            <TableCell className="max-w-md">
+                                                                <p className="line-clamp-2">{f.message || 'No message'}</p>
+                                                            </TableCell>
                                                             <TableCell className="text-muted-foreground text-sm">
-                                                                {/* Assuming backend returns user info or null */}
-                                                                Anonymous
+                                                                <div className="flex items-center gap-2">
+                                                                    {f.user?.username ? (
+                                                                        <>
+                                                                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
+                                                                                {f.user.username.charAt(0).toUpperCase()}
+                                                                            </div>
+                                                                            <span className="font-medium text-foreground">{f.user.username}</span>
+                                                                        </>
+                                                                    ) : (
+                                                                        <span className="italic">Anonymous</span>
+                                                                    )}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="text-muted-foreground text-xs">
+                                                                {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : 'N/A'}
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
                                                 </TableBody>
                                             </Table>
+                                        ) : (
+                                            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
+                                                <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
+                                                <p>No feedback submissions yet</p>
+                                            </div>
                                         )}
                                     </CardContent>
                                 </Card>
