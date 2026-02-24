@@ -20,6 +20,7 @@ import { FileTree } from "@/components/dashboard/FileTree";
 import { StructureViewerModal } from "@/components/dashboard/StructureViewerModal";
 import { Badge } from "@/components/ui/badge";
 import { FileCode2, GitBranch, GitCommit, ChevronRight, Folder, File, ArrowLeft, FileText, Menu } from "lucide-react";
+import { InlineAiProvider } from "@/components/ai/InlineAiProvider";
 
 export function RepositoryDetailPage() {
     const { owner, repo } = useParams();
@@ -193,6 +194,7 @@ export function RepositoryDetailPage() {
 
     return (
         <div className="flex h-screen bg-background overflow-hidden relative">
+            <InlineAiProvider />
             {/* Simple Commit Dialog */}
             {showCommitDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">

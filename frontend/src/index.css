@@ -200,3 +200,24 @@
 .animate-spin-slower {
   animation: spin-slower 30s linear infinite reverse;
 }
+
+/* Inline AI Assistant - Typing indicator */
+@keyframes inline-ai-typing {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.inline-ai-typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: hsl(var(--primary));
+  animation: inline-ai-typing 1.2s ease-in-out infinite;
+}
