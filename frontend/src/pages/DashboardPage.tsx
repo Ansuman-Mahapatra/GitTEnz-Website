@@ -10,6 +10,7 @@ import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { AIAssistant } from "@/components/ai/AIAssistant";
+import { InlineAiProvider } from "@/components/ai/InlineAiProvider";
 import { CodeEditor } from "@/components/editor/CodeEditor";
 import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { LanguageChart, ActivityChart } from "@/components/dashboard/Charts";
@@ -677,6 +678,7 @@ export function DashboardPage() {
       </div>
       <div className="relative z-10 flex w-full h-full">
         <AIAssistant />
+        <InlineAiProvider />
         <div className="hidden lg:block">
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
         </div>
