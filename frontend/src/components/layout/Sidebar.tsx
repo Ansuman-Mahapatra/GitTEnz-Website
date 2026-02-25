@@ -10,8 +10,7 @@ import {
   Bell,
   Users,
   MessageSquare,
-  HelpCircle,
-  Info
+  HelpCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -30,7 +29,6 @@ const userMenuItems = [
   { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
   { id: "activity", icon: History, label: "Activity" },
   { id: "starred", icon: Star, label: "Starred" },
-  { id: "about", icon: Info, label: "About" },
   { id: "settings", icon: Settings, label: "Settings" },
 ];
 
@@ -195,7 +193,7 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               className={cn(
                 "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200",
                 activeTab === item.id
-                  ? "bg-accent text-accent-foreground glow-green"
+                  ? "bg-accent text-accent-foreground glow-purple"
                   : "text-sidebar-foreground hover:bg-sidebar-accent"
               )}
             >

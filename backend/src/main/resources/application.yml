@@ -28,6 +28,9 @@ spring:
             enable: true
 
   security:
+    jwt:
+      secret-key: ${JWT_SECRET_KEY}
+      expiration: 86400000
     oauth2:
       client:
         registration:

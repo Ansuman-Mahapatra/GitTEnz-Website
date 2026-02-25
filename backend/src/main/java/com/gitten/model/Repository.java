@@ -11,7 +11,7 @@ public class Repository {
     @Id
     private String id;
 
-    @Indexed(unique = true)
+    @Indexed(unique = true, sparse = true)
     private Long githubId;
 
     private String name;
@@ -24,17 +24,17 @@ public class Repository {
     private Integer openIssuesCount;
     private String visibility;
 
-    private boolean isLocal = false;
+    private boolean local = false;
     private String localPath;
 
     private LocalDateTime updatedAt;
 
     public boolean isLocal() {
-        return isLocal;
+        return local;
     }
 
     public void setLocal(boolean local) {
-        isLocal = local;
+        this.local = local;
     }
 
     public String getLocalPath() {

@@ -19,23 +19,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
-
+@RequiredArgsConstructor
+@Slf4j
 public class OpenAiService implements AiService {
-
-    private static final Logger log = LoggerFactory.getLogger(OpenAiService.class);
 
     private final RepositoryService repositoryService;
     private final RestClient.Builder restClientBuilder;
     private final UserRepository userRepository;
     private final GitHubService gitHubService;
-
-    public OpenAiService(RepositoryService repositoryService, RestClient.Builder restClientBuilder,
-            UserRepository userRepository, GitHubService gitHubService) {
-        this.repositoryService = repositoryService;
-        this.restClientBuilder = restClientBuilder;
-        this.userRepository = userRepository;
-        this.gitHubService = gitHubService;
-    }
 
     @Value("${openai.api.key:placeholder_key}")
     private String openAiApiKey;
