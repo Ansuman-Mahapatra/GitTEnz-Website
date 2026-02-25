@@ -20,21 +20,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
-
+@RequiredArgsConstructor
+@Slf4j
 public class GitHubServiceImpl implements GitHubService {
-
-    private static final Logger log = LoggerFactory.getLogger(GitHubServiceImpl.class);
 
     private final RestClient restClient;
     private final UserRepository userRepository;
     private final RepositoryRepository repositoryRepository;
-
-    public GitHubServiceImpl(RestClient restClient, UserRepository userRepository,
-            RepositoryRepository repositoryRepository) {
-        this.restClient = restClient;
-        this.userRepository = userRepository;
-        this.repositoryRepository = repositoryRepository;
-    }
 
     @Override
     @Transactional

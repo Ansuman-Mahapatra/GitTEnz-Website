@@ -11,6 +11,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // We n
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
+import java.security.SecureRandom;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -37,6 +38,14 @@ public class AuthController {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body("Error: Email is already in use!"); // Account already exists
+        }
+
+        // Validate password strength
+        if (request.getPassword() == null || request.getPassword().length() < 8) {
+            return ResponseEntity.badRequest().body("Error: Password must be at least 8 characters long");
+        }
+        if (!request.getPassword().matches(".*[A-Za-z].*") || !request.getPassword().matches(".*[0-9].*")) {
+            return ResponseEntity.badRequest().body("Error: Password must contain both letters and numbers");
         }
 
         User user = new User();
@@ -74,7 +83,9 @@ public class AuthController {
 
         // Admin OTP Check
         if ("ADMIN".equalsIgnoreCase(user.getRole()) || "admin".equalsIgnoreCase(user.getUsername())) {
-            String otp = String.format("%06d", new java.util.Random().nextInt(999999));
+            // Use SecureRandom for cryptographically secure OTP generation
+            SecureRandom secureRandom = new SecureRandom();
+            String otp = String.format("%06d", secureRandom.nextInt(1000000));
             user.setOtp(otp);
             user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(5));
             userRepository.save(user);

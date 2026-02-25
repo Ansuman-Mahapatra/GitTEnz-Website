@@ -188,19 +188,19 @@ public class LocalGitService {
 
     public Map<String, Object> updateFile(String localPath, String filePath, String content, String message) {
         File file = new File(localPath, filePath);
-        try {
-            // Write content
-            // Content comes as base64 from generic frontend editor usually?
-            // Or typically simple string if "text". GitHub API assumes base64 for get, but
-            // update?
-            // GitHub API update expects 'content' as base64 encoded string.
-            // Let's assume standard behavior.
+        byte[] originalContent = null;
+        boolean fileExisted = file.exists();
 
+        try {
+            if (fileExisted) {
+                originalContent = Files.readAllBytes(file.toPath());
+            }
+
+            // Write content
             byte[] decodedBytes = Base64.getDecoder().decode(content);
             Files.write(file.toPath(), decodedBytes);
 
-            // Commit logic? User requested "edit them", usually implies commit.
-            // If just save to disk, JGit commit.
+            // Commit logic
             try (Git git = Git.open(new File(localPath))) {
                 git.add().addFilepattern(filePath).call();
                 RevCommit commit = git.commit().setMessage(message).call();
@@ -210,14 +210,26 @@ public class LocalGitService {
                 c.put("sha", commit.getName());
                 c.put("message", commit.getFullMessage());
                 result.put("commit", c);
-                result.put("content", null); // usually returns content wrapper
+                result.put("content", null);
                 return result;
             } catch (GitAPIException e) {
-                throw new RuntimeException("Failed to commit changes: " + e.getMessage());
+                // Revert changes if commit fails
+                try {
+                    if (fileExisted && originalContent != null) {
+                        Files.write(file.toPath(), originalContent);
+                    } else if (!fileExisted) {
+                        Files.deleteIfExists(file.toPath());
+                    }
+                } catch (IOException ioException) {
+                    // Best effort revert failed
+                    throw new RuntimeException("Failed to commit changes and failed to revert file: " + e.getMessage()
+                            + " | Revert error: " + ioException.getMessage());
+                }
+                throw new RuntimeException("Failed to commit changes, reverted file: " + e.getMessage());
             }
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write file: " + e.getMessage());
+            throw new RuntimeException("Failed to update file: " + e.getMessage());
         }
     }
 

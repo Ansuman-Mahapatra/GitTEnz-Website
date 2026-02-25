@@ -72,10 +72,10 @@ export function HelpSection() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <a href="mailto:ansuman197463@gmail.com">
+                        <a href={`mailto:${import.meta.env.VITE_DEVELOPER_EMAIL}`}>
                             <Button className="w-full gap-2" variant="outline">
                                 <Mail className="w-4 h-4" />
-                                ansuman197463@gmail.com
+                                {import.meta.env.VITE_DEVELOPER_EMAIL}
                             </Button>
                         </a>
                     </CardContent>
@@ -94,7 +94,7 @@ export function HelpSection() {
                     </CardHeader>
                     <CardContent>
                         <a
-                            href="https://www.linkedin.com/in/ansumanmahapatra998/"
+                            href={import.meta.env.VITE_DEVELOPER_LINKEDIN_URL}
                             target="_blank"
                             rel="noopener noreferrer"
                         >

@@ -22,13 +22,23 @@ public class DataInitializer {
                 admin.setUsername(adminUsername);
                 admin.setEmail(adminEmail);
                 admin.setName("System Administrator");
-                // Hardcoded password "admin123" - In production read from env
-                admin.setPassword(new BCryptPasswordEncoder().encode("admin123"));
+
+                // Generate a secure random password
+                String randomPassword = java.util.UUID.randomUUID().toString().substring(0, 8);
+                admin.setPassword(new BCryptPasswordEncoder().encode(randomPassword));
+
                 admin.setAvatarUrl("https://ui-avatars.com/api/?name=System+Admin&background=0D8ABC&color=fff");
                 admin.setOnboardingCompleted(true);
                 admin.setRole("ADMIN");
                 userRepository.save(admin);
-                System.out.println("Persistent Admin Account Created: admin / admin123 with email: " + adminEmail);
+
+                // Log the generated password clearly
+                System.out.println("\n\n=================================================");
+                System.out.println("ADMIN ACCOUNT CREATED");
+                System.out.println("Username: " + adminUsername);
+                System.out.println("Password: " + randomPassword);
+                System.out.println("Please change this password immediately after login.");
+                System.out.println("=================================================\n\n");
             } else {
                 // Ensure role is ADMIN
                 boolean changed = false;

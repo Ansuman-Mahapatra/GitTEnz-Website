@@ -25,7 +25,7 @@ export function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // @ts-ignore
+
       const result = await signInWithEmail(formData);
       if (result && result.otpRequired) {
         setOtpRequired(true);

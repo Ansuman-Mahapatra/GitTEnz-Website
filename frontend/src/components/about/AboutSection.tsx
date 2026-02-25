@@ -87,7 +87,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2 glow-green"
-                                        onClick={() => window.open("https://github.com/Ansuman-Mahapatra", "_blank")}
+                                        onClick={() => window.open(import.meta.env.VITE_DEVELOPER_GITHUB_URL, "_blank")}
                                     >
                                         <Github className="w-4 h-4" />
                                         GitHub
@@ -96,7 +96,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2"
-                                        onClick={() => window.location.href = "mailto:ansuman197463@gmail.com"}
+                                        onClick={() => window.location.href = `mailto:${import.meta.env.VITE_DEVELOPER_EMAIL}`}
                                     >
                                         <Mail className="w-4 h-4" />
                                         Email
@@ -105,7 +105,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2"
-                                        onClick={() => window.open("https://linkedin.com/in/ansuman-mahapatra", "_blank")}
+                                        onClick={() => window.open(import.meta.env.VITE_DEVELOPER_LINKEDIN_URL, "_blank")}
                                     >
                                         <Linkedin className="w-4 h-4" />
                                         LinkedIn

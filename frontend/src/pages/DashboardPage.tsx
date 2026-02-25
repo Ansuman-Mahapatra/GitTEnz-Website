@@ -21,11 +21,8 @@ import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { LocalRepoViewer } from "@/components/dashboard/LocalRepoViewer";
 import { HelpSection } from "@/components/dashboard/HelpSection";
 import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
-import { AboutSection } from "@/components/about/AboutSection";
 import { toast } from "sonner";
 import { EtheralShadow } from "@/components/ui/etheral-shadow";
-import { Particles } from "@/components/ui/particles";
-import AetherHero from "@/components/aether-hero";
 
 export function DashboardPage() {
   const { username } = useParams();
@@ -620,13 +617,6 @@ export function DashboardPage() {
           </motion.div>
         );
 
-      case "about":
-        return (
-          <motion.div key="about" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-            <AboutSection />
-          </motion.div>
-        );
-
       case "settings":
         return (
           <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
@@ -677,31 +667,15 @@ export function DashboardPage() {
 
   return (
     <div className="flex h-screen bg-black overflow-hidden relative">
-      {/* Base Layer: Aether Shader Background */}
-      <div className="absolute inset-0 z-0 opacity-30">
-        <AetherHero
-          height="100vh"
-          align="center"
-          textColor="transparent"
-          overlayGradient="radial-gradient(circle at center, transparent, #000)"
-        />
-      </div>
-
-      {/* Second Layer: Turbulence Shadow Effect */}
-      <div className="absolute inset-0 z-0 opacity-20 pointer-events-none">
+      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
         <EtheralShadow
           color="#10b981"
-          animation={{ scale: 80, speed: 20 }}
-          noise={{ opacity: 0.2, scale: 1 }}
+          animation={{ scale: 80, speed: 40 }}
+          noise={{ opacity: 0.5, scale: 1 }}
           showTitle={false}
         />
       </div>
-
-      {/* Third Layer: Floating Particles */}
-      <Particles count={30} className="z-0" />
-
-      {/* Content Layer */}
-      <div className="relative z-10 flex w-full h-full backdrop-blur-[2px]">
+      <div className="relative z-10 flex w-full h-full">
         <AIAssistant />
         <div className="hidden lg:block">
           <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />

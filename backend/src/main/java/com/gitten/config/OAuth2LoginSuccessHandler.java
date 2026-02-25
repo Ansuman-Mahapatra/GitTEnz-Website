@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
@@ -19,18 +20,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.io.IOException;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
         private final JwtService jwtService;
         private final UserRepository userRepository;
         private final OAuth2AuthorizedClientService authorizedClientService;
 
-        public OAuth2LoginSuccessHandler(JwtService jwtService, UserRepository userRepository,
-                        OAuth2AuthorizedClientService authorizedClientService) {
-                this.jwtService = jwtService;
-                this.userRepository = userRepository;
-                this.authorizedClientService = authorizedClientService;
-        }
+        // Manual constructor removed in favor of @RequiredArgsConstructor
 
         @org.springframework.beans.factory.annotation.Value("${frontend.url:https://gittenz.vercel.app}")
         private String frontendUrl;
@@ -49,7 +47,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 if (client != null && client.getAccessToken() != null) {
                         accessToken = client.getAccessToken().getTokenValue();
                 } else {
-                        System.err.println("AuthorizedClient is null!");
+                        log.error("AuthorizedClient is null!");
                         accessToken = "";
                 }
 

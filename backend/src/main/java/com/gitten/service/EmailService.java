@@ -1,10 +1,12 @@
 package com.gitten.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 public class EmailService {
 
@@ -23,11 +25,10 @@ public class EmailService {
             message.setText("Your OTP for Admin Access is: " + otp
                     + "\n\nThis code expires in 5 minutes.\n\nRegards,\nGitTEnz Team");
             mailSender.send(message);
-            System.out.println("OTP Email sent to " + to);
+            log.info("OTP Email sent to {}", to);
         } catch (Exception e) {
-            System.err.println("Failed to send OTP email: " + e.getMessage());
-            // Fallback to console for dev
-            System.out.println("FALLBACK OTP LOG: " + otp);
+            log.error("Failed to send OTP email: {}", e.getMessage());
+            // Fallback logging removed for security
         }
     }
 
@@ -44,9 +45,9 @@ public class EmailService {
                     + "If you didn't request this, please ignore this email.\n\n"
                     + "Regards,\nGitTEnz Team");
             mailSender.send(message);
-            System.out.println("Verification email sent to " + to);
+            log.info("Verification email sent to {}", to);
         } catch (Exception e) {
-            System.err.println("Failed to send verification email: " + e.getMessage());
+            log.error("Failed to send verification email: {}", e.getMessage());
             throw new RuntimeException("Failed to send verification email", e);
         }
     }
@@ -59,9 +60,9 @@ public class EmailService {
             message.setSubject(subject);
             message.setText(body);
             mailSender.send(message);
-            System.out.println("Email sent to " + to);
+            log.info("Email sent to {}", to);
         } catch (Exception e) {
-            System.err.println("Failed to send email: " + e.getMessage());
+            log.error("Failed to send email: {}", e.getMessage());
             throw new RuntimeException("Failed to send email", e);
         }
     }

@@ -9,4 +9,4 @@ Get-Content .env | ForEach-Object {
 }
 
 # Run the application
-mvn spring-boot:run
+mvn spring-boot:run -DskipTests

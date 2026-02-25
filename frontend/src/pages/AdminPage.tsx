@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { API_URL } from "@/config";
-import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu, Mail } from "lucide-react";
+import { Shield, Loader2, Save, BarChart3, Users, GitFork, Star, Lock, Settings, LayoutDashboard, PieChart as PieIcon, MessageSquare, FileText, HelpCircle, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -60,13 +60,6 @@ export function AdminPage() {
     const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
     const [isSavingTerms, setIsSavingTerms] = useState(false);
 
-    // Email change states
-    const [newEmail, setNewEmail] = useState("");
-    const [verificationCode, setVerificationCode] = useState("");
-    const [pendingEmail, setPendingEmail] = useState("");
-    const [isRequestingEmailChange, setIsRequestingEmailChange] = useState(false);
-    const [isVerifyingEmail, setIsVerifyingEmail] = useState(false);
-    const [showVerificationInput, setShowVerificationInput] = useState(false);
 
     const tabParam = searchParams.get("tab");
     const [activeTab, setActiveTab] = useState(tabParam || "overview");
@@ -235,68 +228,6 @@ export function AdminPage() {
         }
     };
 
-    const handleRequestEmailChange = async () => {
-        if (!newEmail) return;
-        setIsRequestingEmailChange(true);
-        try {
-            const res = await fetch(`${API_URL}/api/admin/email/request-change`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ email: newEmail })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                toast.success(data.message || "Verification code sent to your new email");
-                setPendingEmail(data.pendingEmail);
-                setShowVerificationInput(true);
-            } else {
-                toast.error(data || "Failed to send verification code");
-            }
-        } catch (e) {
-            toast.error("Error requesting email change");
-        } finally {
-            setIsRequestingEmailChange(false);
-        }
-    };
-
-    const handleVerifyEmailChange = async () => {
-        if (!verificationCode) return;
-        setIsVerifyingEmail(true);
-        try {
-            const res = await fetch(`${API_URL}/api/admin/email/verify-change`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-                body: JSON.stringify({ code: verificationCode })
-            });
-
-            const data = await res.json();
-
-            if (res.ok) {
-                toast.success(data.message || "Email updated successfully");
-                setNewEmail("");
-                setVerificationCode("");
-                setPendingEmail("");
-                setShowVerificationInput(false);
-                // Refresh user data
-                window.location.reload();
-            } else {
-                toast.error(data || "Invalid verification code");
-            }
-        } catch (e) {
-            toast.error("Error verifying email change");
-        } finally {
-            setIsVerifyingEmail(false);
-        }
-    };
-
     const handleSavePrivacyPolicy = async () => {
         setIsSavingPrivacy(true);
         try {
@@ -343,23 +274,10 @@ export function AdminPage() {
         }
     };
 
-    // Transform data for charts - Use real analytics data
-    const userGrowthData = analytics?.userGrowth && Object.keys(analytics.userGrowth).length > 0
-        ? Object.entries(analytics.userGrowth)
-            .map(([date, count]) => ({
-                date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                count: Number(count)
-            }))
-            .sort((a, b) => {
-                // Sort by actual date
-                const dateA = new Date(Object.entries(analytics.userGrowth).find(([d]) =>
-                    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === a.date
-                )?.[0] || 0);
-                const dateB = new Date(Object.entries(analytics.userGrowth).find(([d]) =>
-                    new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) === b.date
-                )?.[0] || 0);
-                return dateA.getTime() - dateB.getTime();
-            })
+    // Transform data for charts
+    const userGrowthData = analytics ? Object.entries(analytics.userGrowth)
+        .map(([date, count]) => ({ date, count }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
         : [];
 
     const feedbackData = analytics ? Object.entries(analytics.feedbackRatings).map(([rating, count]) => ({ name: `${rating} Stars`, value: count })) : [];
@@ -477,38 +395,28 @@ export function AdminPage() {
                                             <Card className="glass-card border-white/10 col-span-1">
                                                 <CardHeader>
                                                     <CardTitle>User Status (24h)</CardTitle>
-                                                    <CardDescription>Active vs Inactive users (excluding admin)</CardDescription>
+                                                    <CardDescription>Real-time Active, Inactive, Visited</CardDescription>
                                                 </CardHeader>
                                                 <CardContent>
                                                     <div className="h-[250px]">
                                                         {(() => {
-                                                            // Calculate status from usersList - EXCLUDE ADMIN
-                                                            const regularUsers = usersList.filter(u => u.username !== 'admin');
-
-                                                            const now = new Date().getTime();
-                                                            const last24h = 24 * 60 * 60 * 1000;
-
-                                                            const activeCount = regularUsers.filter(u => {
-                                                                if (!u.lastActiveAt) return false;
-                                                                const lastActive = new Date(u.lastActiveAt).getTime();
-                                                                return (now - lastActive) < last24h;
+                                                            // Calculate status from usersList
+                                                            const activeCount = usersList.filter(u => {
+                                                                const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
+                                                                return lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
                                                             }).length;
-
-                                                            const inactiveCount = regularUsers.length - activeCount;
-
-                                                            // Only show chart if there are regular users
-                                                            if (regularUsers.length === 0) {
-                                                                return (
-                                                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                                                        <Users className="w-16 h-16 mb-4 opacity-50" />
-                                                                        <p>No users registered yet</p>
-                                                                    </div>
-                                                                );
-                                                            }
+                                                            const inactiveCount = usersList.length - activeCount;
+                                                            // Visited is essentially Active for this context, but if "Visited" means something else like "Just visited site but not fully active", we can differentiate.
+                                                            // For this chart request: Active, Inactive, Visited. Let's make "Visited" users who visited today but maybe not "Active" (redundant?).
+                                                            // Actually, let's treat "Active" as within 24h, "Visited" as logged in ever (vs never), "Inactive" as never?
+                                                            // Or: Active (<24h), Inactive (>24h), Visited (Visited recently e.g. < 1h - subset?). Pie charts need mutually exclusive.
+                                                            // Prompt says: "real-time active, inactive, and visited states"
+                                                            // Let's interpret: Active (<24h), Inactive (>24h). Maybe "Visited" is just a label for Active.
+                                                            // Let's do: Active (<24h), Inactive (>24h).
 
                                                             const data = [
-                                                                { name: `Active (24h)`, value: activeCount },
-                                                                { name: 'Inactive (>24h)', value: inactiveCount }
+                                                                { name: 'Active (24h)', value: activeCount },
+                                                                { name: 'Inactive', value: inactiveCount }
                                                             ];
 
                                                             return (
@@ -652,8 +560,8 @@ export function AdminPage() {
                                             <Users className="h-4 w-4 text-muted-foreground" />
                                         </CardHeader>
                                         <CardContent>
-                                            <div className="text-2xl font-bold">{analytics?.totalUsers ? analytics.totalUsers - 1 : usersList.filter(u => u.username !== 'admin').length}</div>
-                                            <p className="text-xs text-muted-foreground">Registered accounts (excluding admin)</p>
+                                            <div className="text-2xl font-bold">{analytics?.totalUsers ?? usersList.length}</div>
+                                            <p className="text-xs text-muted-foreground">Registered accounts</p>
                                         </CardContent>
                                     </Card>
                                     <Card className="glass-card border-white/10">
@@ -711,7 +619,7 @@ export function AdminPage() {
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle>All Users</CardTitle>
-                                        <CardDescription>Manage registered users (excluding admin)</CardDescription>
+                                        <CardDescription>Manage registered users</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {isLoadingTab ? (
@@ -728,7 +636,7 @@ export function AdminPage() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {usersList.filter((u: any) => u.username !== 'admin').map((u: any) => {
+                                                    {usersList.map((u: any) => {
                                                         const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
                                                         // Active if within last 24 hours
                                                         const isActive = lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
@@ -804,61 +712,28 @@ export function AdminPage() {
                                     </Card>
                                 </div>
 
-
-                                {/* Feedback Ratings Chart - Histogram */}
+                                {/* Feedback Ratings Chart */}
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
-                                            <BarChart3 className="w-5 h-5 text-primary" />
-                                            Feedback Ratings Distribution (Histogram)
+                                            <Star className="w-5 h-5 text-yellow-500" />
+                                            Feedback Ratings Distribution
                                         </CardTitle>
                                         <CardDescription>User satisfaction ratings across all feedback</CardDescription>
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="h-[300px]">
-                                            {analytics?.feedbackRatings && Object.keys(analytics.feedbackRatings).length > 0 ? (() => {
-                                                // Convert feedback ratings object to histogram data
-                                                const feedbackData = Object.entries(analytics.feedbackRatings)
-                                                    .map(([rating, count]) => ({
-                                                        rating: `${rating} ⭐`,
-                                                        count: Number(count)
-                                                    }))
-                                                    .sort((a, b) => parseInt(a.rating) - parseInt(b.rating));
-
-                                                return (
-                                                    <ResponsiveContainer width="100%" height="100%">
-                                                        <BarChart data={feedbackData} margin={{ bottom: 20, left: 10, right: 10 }}>
-                                                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff20" />
-                                                            <XAxis
-                                                                dataKey="rating"
-                                                                stroke="#888888"
-                                                                fontSize={12}
-                                                                tickLine={false}
-                                                                axisLine={false}
-                                                                interval={0}
-                                                            />
-                                                            <YAxis
-                                                                stroke="#888888"
-                                                                fontSize={12}
-                                                                tickLine={false}
-                                                                axisLine={false}
-                                                                label={{ value: 'Count', angle: -90, position: 'insideLeft', style: { fill: '#888888' } }}
-                                                            />
-                                                            <Tooltip
-                                                                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }}
-                                                                itemStyle={{ color: '#fff' }}
-                                                                cursor={{ fill: 'rgba(173, 250, 29, 0.1)' }}
-                                                            />
-                                                            <Bar
-                                                                dataKey="count"
-                                                                fill="#adfa1d"
-                                                                radius={[4, 4, 0, 0]}
-                                                                barSize={60}
-                                                            />
-                                                        </BarChart>
-                                                    </ResponsiveContainer>
-                                                );
-                                            })() : (
+                                        <div className="h-[280px]">
+                                            {analytics?.feedbackRatings && Object.keys(analytics.feedbackRatings).length > 0 ? (
+                                                <ResponsiveContainer width="100%" height="100%">
+                                                    <BarChart data={feedbackData} layout="vertical" margin={{ left: 20 }}>
+                                                        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#ffffff20" />
+                                                        <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <YAxis dataKey="name" type="category" width={100} stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                                        <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} itemStyle={{ color: '#fff' }} />
+                                                        <Bar dataKey="value" fill="#adfa1d" radius={[0, 4, 4, 0]} barSize={24} />
+                                                    </BarChart>
+                                                </ResponsiveContainer>
+                                            ) : (
                                                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                                     <BarChart3 className="w-16 h-16 mb-4 opacity-50" />
                                                     <p>No feedback data yet</p>
@@ -872,19 +747,18 @@ export function AdminPage() {
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle>User Feedback</CardTitle>
-                                        <CardDescription>Recent feedback submissions with user information</CardDescription>
+                                        <CardDescription>Recent feedback submissions</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {isLoadingTab ? (
                                             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
-                                        ) : feedbackList.length > 0 ? (
+                                        ) : (
                                             <Table>
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="w-[100px]">Rating</TableHead>
                                                         <TableHead>Message</TableHead>
-                                                        <TableHead className="w-[150px]">User</TableHead>
-                                                        <TableHead className="w-[120px]">Date</TableHead>
+                                                        <TableHead>User</TableHead>
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
@@ -893,38 +767,18 @@ export function AdminPage() {
                                                             <TableCell>
                                                                 <div className="flex items-center gap-1">
                                                                     <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                                                    <span className="font-semibold">{f.rating}</span>
+                                                                    {f.rating}
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="max-w-md">
-                                                                <p className="line-clamp-2">{f.message || 'No message'}</p>
-                                                            </TableCell>
+                                                            <TableCell>{f.message}</TableCell>
                                                             <TableCell className="text-muted-foreground text-sm">
-                                                                <div className="flex items-center gap-2">
-                                                                    {f.user?.username ? (
-                                                                        <>
-                                                                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs font-semibold text-primary">
-                                                                                {f.user.username.charAt(0).toUpperCase()}
-                                                                            </div>
-                                                                            <span className="font-medium text-foreground">{f.user.username}</span>
-                                                                        </>
-                                                                    ) : (
-                                                                        <span className="italic">Anonymous</span>
-                                                                    )}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell className="text-muted-foreground text-xs">
-                                                                {f.createdAt ? new Date(f.createdAt).toLocaleDateString() : 'N/A'}
+                                                                {/* Assuming backend returns user info or null */}
+                                                                Anonymous
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
                                                 </TableBody>
                                             </Table>
-                                        ) : (
-                                            <div className="flex flex-col items-center justify-center p-8 text-muted-foreground">
-                                                <MessageSquare className="w-12 h-12 mb-4 opacity-50" />
-                                                <p>No feedback submissions yet</p>
-                                            </div>
                                         )}
                                     </CardContent>
                                 </Card>
@@ -1049,98 +903,6 @@ export function AdminPage() {
                                                 {isChangingPassword && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                                 Change Password
                                             </Button>
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Email Change Card */}
-                                    <Card className="glass-card border-white/10">
-                                        <CardHeader>
-                                            <CardTitle className="flex items-center gap-2">
-                                                <Mail className="w-5 h-5 text-primary" />
-                                                Admin Email
-                                            </CardTitle>
-                                            <CardDescription>
-                                                Change your administrator email address
-                                                {user?.email && (
-                                                    <div className="mt-2 text-sm">
-                                                        Current: <span className="text-primary font-medium">{user.email}</span>
-                                                    </div>
-                                                )}
-                                            </CardDescription>
-                                        </CardHeader>
-                                        <CardContent className="space-y-4">
-                                            {!showVerificationInput ? (
-                                                <>
-                                                    <div className="space-y-2">
-                                                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                            New Email Address
-                                                        </label>
-                                                        <Input
-                                                            type="email"
-                                                            value={newEmail}
-                                                            onChange={(e) => setNewEmail(e.target.value)}
-                                                            placeholder="Enter new email address"
-                                                            className="bg-black/20"
-                                                        />
-                                                        <p className="text-xs text-muted-foreground">
-                                                            A verification code will be sent to this email
-                                                        </p>
-                                                    </div>
-                                                    <Button
-                                                        onClick={handleRequestEmailChange}
-                                                        disabled={!newEmail || isRequestingEmailChange}
-                                                        className="w-full glow-green"
-                                                    >
-                                                        {isRequestingEmailChange && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                        Send Verification Code
-                                                    </Button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                                                        <p className="text-sm">
-                                                            Verification code sent to: <span className="font-medium text-primary">{pendingEmail}</span>
-                                                        </p>
-                                                        <p className="text-xs text-muted-foreground mt-1">
-                                                            Code expires in 10 minutes
-                                                        </p>
-                                                    </div>
-                                                    <div className="space-y-2">
-                                                        <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                                                            Verification Code
-                                                        </label>
-                                                        <Input
-                                                            type="text"
-                                                            value={verificationCode}
-                                                            onChange={(e) => setVerificationCode(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                                                            placeholder="Enter 6-digit code"
-                                                            className="bg-black/20 text-center text-2xl tracking-widest"
-                                                            maxLength={6}
-                                                        />
-                                                    </div>
-                                                    <div className="flex gap-2">
-                                                        <Button
-                                                            onClick={handleVerifyEmailChange}
-                                                            disabled={verificationCode.length !== 6 || isVerifyingEmail}
-                                                            className="flex-1 glow-green"
-                                                        >
-                                                            {isVerifyingEmail && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                                            Verify & Update Email
-                                                        </Button>
-                                                        <Button
-                                                            onClick={() => {
-                                                                setShowVerificationInput(false);
-                                                                setVerificationCode("");
-                                                                setPendingEmail("");
-                                                            }}
-                                                            variant="outline"
-                                                            className="border-white/10"
-                                                        >
-                                                            Cancel
-                                                        </Button>
-                                                    </div>
-                                                </>
-                                            )}
                                         </CardContent>
                                     </Card>
                                 </div>

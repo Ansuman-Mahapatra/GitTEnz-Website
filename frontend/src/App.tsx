@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter, HashRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { AnimatePresence } from "framer-motion";
 import { AuthProvider, useAuth } from "@/lib/auth";
@@ -15,6 +15,9 @@ import { AuthSuccessPage } from "./pages/AuthSuccessPage";
 import { HomePage } from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
 import { DemoOne } from "@/components/ui/demo";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
+const Router = import.meta.env.MODE === 'electron' ? HashRouter : BrowserRouter;
 
 const queryClient = new QueryClient();
 
@@ -131,19 +134,21 @@ function AppRoutes() {
 }
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <Router>
           <AuthProvider>
             <AppRoutes />
           </AuthProvider>
-        </BrowserRouter>
+        </Router>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;
