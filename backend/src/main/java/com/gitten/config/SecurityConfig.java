@@ -38,6 +38,12 @@ public class SecurityConfig {
                                                                 org.springframework.security.config.http.SessionCreationPolicy.IF_REQUIRED))
                                 .oauth2Login(oauth2 -> oauth2
                                                 .successHandler(oAuth2LoginSuccessHandler))
+                                .exceptionHandling(exceptions -> exceptions
+                                                .defaultAuthenticationEntryPointFor(
+                                                                new org.springframework.security.web.authentication.HttpStatusEntryPoint(
+                                                                                org.springframework.http.HttpStatus.UNAUTHORIZED),
+                                                                new org.springframework.security.web.util.matcher.AntPathRequestMatcher(
+                                                                                "/api/**")))
                                 .addFilterBefore(jwtAuthFilter,
                                                 org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
 

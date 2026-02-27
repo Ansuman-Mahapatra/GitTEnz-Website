@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
 import java.security.SecureRandom;
+import java.util.concurrent.ConcurrentHashMap;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -30,6 +32,37 @@ public class AuthController {
         this.emailService = emailService;
     }
 
+    private static class OtpData {
+        String otp;
+        LocalDateTime expiry;
+
+        OtpData(String otp, LocalDateTime expiry) {
+            this.otp = otp;
+            this.expiry = expiry;
+        }
+    }
+
+    private final ConcurrentHashMap<String, OtpData> signupOtpStore = new ConcurrentHashMap<>();
+
+    @PostMapping("/send-signup-otp")
+    public ResponseEntity<?> sendSignupOtp(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        if (email == null || email.trim().isEmpty())
+            return ResponseEntity.badRequest().body("Error: Email is required");
+
+        if (userRepository.findByEmail(email).isPresent()) {
+            return ResponseEntity.badRequest().body("Error: Email is already in use!");
+        }
+
+        SecureRandom secureRandom = new SecureRandom();
+        String otp = String.format("%06d", secureRandom.nextInt(1000000));
+        signupOtpStore.put(email, new OtpData(otp, LocalDateTime.now().plusMinutes(10)));
+
+        emailService.sendEmailVerification(email, otp);
+
+        return ResponseEntity.ok(java.util.Map.of("message", "Verification code sent to your email"));
+    }
+
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
@@ -40,7 +73,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Email is already in use!"); // Account already exists
         }
 
-        // Validate password strength
+        // Validate password strength first, before consuming the OTP
         if (request.getPassword() == null || request.getPassword().length() < 8) {
             return ResponseEntity.badRequest().body("Error: Password must be at least 8 characters long");
         }
@@ -48,21 +81,28 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Password must contain both letters and numbers");
         }
 
+        OtpData otpData = signupOtpStore.get(request.getEmail());
+        if (otpData == null || request.getOtp() == null || !otpData.otp.equals(request.getOtp())) {
+            return ResponseEntity.badRequest().body("Error: Invalid or missing Verification Code");
+        }
+        if (otpData.expiry.isBefore(LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Error: Verification Code Expired");
+        }
+
+        // Clear OTP so token isn't reused maliciously
+        signupOtpStore.remove(request.getEmail());
+
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setName(request.getName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.getName()); // Default avatar
+        user.setOnboardingCompleted(true);
 
-        User savedUser = userRepository.save(user);
-        savedUser.setLastActiveAt(java.time.LocalDateTime.now());
-        userRepository.save(savedUser);
+        userRepository.save(user);
 
-        // Generate Token
-        String token = jwtService.generateToken(new HashMap<>(), savedUser.getUsername());
-
-        return ResponseEntity.ok(new AuthResponse(token, savedUser));
+        return ResponseEntity.ok(java.util.Map.of("message", "Signup successful!"));
     }
 
     @PostMapping("/login")
@@ -77,6 +117,33 @@ public class AuthController {
         }
 
         User user = userOpt.get();
+
+        if (!user.isOnboardingCompleted()) {
+            return ResponseEntity.status(401)
+                    .body("Error: Email not verified. Please complete signup verification first.");
+        }
+
+        // Enforce GitHub verification
+        boolean githubVerificationRequired = false;
+        if (user.getLastGithubVerifiedAt() == null) {
+            githubVerificationRequired = true;
+        } else {
+            if (user.getLastActiveAt() != null) {
+                java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                java.time.Duration sinceLastActive = java.time.Duration.between(user.getLastActiveAt(), now);
+                if (sinceLastActive.toDays() >= 2) {
+                    githubVerificationRequired = true;
+                }
+            } else {
+                githubVerificationRequired = true;
+            }
+        }
+
+        if (githubVerificationRequired) {
+            return ResponseEntity.status(401)
+                    .body("GitHub verification required: You must verify with GitHub to continue using this account.");
+        }
+
         if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             return ResponseEntity.badRequest().body("Error: Invalid credentials");
         }
@@ -134,5 +201,53 @@ public class AuthController {
 
         String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
         return ResponseEntity.ok(new AuthResponse(token, user, false));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty())
+            return ResponseEntity.badRequest().body("User not found with this email");
+        User user = userOpt.get();
+
+        String token = java.util.UUID.randomUUID().toString();
+        user.setEmailVerificationToken(token);
+        user.setEmailVerificationExpiry(java.time.LocalDateTime.now().plusMinutes(15));
+        userRepository.save(user);
+
+        String resetLink = "http://localhost:5180/reset-password?token=" + token + "&email=" + email;
+        emailService.sendEmail(email, "Reset Your Password - GitTEnz",
+                "Hello,\n\nClick the link below to reset your password:\n\n" + resetLink
+                        + "\n\nThis link expires in 15 minutes.\n\nRegards,\nGitTEnz Team");
+
+        return ResponseEntity.ok(java.util.Map.of("message", "Reset password link sent to your email"));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody java.util.Map<String, String> request) {
+        String email = request.get("email");
+        String token = request.get("token");
+        String newPassword = request.get("newPassword");
+
+        Optional<User> userOpt = userRepository.findByEmail(email);
+        if (userOpt.isEmpty())
+            return ResponseEntity.badRequest().body("Error: User not found");
+        User user = userOpt.get();
+
+        if (user.getEmailVerificationToken() == null || !user.getEmailVerificationToken().equals(token)) {
+            return ResponseEntity.badRequest().body("Error: Invalid or expired token");
+        }
+        if (user.getEmailVerificationExpiry() == null
+                || user.getEmailVerificationExpiry().isBefore(java.time.LocalDateTime.now())) {
+            return ResponseEntity.badRequest().body("Error: Token expired");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        user.setEmailVerificationToken(null);
+        user.setEmailVerificationExpiry(null);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(java.util.Map.of("message", "Password reset successfully"));
     }
 }

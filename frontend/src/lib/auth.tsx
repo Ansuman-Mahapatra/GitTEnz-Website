@@ -23,7 +23,8 @@ interface AuthContextType {
   loading: boolean;
   signInWithGitHub: () => void;
   signInWithEmail: (data: any) => Promise<any>;
-  signUpWithEmail: (data: any) => Promise<void>;
+  signUpWithEmail: (data: any) => Promise<any>;
+  verifySignupOtp: (identifier: string, otp: string) => Promise<void>;
   verifyOtp: (identifier: string, otp: string) => Promise<void>;
   signOut: () => void;
   token: string | null;
@@ -169,6 +170,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(user);
   };
 
+  const verifySignupOtp = async (identifier: string, otp: string) => {
+    const res = await fetch(`${API_URL}/api/auth/verify-signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier, otp }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(errorText || "OTP verification failed");
+    }
+  };
+
   const signUpWithEmail = async (data: any) => {
     const res = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
@@ -181,13 +195,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(errorText || "Signup failed");
     }
 
-    const { token, user } = await res.json();
-    setToken(token);
-    setUser(user);
+    return await res.json();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signInWithEmail, signUpWithEmail, verifyOtp, signOut, token, setToken }}>
+    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signInWithEmail, signUpWithEmail, verifySignupOtp, verifyOtp, signOut, token, setToken }}>
       {children}
     </AuthContext.Provider>
   );

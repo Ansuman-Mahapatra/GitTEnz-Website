@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +13,22 @@ import { Particles } from "@/components/ui/particles";
 export function LoginPage() {
   const { signInWithEmail, signInWithGitHub, verifyOtp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     identifier: "",
     password: ""
   });
   const [otpRequired, setOtpRequired] = useState(false);
+  const [githubVerificationRequired, setGithubVerificationRequired] = useState(false);
   const [otp, setOtp] = useState("");
+
+  useEffect(() => {
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      toast.error(decodeURIComponent(errorParam));
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +44,12 @@ export function LoginPage() {
         navigate("/dashboard");
       }
     } catch (error: any) {
-      toast.error(error.message);
+      if (error.message && error.message.includes("GitHub verification required")) {
+        setGithubVerificationRequired(true);
+        toast.error("GitHub verification needed", { description: error.message });
+      } else {
+        toast.error(error.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,14 +101,14 @@ export function LoginPage() {
           <div className="w-full bg-background/40 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-[0_0_50px_-12px_rgba(0,0,0,0.5)] space-y-6">
             <div className="text-center space-y-2">
               <h1 className="text-3xl font-bold tracking-tight text-gradient">
-                {otpRequired ? "Verify Identity" : "Welcome Back"}
+                {otpRequired ? "Verify Identity" : githubVerificationRequired ? "GitHub Verification" : "Welcome Back"}
               </h1>
               <p className="text-sm text-muted-foreground">
-                {otpRequired ? "A 6-digit code has been sent to your email" : "Enter your credentials to access your dashboard"}
+                {otpRequired ? "A 6-digit code has been sent to your email" : githubVerificationRequired ? "Please verify your account to continue" : "Enter your credentials to access your dashboard"}
               </p>
             </div>
 
-            {!otpRequired ? (
+            {!otpRequired && !githubVerificationRequired && (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold uppercase tracking-wider opacity-70">Identifier</Label>
@@ -110,7 +124,7 @@ export function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold uppercase tracking-wider opacity-70">Password</Label>
-                    <span className="text-[10px] text-primary uppercase font-bold tracking-widest cursor-pointer hover:underline">Forgot?</span>
+                    <Link to="/forgot-password" className="text-[10px] text-primary uppercase font-bold tracking-widest cursor-pointer hover:underline">Forgot?</Link>
                   </div>
                   <Input
                     type="password"
@@ -126,26 +140,7 @@ export function LoginPage() {
                   {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Sign In"}
                 </Button>
 
-                <div className="relative py-2">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-white/5" />
-                  </div>
-                  <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em] font-bold">
-                    <span className="bg-transparent px-4 text-muted-foreground">
-                      Third Party
-                    </span>
-                  </div>
-                </div>
 
-                <Button
-                  variant="outline"
-                  className="w-full h-12 rounded-xl gap-3 border-white/10 hover:bg-white/5 transition-all hover:scale-[1.02]"
-                  onClick={signInWithGitHub}
-                  type="button"
-                >
-                  <Github className="w-5 h-5 text-primary" />
-                  <span className="font-semibold">Continue with GitHub</span>
-                </Button>
 
                 <p className="text-center text-xs text-muted-foreground pt-2">
                   Don't have an account?{" "}
@@ -154,7 +149,9 @@ export function LoginPage() {
                   </Link>
                 </p>
               </form>
-            ) : (
+            )}
+
+            {otpRequired && (
               <form onSubmit={handleOtpSubmit} className="space-y-6">
                 <div className="space-y-4">
                   <Label className="text-xs font-semibold uppercase tracking-wider opacity-70 text-center block w-full">Security Code</Label>
@@ -182,6 +179,32 @@ export function LoginPage() {
                   Back to Sign In
                 </Button>
               </form>
+            )}
+
+            {githubVerificationRequired && (
+               <div className="space-y-6">
+                 <div className="text-center space-y-4">
+                   <p className="text-sm text-muted-foreground">For security, you need to verify your account with GitHub before proceeding.</p>
+                 </div>
+                 <Button
+                  className="w-full h-14 rounded-xl gap-3 glow-green transition-all hover:scale-[1.02]"
+                  onClick={signInWithGitHub}
+                  type="button"
+                 >
+                   <Github className="w-5 h-5" />
+                   <span className="font-bold text-lg">Verify with GitHub</span>
+                 </Button>
+
+                 <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-white transition-colors"
+                  onClick={() => setGithubVerificationRequired(false)}
+                 >
+                   <ArrowLeft className="w-3 h-3 mr-2" />
+                   Back to Sign In
+                 </Button>
+               </div>
             )}
           </div>
 

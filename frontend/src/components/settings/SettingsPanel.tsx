@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { User, Bell, Palette, Shield, Code, Globe, Loader2, Save } from "lucide-react";
+import { User, Bell, Palette, Shield, Code, Globe, Loader2, Save, Github } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -170,6 +170,12 @@ export function SettingsPanel() {
         { id: "betaFeatures", label: "Beta Features", description: "Try experimental features" },
       ],
     },
+    {
+      title: "GitHub Connection",
+      icon: Github,
+      customContent: true,
+      settings: [],
+    }
   ];
 
   return (
@@ -267,6 +273,17 @@ export function SettingsPanel() {
                 <div className="flex flex-col items-center justify-center py-6 text-center space-y-2 bg-muted/20 border border-dashed rounded-md">
                   <p className="font-semibold text-muted-foreground">Coming Soon</p>
                   <p className="text-xs text-muted-foreground">This feature is currently under development.</p>
+                </div>
+              ) : section.customContent ? (
+                <div className="flex flex-col sm:flex-row items-center justify-between py-2 gap-4">
+                  <div className="space-y-1 text-center sm:text-left">
+                    <p className="text-sm font-medium">Status: {user?.id && user?.onboardingCompleted !== undefined ? "Verified" : "Connected (Verify Needed)"}</p>
+                    <p className="text-xs text-muted-foreground">GitHub must be verified to use all features, and re-verified if inactive for 3 days.</p>
+                  </div>
+                  <Button variant="outline" onClick={() => window.location.href = `${API_URL}/oauth2/authorization/github`} className="gap-2 shrink-0">
+                    <Github className="w-4 h-4" />
+                    Verify GitHub
+                  </Button>
                 </div>
               ) : (
                 section.settings.map((setting, index) => (

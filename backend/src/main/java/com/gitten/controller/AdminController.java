@@ -42,19 +42,24 @@ public class AdminController {
         if (!isAdmin(principal))
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
-        long totalUsers = userRepository.count();
+        // Exclude the permanent admin account from analytics where it would skew results
+        List<User> nonAdminUsers = userRepository.findAll().stream()
+                .filter(u -> u.getUsername() != null && !"admin".equals(u.getUsername()))
+                .toList();
+
+        long totalUsers = nonAdminUsers.size();
         long totalRepos = repositoryRepository.count();
         long totalFeedback = feedbackRepository.count();
 
         // User Growth
-        Map<String, Long> userGrowth = userRepository.findAll().stream()
+        Map<String, Long> userGrowth = nonAdminUsers.stream()
                 .filter(u -> u.getCreatedAt() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
                         u -> u.getCreatedAt().toLocalDate().toString(),
                         java.util.stream.Collectors.counting()));
 
         // Active Users (Users with most Repos)
-        List<Map<String, Object>> activeUsers = userRepository.findAll().stream()
+        List<Map<String, Object>> activeUsers = nonAdminUsers.stream()
                 .map(user -> {
                     long repoCount = repositoryRepository.findByOwner(user).size();
                     return Map.of("username", user.getUsername(), "repoCount", (Object) repoCount);
@@ -71,7 +76,7 @@ public class AdminController {
 
         // User Activation Status (Onboarded vs Not)
         Map<String, Long> userStatus = new java.util.HashMap<>();
-        long onboardedCount = userRepository.findAll().stream().filter(User::isOnboardingCompleted).count();
+        long onboardedCount = nonAdminUsers.stream().filter(User::isOnboardingCompleted).count();
         userStatus.put("Active", onboardedCount);
         userStatus.put("Pending", totalUsers - onboardedCount);
 

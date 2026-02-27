@@ -51,20 +51,37 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                         accessToken = "";
                 }
 
+                Object emailObj = oAuth2User.getAttribute("email");
+                String email = emailObj != null ? String.valueOf(emailObj) : null;
+
                 Object loginObj = oAuth2User.getAttributes().get("login");
                 String username = (loginObj != null) ? String.valueOf(loginObj) : "unknown";
 
                 // Save or Update User
-                User user = userRepository.findByUsername(username)
-                                .orElse(new User());
+                java.util.Optional<User> userOpt = java.util.Optional.empty();
+                if (email != null && !email.isBlank()) {
+                        userOpt = userRepository.findByEmail(email);
+                }
+                if (userOpt.isEmpty()) {
+                        userOpt = userRepository.findByUsername(username);
+                }
 
-                user.setUsername(username);
+                if (userOpt.isEmpty()) {
+                        // Not registered. Return error.
+                        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/login")
+                                        .queryParam("error",
+                                                        "GitHub login requires an existing account. Please sign up first and ensure your GitHub email or username matches.")
+                                        .build().toUriString();
+                        getRedirectStrategy().sendRedirect(request, response, targetUrl);
+                        return;
+                }
+
+                User user = userOpt.get();
 
                 Object nameObj = oAuth2User.getAttribute("name");
                 user.setName(nameObj != null ? String.valueOf(nameObj) : null);
 
-                Object emailObj = oAuth2User.getAttribute("email");
-                user.setEmail(emailObj != null ? String.valueOf(emailObj) : null);
+                user.setEmail(email != null ? email : null);
 
                 Object avatarObj = oAuth2User.getAttribute("avatar_url");
                 user.setAvatarUrl(avatarObj != null ? String.valueOf(avatarObj) : null);
@@ -74,10 +91,12 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 user.setGithubId(idObj != null ? String.valueOf(idObj) : null);
 
                 user.setAccessToken(accessToken);
+                // Record time of successful GitHub verification for 72h re-auth logic
+                user.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
 
                 userRepository.save(user);
 
-                String token = jwtService.generateToken(authentication);
+                String token = jwtService.generateToken(new java.util.HashMap<>(), user.getUsername());
 
                 String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/auth/success")
                                 .queryParam("token", token)

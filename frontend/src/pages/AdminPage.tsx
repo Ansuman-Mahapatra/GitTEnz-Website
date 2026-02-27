@@ -296,6 +296,12 @@ export function AdminPage() {
 
     return (
         <div className="flex h-screen bg-background overflow-hidden relative">
+            {/* Animated background similar to landing page */}
+            <div className="fixed inset-0 pointer-events-none -z-10">
+                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[400px] bg-primary/20 blur-[120px] rounded-full opacity-30" />
+                <div className="absolute bottom-10 right-10 w-72 h-72 bg-primary/10 rounded-full blur-[100px]" />
+            </div>
             <div className="hidden lg:block">
                 <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
@@ -401,11 +407,12 @@ export function AdminPage() {
                                                     <div className="h-[250px]">
                                                         {(() => {
                                                             // Calculate status from usersList
-                                                            const activeCount = usersList.filter(u => {
+                                                            const activeUsers = usersList.filter(u => u.username !== "admin");
+                                                            const activeCount = activeUsers.filter(u => {
                                                                 const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
                                                                 return lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
                                                             }).length;
-                                                            const inactiveCount = usersList.length - activeCount;
+                                                            const inactiveCount = activeUsers.length - activeCount;
                                                             // Visited is essentially Active for this context, but if "Visited" means something else like "Just visited site but not fully active", we can differentiate.
                                                             // For this chart request: Active, Inactive, Visited. Let's make "Visited" users who visited today but maybe not "Active" (redundant?).
                                                             // Actually, let's treat "Active" as within 24h, "Visited" as logged in ever (vs never), "Inactive" as never?
@@ -481,43 +488,6 @@ export function AdminPage() {
                                                 </CardContent>
                                             </Card>
 
-                                            {/* Feedback Ratings Pie Chart */}
-                                            <Card className="glass-card border-white/10 col-span-1">
-                                                <CardHeader>
-                                                    <CardTitle>Satisfaction</CardTitle>
-                                                    <CardDescription>User Feedback Ratings</CardDescription>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div className="h-[250px]">
-                                                        {feedbackData.length > 0 ? (
-                                                            <ResponsiveContainer width="100%" height="100%">
-                                                                <PieChart>
-                                                                    <Pie
-                                                                        data={feedbackData}
-                                                                        cx="50%"
-                                                                        cy="50%"
-                                                                        outerRadius={80}
-                                                                        fill="#8884d8"
-                                                                        dataKey="value"
-                                                                    >
-                                                                        {feedbackData.map((entry, index) => (
-                                                                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                                                        ))}
-                                                                    </Pie>
-                                                                    <Tooltip contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333' }} />
-                                                                    <Legend verticalAlign="bottom" height={36} />
-                                                                </PieChart>
-                                                            </ResponsiveContainer>
-                                                        ) : (
-                                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                                                <Star className="w-12 h-12 mb-2 opacity-50" />
-                                                                <p className="text-sm">No feedback yet</p>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-
                                             {/* User Growth Line Chart */}
                                             <Card className="glass-card border-white/10 col-span-full">
                                                 <CardHeader>
@@ -554,7 +524,7 @@ export function AdminPage() {
                             <TabsContent value="users" className="space-y-6">
                                 {/* User Stats Summary */}
                                 <div className="grid gap-4 md:grid-cols-3">
-                                    <Card className="glass-card border-white/10">
+                                            <Card className="glass-card border-white/10">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Total Users</CardTitle>
                                             <Users className="h-4 w-4 text-muted-foreground" />
@@ -564,7 +534,7 @@ export function AdminPage() {
                                             <p className="text-xs text-muted-foreground">Registered accounts</p>
                                         </CardContent>
                                     </Card>
-                                    <Card className="glass-card border-white/10">
+                                            <Card className="glass-card border-white/10">
                                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                             <CardTitle className="text-sm font-medium">Total Repos</CardTitle>
                                             <GitFork className="h-4 w-4 text-muted-foreground" />
@@ -636,7 +606,7 @@ export function AdminPage() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {usersList.map((u: any) => {
+                                                    {usersList.filter((u: any) => u.username !== "admin").map((u: any) => {
                                                         const lastActive = u.lastActiveAt ? new Date(u.lastActiveAt) : null;
                                                         // Active if within last 24 hours
                                                         const isActive = lastActive && (new Date().getTime() - lastActive.getTime()) < (24 * 60 * 60 * 1000);
@@ -747,38 +717,37 @@ export function AdminPage() {
                                 <Card className="glass-card border-white/10">
                                     <CardHeader>
                                         <CardTitle>User Feedback</CardTitle>
-                                        <CardDescription>Recent feedback submissions</CardDescription>
+                                        <CardDescription>Recent feedback with usernames and comments</CardDescription>
                                     </CardHeader>
                                     <CardContent>
                                         {isLoadingTab ? (
                                             <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>
+                                        ) : feedbackList.length === 0 ? (
+                                            <p className="text-sm text-muted-foreground">No feedback submitted yet.</p>
                                         ) : (
-                                            <Table>
-                                                <TableHeader>
-                                                    <TableRow>
-                                                        <TableHead className="w-[100px]">Rating</TableHead>
-                                                        <TableHead>Message</TableHead>
-                                                        <TableHead>User</TableHead>
-                                                    </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                    {feedbackList.map((f: any, i: number) => (
-                                                        <TableRow key={i}>
-                                                            <TableCell>
-                                                                <div className="flex items-center gap-1">
-                                                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                                                    {f.rating}
-                                                                </div>
-                                                            </TableCell>
-                                                            <TableCell>{f.message}</TableCell>
-                                                            <TableCell className="text-muted-foreground text-sm">
-                                                                {/* Assuming backend returns user info or null */}
-                                                                Anonymous
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))}
-                                                </TableBody>
-                                            </Table>
+                                            <div className="space-y-4">
+                                                {feedbackList.map((f: any, i: number) => (
+                                                    <div key={i} className="border border-white/5 rounded-lg p-4 bg-background/40 space-y-2">
+                                                        <div className="flex items-center justify-between gap-2">
+                                                            <div className="font-medium">
+                                                                {f.username || "Unknown user"}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-yellow-500">
+                                                                <Star className="w-4 h-4 fill-yellow-500" />
+                                                                <span className="text-sm font-semibold">{f.rating}/5</span>
+                                                            </div>
+                                                        </div>
+                                                        <p className="text-sm text-muted-foreground whitespace-pre-line">
+                                                            {f.comment || f.message}
+                                                        </p>
+                                                        {f.createdAt && (
+                                                            <p className="text-xs text-muted-foreground/70">
+                                                                {new Date(f.createdAt).toLocaleDateString()} {new Date(f.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
                                         )}
                                     </CardContent>
                                 </Card>

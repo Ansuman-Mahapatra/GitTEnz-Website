@@ -19,6 +19,9 @@ public class User {
 
     private String accessToken;
 
+    // Last time the user successfully verified via GitHub OAuth
+    private java.time.LocalDateTime lastGithubVerifiedAt;
+
     private boolean onboardingCompleted = false;
 
     private String password;
@@ -77,6 +80,14 @@ public class User {
 
     public void setAccessToken(String accessToken) {
         this.accessToken = accessToken;
+    }
+
+    public java.time.LocalDateTime getLastGithubVerifiedAt() {
+        return lastGithubVerifiedAt;
+    }
+
+    public void setLastGithubVerifiedAt(java.time.LocalDateTime lastGithubVerifiedAt) {
+        this.lastGithubVerifiedAt = lastGithubVerifiedAt;
     }
 
     public boolean isOnboardingCompleted() {
