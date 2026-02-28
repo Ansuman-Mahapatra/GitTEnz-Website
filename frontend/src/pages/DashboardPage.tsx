@@ -24,6 +24,8 @@ import { HelpSection } from "@/components/dashboard/HelpSection";
 import { PrivacyPolicySection } from "@/components/dashboard/PrivacyPolicySection";
 import { toast } from "sonner";
 import { EtheralShadow } from "@/components/ui/etheral-shadow";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { GitPushAnalyzerModal } from "@/components/dashboard/GitPushAnalyzerModal";
 
 export function DashboardPage() {
   const { username } = useParams();
@@ -41,6 +43,53 @@ export function DashboardPage() {
 
   // Activity State
   const [activityTimeframe, setActivityTimeframe] = useState<"weekly" | "monthly">("weekly");
+
+  // Git Analyzer Modal State
+  const [analyzerParams, setAnalyzerParams] = useState<{ dirHandle: any } | null>(null);
+
+  // Dialog state for notifications
+  const [dialogState, setDialogState] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    description: "",
+    confirmText: "Yes",
+    cancelText: "Cancel",
+    onConfirm: () => {},
+    onCancel: () => {},
+  });
+
+  const confirmDialog = (title: string, description: string, confirmText = "Yes", cancelText = "Cancel") => {
+    return new Promise<boolean>((resolve) => {
+      setDialogState({
+        isOpen: true,
+        title,
+        description,
+        confirmText,
+        cancelText,
+        onConfirm: () => {
+          setDialogState((prev) => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialogState((prev) => ({ ...prev, isOpen: false }));
+          resolve(false);
+        },
+      });
+    });
+  };
+
+  // Clear search when switching tabs
+  useEffect(() => {
+    setSearchQuery("");
+  }, [activeTab]);
 
   const { token, user, setToken } = useAuth(); // Assuming setToken or setUser is available or we trigger refetch?
   // We can't update user easily in AuthContext without a setUser exposed. 
@@ -510,67 +559,14 @@ export function DashboardPage() {
                     onClick={async () => {
                       try {
                         // @ts-ignore - File System Access API
-                        const dirHandle = await window.showDirectoryPicker();
-
-                        // Check for .git directory to verify it is an initialized repo
-                        let isGit = false;
-                        try {
-                          // @ts-ignore
-                          await dirHandle.getDirectoryHandle('.git');
-                          isGit = true;
-                        } catch (e) {
-                          // Not found
-                        }
-
-                        if (!isGit) {
-                          alert("The selected folder is not a git initialized repository. Please initialize git first.");
-                          return;
-                        }
-
-                        const repoName = dirHandle.name;
-                        // Check for specific project files
-                        let language = "Unknown";
-                        try {
-                          // Check for package.json (Node/JS/TS)
-                          // @ts-ignore
-                          const pkgHandle = await dirHandle.getFileHandle('package.json').catch(() => null);
-                          if (pkgHandle) language = "JavaScript/TypeScript";
-
-                          // Check for pom.xml (Java)
-                          // @ts-ignore
-                          const pomHandle = await dirHandle.getFileHandle('pom.xml').catch(() => null);
-                          if (pomHandle) language = "Java";
-
-                          // Check for requirements.txt (Python)
-                          // @ts-ignore
-                          const pyHandle = await dirHandle.getFileHandle('requirements.txt').catch(() => null);
-                          if (pyHandle) language = "Python";
-
-                          // Check for Cargo.toml (Rust)
-                          // @ts-ignore
-                          const rustHandle = await dirHandle.getFileHandle('Cargo.toml').catch(() => null);
-                          if (rustHandle) language = "Rust";
-                        } catch (e) { console.error(e); }
-
-                        const newRepo = {
-                          name: repoName,
-                          description: `Local ${language} project`,
-                          language: language,
-                          visibility: "local",
-                          stargazersCount: 0,
-                          forksCount: 0,
-                          updatedAt: new Date().toISOString(),
-                          handle: dirHandle
-                        };
-
-                        // @ts-ignore
-                        setLocalReposResults([newRepo]);
+                        const dirHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                        setAnalyzerParams({ dirHandle });
                       } catch (err: any) {
                         if (err.name === 'AbortError') {
                           console.log("User cancelled selection");
                         } else {
                           console.error("Local repo error", err);
-                          alert("Failed to access folder. Browser may not support this feature.");
+                          toast.error("Failed to access folder. Browser may not support this feature or permission denied.");
                         }
                       }
                     }}
@@ -710,21 +706,69 @@ export function DashboardPage() {
             <Menu className="w-5 h-5" />
           </Button>
           <main className="flex-1 overflow-auto p-4 lg:p-6">
-            <div className="mb-6 flex items-center gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search repositories, commits..."
-                  className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+            {activeTab === "repositories" && (
+              <div className="mb-6 flex items-center gap-4">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search repositories..."
+                    className="pl-9 bg-background/50 border-white/10 focus-visible:ring-primary/50"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                </div>
               </div>
-            </div>
+            )}
             {renderContent()}
           </main>
         </div>
       </div>
+
+      {/* Website Notification Dialog */}
+      <AlertDialog open={dialogState.isOpen} onOpenChange={(open) => !open && dialogState.onCancel()}>
+        <AlertDialogContent className="glass-card border-primary/20 backdrop-blur-xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>{dialogState.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              {dialogState.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={dialogState.onCancel} className="hover:bg-white/5 border-white/10">
+              {dialogState.cancelText || "Cancel"}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={dialogState.onConfirm} className="glow-green flex-1 sm:flex-none">
+              {dialogState.confirmText || "Yes"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* GitPushAnalyzer Modal */}
+      <GitPushAnalyzerModal 
+        isOpen={!!analyzerParams} 
+        onClose={() => setAnalyzerParams(null)} 
+        dirHandle={analyzerParams?.dirHandle || null} 
+        username={user?.username || 'user'}
+        onContinue={(analysis) => {
+           if(analyzerParams?.dirHandle) {
+             const newRepo = {
+                name: analyzerParams.dirHandle.name,
+                description: `Local ${analysis.language} project`,
+                language: analysis.language,
+                visibility: "local",
+                stargazersCount: 0,
+                forksCount: 0,
+                updatedAt: new Date().toISOString(),
+                handle: analyzerParams.dirHandle
+             };
+             // @ts-ignore
+             setLocalReposResults([newRepo]);
+             toast.success("Project successfully onboarded and loaded!");
+           }
+           setAnalyzerParams(null);
+        }}
+      />
     </div>
   );
 }
