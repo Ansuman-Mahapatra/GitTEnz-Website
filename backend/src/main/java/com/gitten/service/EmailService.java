@@ -32,7 +32,7 @@ public class EmailService {
         }
     }
 
-    public void sendEmailVerification(String to, String verificationToken) {
+    public boolean sendEmailVerification(String to, String verificationToken) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -46,13 +46,14 @@ public class EmailService {
                     + "Regards,\nGitTEnz Team");
             mailSender.send(message);
             log.info("Verification email sent to {}", to);
+            return true;
         } catch (Exception e) {
             log.error("Failed to send verification email: {}", e.getMessage());
-            throw new RuntimeException("Failed to send verification email", e);
+            return false;
         }
     }
 
-    public void sendEmail(String to, String subject, String body) {
+    public boolean sendEmail(String to, String subject, String body) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(fromEmail);
@@ -61,9 +62,10 @@ public class EmailService {
             message.setText(body);
             mailSender.send(message);
             log.info("Email sent to {}", to);
+            return true;
         } catch (Exception e) {
             log.error("Failed to send email: {}", e.getMessage());
-            throw new RuntimeException("Failed to send email", e);
+            return false;
         }
     }
 }

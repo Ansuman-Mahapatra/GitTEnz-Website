@@ -62,7 +62,12 @@ public class AuthController {
         String otp = String.format("%06d", secureRandom.nextInt(1000000));
         signupOtpStore.put(email, new OtpData(otp, LocalDateTime.now().plusMinutes(10)));
 
-        emailService.sendEmailVerification(email, otp);
+        boolean emailSent = emailService.sendEmailVerification(email, otp);
+        if (!emailSent) {
+            signupOtpStore.remove(email);
+            return ResponseEntity.status(500)
+                    .body("Error: Failed to process email verification OTP. Email server timeout or delivery failed.");
+        }
 
         return ResponseEntity.ok(java.util.Map.of("message", "Verification code sent to your email"));
     }
@@ -238,9 +243,14 @@ public class AuthController {
         }
 
         String resetLink = baseUrl + "/reset-password?token=" + token + "&email=" + email;
-        emailService.sendEmail(email, "Reset Your Password - GitTEnz",
+        boolean emailSent = emailService.sendEmail(email, "Reset Your Password - GitTEnz",
                 "Hello " + user.getUsername() + ",\n\nClick the link below to reset your password:\n\n" + resetLink
                         + "\n\nThis link expires in 15 minutes.\n\nRegards,\nGitTEnz Team");
+
+        if (!emailSent) {
+            return ResponseEntity.status(500)
+                    .body("Error: Failed to send reset link. Email server timeout or delivery failed.");
+        }
 
         return ResponseEntity.ok(java.util.Map.of("message", "Reset password link sent to your email"));
     }
