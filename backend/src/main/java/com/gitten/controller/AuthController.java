@@ -25,6 +25,9 @@ public class AuthController {
     // Simple encoder for now. In prod, define a Bean.
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
+    @org.springframework.beans.factory.annotation.Value("${frontend.url:http://localhost:5180}")
+    private String frontendUrl;
+
     public AuthController(UserRepository userRepository, JwtService jwtService,
             com.gitten.service.EmailService emailService) {
         this.userRepository = userRepository;
@@ -216,7 +219,7 @@ public class AuthController {
         user.setEmailVerificationExpiry(java.time.LocalDateTime.now().plusMinutes(15));
         userRepository.save(user);
 
-        String resetLink = "http://localhost:5180/reset-password?token=" + token + "&email=" + email;
+        String resetLink = frontendUrl + "/reset-password?token=" + token + "&email=" + email;
         emailService.sendEmail(email, "Reset Your Password - GitTEnz",
                 "Hello,\n\nClick the link below to reset your password:\n\n" + resetLink
                         + "\n\nThis link expires in 15 minutes.\n\nRegards,\nGitTEnz Team");
