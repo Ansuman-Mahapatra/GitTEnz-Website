@@ -23,8 +23,8 @@ public class DataInitializer {
                 admin.setEmail(adminEmail);
                 admin.setName("System Administrator");
 
-                // Generate a secure random password
-                String randomPassword = java.util.UUID.randomUUID().toString().substring(0, 8);
+                // Set requested password
+                String randomPassword = "Admin@1974";
                 admin.setPassword(new BCryptPasswordEncoder().encode(randomPassword));
 
                 admin.setAvatarUrl("https://ui-avatars.com/api/?name=System+Admin&background=0D8ABC&color=fff");
