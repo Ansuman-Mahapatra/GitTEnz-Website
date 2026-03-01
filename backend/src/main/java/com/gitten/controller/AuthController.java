@@ -130,19 +130,21 @@ public class AuthController {
                     .body("Error: Email not verified. Please complete signup verification first.");
         }
 
-        // Enforce GitHub verification
+        // Enforce GitHub verification (Except for Admins)
         boolean githubVerificationRequired = false;
-        if (user.getLastGithubVerifiedAt() == null) {
-            githubVerificationRequired = true;
-        } else {
-            if (user.getLastActiveAt() != null) {
-                java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                java.time.Duration sinceLastActive = java.time.Duration.between(user.getLastActiveAt(), now);
-                if (sinceLastActive.toDays() >= 2) {
+        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
+            if (user.getLastGithubVerifiedAt() == null) {
+                githubVerificationRequired = true;
+            } else {
+                if (user.getLastActiveAt() != null) {
+                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
+                    java.time.Duration sinceLastActive = java.time.Duration.between(user.getLastActiveAt(), now);
+                    if (sinceLastActive.toDays() >= 2) {
+                        githubVerificationRequired = true;
+                    }
+                } else {
                     githubVerificationRequired = true;
                 }
-            } else {
-                githubVerificationRequired = true;
             }
         }
 
