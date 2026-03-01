@@ -29,6 +29,8 @@ public class SecurityConfig {
                                 .csrf(csrf -> csrf.disable())
                                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                                 .authorizeHttpRequests(auth -> auth
+                                                .requestMatchers(org.springframework.http.HttpMethod.OPTIONS, "/**")
+                                                .permitAll()
                                                 .requestMatchers("/", "/login**", "/error", "/api/public/**",
                                                                 "/api/auth/**")
                                                 .permitAll()
@@ -67,7 +69,7 @@ public class SecurityConfig {
                 }
                 configuration.setAllowedOrigins(allowedOrigins);
                 configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-                configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type"));
+                configuration.setAllowedHeaders(java.util.List.of("*"));
                 configuration.setAllowCredentials(true);
                 org.springframework.web.cors.UrlBasedCorsConfigurationSource source = new org.springframework.web.cors.UrlBasedCorsConfigurationSource();
                 source.registerCorsConfiguration("/**", configuration);
