@@ -54,7 +54,8 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Email is required");
 
         if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: Email is already in use!");
+            return ResponseEntity.badRequest().body(
+                    "Error: Email already exists. One email is related to only one account and cannot be used for another.");
         }
 
         SecureRandom secureRandom = new SecureRandom();
@@ -73,7 +74,10 @@ public class AuthController {
         }
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body("Error: Email is already in use!"); // Account already exists
+            return ResponseEntity.badRequest().body(
+                    "Error: Email already exists. One email is related to only one account and cannot be used for another."); // Account
+                                                                                                                              // already
+                                                                                                                              // exists
         }
 
         // Validate password strength first, before consuming the OTP
