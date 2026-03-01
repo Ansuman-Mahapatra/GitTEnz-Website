@@ -184,6 +184,9 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     public List<java.util.Map<String, Object>> getUserEvents(String username, String oauthToken) {
         log.info("Fetching events for user: {}", username);
+        if (oauthToken == null || oauthToken.isEmpty()) {
+            return new ArrayList<>();
+        }
         return restClient.get()
                 .uri("/users/" + username + "/events?per_page=100")
                 .header("Authorization", "Bearer " + oauthToken)
@@ -195,6 +198,9 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     public List<java.util.Map<String, Object>> getStarredRepositories(String username, String oauthToken) {
         log.info("Fetching starred repositories for user: {}", username);
+        if (oauthToken == null || oauthToken.isEmpty()) {
+            return new ArrayList<>();
+        }
         return restClient.get()
                 .uri("/users/" + username + "/starred?per_page=100&sort=created")
                 .header("Authorization", "Bearer " + oauthToken)

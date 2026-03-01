@@ -135,6 +135,7 @@ export function SettingsPanel() {
     {
       title: "Appearance",
       icon: Palette,
+      comingSoon: true,
       settings: [
         { id: "darkMode", label: "Dark Mode", description: "Use dark theme across the application" },
         { id: "animations", label: "Animations", description: "Enable smooth transitions and animations" },
@@ -144,6 +145,7 @@ export function SettingsPanel() {
     {
       title: "Notifications",
       icon: Bell,
+      comingSoon: true,
       settings: [
         { id: "pushNotifications", label: "Push Notifications", description: "Receive push notifications" },
         { id: "emailNotifications", label: "Email Notifications", description: "Receive email updates" },
