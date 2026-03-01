@@ -2,7 +2,6 @@ package com.gitten.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
@@ -18,13 +17,17 @@ public class EmailService {
 
     public void sendOtp(String to, String otp) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject("GitTEnz Admin Login OTP");
-            message.setText("Your OTP for Admin Access is: " + otp
+            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    mimeMessage, "utf-8");
+
+            helper.setFrom(fromEmail, "GitTEnz");
+            helper.setTo(to);
+            helper.setSubject("GitTEnz Admin Login OTP");
+            helper.setText("Your OTP for Admin Access is: " + otp
                     + "\n\nThis code expires in 5 minutes.\n\nRegards,\nGitTEnz Team");
-            mailSender.send(message);
+
+            mailSender.send(mimeMessage);
             log.info("OTP Email sent to {}", to);
         } catch (Exception e) {
             log.error("Failed to send OTP email: {}", e.getMessage());
@@ -34,17 +37,21 @@ public class EmailService {
 
     public boolean sendEmailVerification(String to, String verificationToken) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject("GitTEnz - Verify Your Email Address");
-            message.setText("Hello,\n\n"
+            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    mimeMessage, "utf-8");
+
+            helper.setFrom(fromEmail, "GitTEnz");
+            helper.setTo(to);
+            helper.setSubject("GitTEnz - Verify Your Email Address");
+            helper.setText("Hello,\n\n"
                     + "Please verify your email address by entering this verification code:\n\n"
                     + verificationToken + "\n\n"
                     + "This code expires in 10 minutes.\n\n"
                     + "If you didn't request this, please ignore this email.\n\n"
                     + "Regards,\nGitTEnz Team");
-            mailSender.send(message);
+
+            mailSender.send(mimeMessage);
             log.info("Verification email sent to {}", to);
             return true;
         } catch (Exception e) {
@@ -55,12 +62,16 @@ public class EmailService {
 
     public boolean sendEmail(String to, String subject, String body) {
         try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom(fromEmail);
-            message.setTo(to);
-            message.setSubject(subject);
-            message.setText(body);
-            mailSender.send(message);
+            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
+            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
+                    mimeMessage, "utf-8");
+
+            helper.setFrom(fromEmail, "GitTEnz");
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body);
+
+            mailSender.send(mimeMessage);
             log.info("Email sent to {}", to);
             return true;
         } catch (Exception e) {
