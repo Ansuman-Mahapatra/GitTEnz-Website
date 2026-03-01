@@ -213,7 +213,8 @@ public class AuthController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request) {
+    public ResponseEntity<?> forgotPassword(@RequestBody java.util.Map<String, String> request,
+            jakarta.servlet.http.HttpServletRequest httpRequest) {
         String email = request.get("email");
         Optional<User> userOpt = userRepository.findByEmail(email);
         if (userOpt.isEmpty())
@@ -225,9 +226,20 @@ public class AuthController {
         user.setEmailVerificationExpiry(java.time.LocalDateTime.now().plusMinutes(15));
         userRepository.save(user);
 
-        String resetLink = frontendUrl + "/reset-password?token=" + token + "&email=" + email;
+        String origin = httpRequest.getHeader("Origin");
+        String baseUrl = frontendUrl; // Default fallback from application.yml / env vars
+        if (origin != null && !origin.isEmpty()) {
+            baseUrl = origin; // Prioritize the exact URL that requested the reset
+        } else {
+            String referer = httpRequest.getHeader("Referer");
+            if (referer != null && !referer.isEmpty()) {
+                baseUrl = referer.endsWith("/") ? referer.substring(0, referer.length() - 1) : referer;
+            }
+        }
+
+        String resetLink = baseUrl + "/reset-password?token=" + token + "&email=" + email;
         emailService.sendEmail(email, "Reset Your Password - GitTEnz",
-                "Hello,\n\nClick the link below to reset your password:\n\n" + resetLink
+                "Hello " + user.getUsername() + ",\n\nClick the link below to reset your password:\n\n" + resetLink
                         + "\n\nThis link expires in 15 minutes.\n\nRegards,\nGitTEnz Team");
 
         return ResponseEntity.ok(java.util.Map.of("message", "Reset password link sent to your email"));
