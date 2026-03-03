@@ -46,9 +46,6 @@ public class EmailService {
                 log.error("Failed to send email via Resend API. Status: {}", response.getStatusCode());
                 return false;
             }
-        } catch (org.springframework.web.client.HttpClientErrorException e) {
-            log.error("Failed to call Resend API: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            return false;
         } catch (Exception e) {
             log.error("Failed to call Resend API: {}", e.getMessage());
             return false;
