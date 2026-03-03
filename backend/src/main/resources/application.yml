@@ -33,7 +33,7 @@ spring:
   security:
     jwt:
       secret-key: ${JWT_SECRET_KEY}
-      expiration: 86400000
+      expiration: 315360000000 # 10 years in ms (frontend handles 30 day inactivity)
     oauth2:
       client:
         registration:

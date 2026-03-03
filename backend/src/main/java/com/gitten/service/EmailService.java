@@ -52,10 +52,21 @@ public class EmailService {
                     + "Regards,\nGitTEnz Team");
 
             mailSender.send(mimeMessage);
-            log.info("Verification email sent to {}", to);
+            log.info("[EMAIL] Verification email sent successfully to {}", to);
             return true;
         } catch (Exception e) {
-            log.error("Failed to send verification email: {}", e.getMessage());
+            log.error("================================================================");
+            log.error("[EMAIL FAILURE] Could not send verification email to: {}", to);
+            log.error("[EMAIL FAILURE] Error type: {}", e.getClass().getSimpleName());
+            log.error("[EMAIL FAILURE] Reason: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("[EMAIL FAILURE] Root cause: {}", e.getCause().getMessage());
+            }
+            log.error(
+                    "[EMAIL FAILURE] This is likely because the hosting platform (e.g. Render free tier) blocks outbound SMTP port 587.");
+            log.error(
+                    "[EMAIL FAILURE] Fix: Upgrade Render plan, switch to Railway, or use an HTTP email API like Resend/Brevo.");
+            log.error("================================================================");
             return false;
         }
     }
@@ -72,10 +83,22 @@ public class EmailService {
             helper.setText(body);
 
             mailSender.send(mimeMessage);
-            log.info("Email sent to {}", to);
+            log.info("[EMAIL] Email sent successfully to {}", to);
             return true;
         } catch (Exception e) {
-            log.error("Failed to send email: {}", e.getMessage());
+            log.error("================================================================");
+            log.error("[EMAIL FAILURE] Could not send email to: {}", to);
+            log.error("[EMAIL FAILURE] Subject: {}", subject);
+            log.error("[EMAIL FAILURE] Error type: {}", e.getClass().getSimpleName());
+            log.error("[EMAIL FAILURE] Reason: {}", e.getMessage());
+            if (e.getCause() != null) {
+                log.error("[EMAIL FAILURE] Root cause: {}", e.getCause().getMessage());
+            }
+            log.error(
+                    "[EMAIL FAILURE] This is likely because the hosting platform (e.g. Render free tier) blocks outbound SMTP port 587.");
+            log.error(
+                    "[EMAIL FAILURE] Fix: Upgrade Render plan, switch to Railway, or use an HTTP email API like Resend/Brevo.");
+            log.error("================================================================");
             return false;
         }
     }

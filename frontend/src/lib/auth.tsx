@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { API_URL } from "@/config";
 
-const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes
+const INACTIVITY_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 export interface User {
   username: string;
@@ -37,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setTokenState] = useState<string | null>(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
-  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchUser = useCallback(async (authToken: string) => {
     try {
@@ -83,27 +82,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [fetchUser]);
 
-  // 5-minute inactivity auto-logout
+  // 30-day inactivity auto-logout (rolling session)
   useEffect(() => {
     if (!user || !token) return;
 
-    const resetTimer = () => {
-      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
-      inactivityTimerRef.current = setTimeout(() => {
+    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+    let activityTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const checkAndResetTimer = () => {
+      const now = Date.now();
+      const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
+      
+      // If returning after being away too long, log out immediately
+      if (lastActivityStr) {
+        const lastActivity = parseInt(lastActivityStr, 10);
+        if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+          if (typeof window !== "undefined") {
+            window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
+          }
+          signOut();
+          return;
+        }
+      }
+      
+      // Update activity timestamp in local storage
+      localStorage.setItem("lastActivityTimestamp", now.toString());
+
+      // Set the active session timeout
+      if (activityTimer) clearTimeout(activityTimer);
+      activityTimer = setTimeout(() => {
         if (typeof window !== "undefined") {
-          window.alert("Session expired. You have been logged out due to 5 minutes of inactivity. Please log in again.");
+          window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
         }
         signOut();
       }, INACTIVITY_TIMEOUT_MS);
     };
 
-    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
-    resetTimer();
+    // Throttle the local storage writes so they only happen max once every 30 seconds
+    const handleActivity = () => {
+      if (throttleTimer) return;
+      throttleTimer = setTimeout(() => {
+        checkAndResetTimer();
+        throttleTimer = null;
+      }, 30000); 
+    };
 
-    events.forEach((ev) => window.addEventListener(ev, resetTimer));
+    const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
+    
+    // Initial check on mount
+    checkAndResetTimer();
+
+    events.forEach((ev) => window.addEventListener(ev, handleActivity));
     return () => {
-      events.forEach((ev) => window.removeEventListener(ev, resetTimer));
-      if (inactivityTimerRef.current) clearTimeout(inactivityTimerRef.current);
+      events.forEach((ev) => window.removeEventListener(ev, handleActivity));
+      if (activityTimer) clearTimeout(activityTimer);
+      if (throttleTimer) clearTimeout(throttleTimer);
     };
   }, [user, token, signOut]);
 

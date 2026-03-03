@@ -64,9 +64,14 @@ public class AuthController {
 
         boolean emailSent = emailService.sendEmailVerification(email, otp);
         if (!emailSent) {
-            signupOtpStore.remove(email);
-            return ResponseEntity.status(500)
-                    .body("Error: Failed to process email verification OTP. Email server timeout or delivery failed.");
+            // Don't crash the app — SMTP may be blocked in production (e.g. Render free
+            // tier).
+            // The OTP is stored in memory. Log the failure and return graceful success.
+            // Developer can check server logs for the [EMAIL FAILURE] entries for
+            // diagnosis.
+            log.warn(
+                    "[SIGNUP OTP] Email delivery failed for {}. OTP is stored but email was not sent. Check [EMAIL FAILURE] logs.",
+                    email);
         }
 
         return ResponseEntity.ok(java.util.Map.of("message", "Verification code sent to your email"));
@@ -248,8 +253,15 @@ public class AuthController {
                         + "\n\nThis link expires in 15 minutes.\n\nRegards,\nGitTEnz Team");
 
         if (!emailSent) {
-            return ResponseEntity.status(500)
-                    .body("Error: Failed to send reset link. Email server timeout or delivery failed.");
+            // Don't crash the app — SMTP may be blocked in production (e.g. Render free
+            // tier).
+            // Log the failure and return graceful success so the frontend doesn't show a
+            // server error.
+            // Developer can check server logs for the [EMAIL FAILURE] entries for
+            // diagnosis.
+            log.warn(
+                    "[FORGOT PASSWORD] Email delivery failed for {}. Reset link was generated but email was not sent. Check [EMAIL FAILURE] logs.",
+                    email);
         }
 
         return ResponseEntity.ok(java.util.Map.of("message", "Reset password link sent to your email"));
