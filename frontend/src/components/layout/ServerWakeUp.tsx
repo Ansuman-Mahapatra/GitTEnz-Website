@@ -4,9 +4,10 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // ─── constants ────────────────────────────────────────────────
 const HEALTH_URL = `${API_URL}/api/public/health`;
-const PING_INTERVAL_MS = 3000;          // retry every 3 s when offline
+const FAST_PING_TIMEOUT_MS = 800;       // if backend responds within 800ms, skip overlay entirely
+const PING_INTERVAL_MS = 3000;          // retry every 3s when offline
 const BACKGROUND_PING_MS = 5 * 60 * 1000; // check every 5 mins when online
-const LONG_WAIT_THRESHOLD_MS = 5000;    // show full card after 5 s
+const LONG_WAIT_THRESHOLD_MS = 5000;    // show full card after 5s
 
 // ─── helpers ──────────────────────────────────────────────────
 function formatElapsed(ms: number) {
@@ -19,7 +20,6 @@ function clamp(v: number, min: number, max: number) {
   return Math.min(max, Math.max(min, v));
 }
 
-// Stage descriptions shown in sequence
 const STAGES = [
   { threshold: 0,   label: "Connecting to server…"           },
   { threshold: 8,   label: "Initializing backend…"          },
@@ -41,9 +41,7 @@ function getStage(elapsed: number) {
 function GridBackground() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Radial glow at center */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_60%,rgba(34,197,94,0.08),transparent)]" />
-      {/* Grid */}
       <div
         className="absolute inset-0 opacity-[0.04]"
         style={{
@@ -60,7 +58,6 @@ function GridBackground() {
 function LogoRing() {
   return (
     <div className="relative w-24 h-24 flex items-center justify-center">
-      {/* Outer slow spin */}
       <motion.div
         className="absolute inset-0 rounded-full border-2 border-transparent"
         style={{
@@ -71,7 +68,6 @@ function LogoRing() {
         animate={{ rotate: 360 }}
         transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
       />
-      {/* Inner faster spin (opposite) */}
       <motion.div
         className="absolute inset-2 rounded-full border border-transparent"
         style={{
@@ -82,13 +78,11 @@ function LogoRing() {
         animate={{ rotate: -360 }}
         transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
       />
-      {/* Pulse blob */}
       <motion.div
         className="absolute inset-0 rounded-full bg-green-500/10"
         animate={{ scale: [1, 1.25, 1], opacity: [0.6, 0, 0.6] }}
         transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
       />
-      {/* Logo text */}
       <span className="relative z-10 text-xl font-black tracking-tight text-green-400 select-none">
         GT
       </span>
@@ -111,7 +105,7 @@ function ProgressBar({ progress }: { progress: number }) {
   );
 }
 
-// ─── Dot bounce loader (used at initial glance) ────────────────
+// ─── Dot bounce loader ────────────────────────────────────────
 function DotLoader() {
   return (
     <div className="flex gap-1.5">
@@ -134,108 +128,129 @@ function DotLoader() {
 
 // ─── main export ─────────────────────────────────────────────
 export function ServerWakeUp({ children }: { children: React.ReactNode }) {
+  // "checking" = silent fast-ping in progress, no overlay shown
+  // "waking"   = backend is slow / cold starting, overlay visible
+  // "up"       = backend just responded, short transition away
+  // "done"     = overlay gone, full app visible
   const [status, setStatus] = useState<"checking" | "waking" | "up" | "done">("checking");
-  const [elapsed, setElapsed]       = useState(0);
-  const [showCard, setShowCard]     = useState(false);
-  const [fadeOut, setFadeOut]       = useState(false);
+  const [elapsed, setElapsed]   = useState(0);
+  const [showCard, setShowCard] = useState(false);
+  const [fadeOut, setFadeOut]   = useState(false);
 
-  const startTimeRef   = useRef<number>(Date.now());
-  const mountedRef     = useRef(true);
-  const elapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const pingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startTimeRef      = useRef<number>(Date.now());
+  const mountedRef        = useRef(true);
+  const elapsedTimerRef   = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pingTimeoutRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const overlayTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── ping loop
   useEffect(() => {
     mountedRef.current = true;
-    startTimeRef.current = Date.now();
 
-    // Elapsed-time ticker (updates every second) only runs while disconnected
-    const startTimers = () => {
+    const startElapsedTimer = () => {
       if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
       elapsedTimerRef.current = setInterval(() => {
         if (!mountedRef.current) return;
-        setElapsed(Date.now() - startTimeRef.current);
-        if (Date.now() - startTimeRef.current > LONG_WAIT_THRESHOLD_MS) {
-           setShowCard(true);
-        }
+        const ms = Date.now() - startTimeRef.current;
+        setElapsed(ms);
+        if (ms > LONG_WAIT_THRESHOLD_MS) setShowCard(true);
       }, 1000);
     };
 
-    const stopTimers = () => {
+    const stopElapsedTimer = () => {
       if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
       setElapsed(0);
       setShowCard(false);
       setFadeOut(false);
     };
 
-    if (status !== "done") {
-        startTimers();
-    }
+    const markDone = () => {
+      if (!mountedRef.current) return;
+      setStatus("up");
+      setTimeout(() => {
+        if (!mountedRef.current) return;
+        setFadeOut(true);
+        setTimeout(() => {
+          if (mountedRef.current) {
+            setStatus("done");
+            stopElapsedTimer();
+          }
+        }, 700);
+      }, 500);
+    };
 
-    const pingServer = async () => {
+    const pingServer = async (isFastPing = false) => {
       if (!mountedRef.current) return;
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+          () => controller.abort(),
+          isFastPing ? FAST_PING_TIMEOUT_MS : 8000
+        );
         const res = await fetch(HEALTH_URL, {
-          signal: AbortSignal.timeout ? AbortSignal.timeout(5000) : undefined,
+          signal: controller.signal,
           cache: "no-store",
         });
-        
-        if (res.ok) {
-          if (status !== "done") {
-             // Server just came up!
-             setStatus("up");
-             setTimeout(() => {
-                if (!mountedRef.current) return;
-                setFadeOut(true);
-                setTimeout(() => {
-                   if (mountedRef.current) {
-                      setStatus("done");
-                      stopTimers();
-                   }
-                }, 700);
-             }, 600);
-          }
-          
-          // Schedule background check for 5 mins
-          pingTimeoutRef.current = setTimeout(pingServer, BACKGROUND_PING_MS);
+        clearTimeout(timeoutId);
+
+        if (res.ok && mountedRef.current) {
+          // Cancel the "show overlay" timer since we responded fast enough
+          if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current);
+          markDone();
+          pingTimeoutRef.current = setTimeout(() => pingServer(false), BACKGROUND_PING_MS);
           return;
         }
       } catch {
-        /* fetch failed (offline) */
+        // ping timed out or network error
       }
 
-      // If we reach here, server is offline
-      if (status === "done" && mountedRef.current) {
-         // We lost connection! Re-trigger WakeUp UI
-         setStatus("waking");
-         startTimeRef.current = Date.now();
-         startTimers();
-      }
+      if (!mountedRef.current) return;
 
-      if (mountedRef.current) {
-          pingTimeoutRef.current = setTimeout(pingServer, PING_INTERVAL_MS);
+      if (isFastPing) {
+        // The FAST_PING_TIMEOUT_MS timer will handle switching state to "waking"
+        // Just schedule a normal retry
+        pingTimeoutRef.current = setTimeout(() => pingServer(false), PING_INTERVAL_MS);
+      } else {
+        pingTimeoutRef.current = setTimeout(() => pingServer(false), PING_INTERVAL_MS);
       }
     };
 
-    pingServer();
+    // Kick off the fast silent ping immediately
+    // If it doesn't resolve within FAST_PING_TIMEOUT_MS, switch to "waking" and show overlay
+    overlayTimeoutRef.current = setTimeout(() => {
+      if (mountedRef.current) {
+        setStatus((prev) => {
+          if (prev === "checking") {
+            startTimeRef.current = Date.now();
+            startElapsedTimer();
+            return "waking";
+          }
+          return prev;
+        });
+      }
+    }, FAST_PING_TIMEOUT_MS);
+
+    pingServer(true);
 
     return () => {
       mountedRef.current = false;
       if (elapsedTimerRef.current) clearInterval(elapsedTimerRef.current);
       if (pingTimeoutRef.current) clearTimeout(pingTimeoutRef.current);
+      if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current);
     };
-  }, [status]); // Effect re-runs logic hooks slightly if status resets to "waking" but avoids looping.
+  }, []);
 
-  // ── render children once done AND disconnected? 
-  // We want to overlay the UI when disconnected, but keep children underneath intact so it doesn't unmount the whole app.
+  // ── Fast path: backend was already up, skip overlay entirely
+  if (status === "checking" || status === "done") {
+    return <>{children}</>;
+  }
 
-  const progress = clamp((elapsed / 30000) * 100, 5, 95); // Fake progress
+  const progress = clamp((elapsed / 30000) * 100, 5, 95);
   const stage    = getStage(elapsed);
   const isUp     = status === "up";
 
   return (
     <>
-      {/* Overlay */}
+      {/* Overlay — only shown when status is "waking" or "up" */}
       <AnimatePresence>
         {!fadeOut && (
           <motion.div
@@ -247,7 +262,6 @@ export function ServerWakeUp({ children }: { children: React.ReactNode }) {
           >
             <GridBackground />
 
-            {/* ── Initial bare spinner (first 5 s) */}
             <AnimatePresence mode="wait">
               {!showCard ? (
                 <motion.div
@@ -264,7 +278,6 @@ export function ServerWakeUp({ children }: { children: React.ReactNode }) {
                   </p>
                 </motion.div>
               ) : (
-                /* ── Full wake-up card */
                 <motion.div
                   key="card"
                   initial={{ opacity: 0, y: 24, scale: 0.96 }}
@@ -276,13 +289,8 @@ export function ServerWakeUp({ children }: { children: React.ReactNode }) {
                              backdrop-blur-xl shadow-[0_0_80px_rgba(34,197,94,0.04)]
                              max-w-sm w-full text-center"
                 >
-                  {/* Subtle top glow */}
                   <div className="absolute -top-px left-1/2 -translate-x-1/2 w-32 h-px bg-gradient-to-r from-transparent via-green-400/50 to-transparent" />
-
-                  {/* Logo ring */}
                   <LogoRing />
-
-                  {/* Title */}
                   <div className="space-y-1.5">
                     <motion.h2
                       className="text-xl font-bold text-white tracking-tight"
@@ -299,17 +307,11 @@ export function ServerWakeUp({ children }: { children: React.ReactNode }) {
                         transition={{ duration: 0.3 }}
                         className="text-xs text-white/40 leading-relaxed"
                       >
-                        {isUp
-                          ? "Launching your dashboard…"
-                          : stage.label}
+                        {isUp ? "Launching your dashboard…" : stage.label}
                       </motion.p>
                     </AnimatePresence>
                   </div>
-
-                  {/* Progress bar */}
                   <ProgressBar progress={isUp ? 100 : progress} />
-
-                  {/* Footer row: elapsed + tip */}
                   <div className="flex items-center justify-between w-full max-w-xs text-[11px] text-white/20">
                     <span className="font-mono tabular-nums">
                       {formatElapsed(elapsed)}
@@ -331,8 +333,8 @@ export function ServerWakeUp({ children }: { children: React.ReactNode }) {
         )}
       </AnimatePresence>
 
-      {/* Always render children underneath so app state remains intact when switching between online/offline */}
-      <div className={status === "done" && !fadeOut ? "block" : "invisible pointer-events-none"}>
+      {/* Keep children mounted beneath overlay so app state is preserved */}
+      <div className="invisible pointer-events-none">
         {children}
       </div>
     </>
