@@ -95,7 +95,13 @@ cd backend
 
 #### Configure Environment Variables:
 
-Create/update the `.env` file in the `backend` directory:
+Copy the example environment file to create your local `.env`:
+
+```bash
+cp .env.example .env
+```
+
+Then configure `.env` with your actual credentials:
 
 ```env
 # GitHub OAuth Credentials
@@ -164,10 +170,11 @@ ADMIN_INITIAL_EMAIL=admin_email@example.com
 cd ../frontend
 ```
 
-#### Install dependencies:
+#### Install dependencies & Configure Env:
 
 ```bash
 npm install
+cp .env.example .env
 ```
 
 ## ▶️ Running the Application
