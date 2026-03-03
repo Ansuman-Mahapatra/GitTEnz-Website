@@ -18,6 +18,7 @@ import { HomePage } from "./pages/HomePage";
 import NotFound from "./pages/NotFound";
 import { DemoOne } from "@/components/ui/demo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ServerWakeUp } from "./components/layout/ServerWakeUp";
 
 const Router = import.meta.env.MODE === 'electron' ? HashRouter : BrowserRouter;
 
@@ -160,7 +161,9 @@ const App = () => (
         <Sonner />
         <Router>
           <AuthProvider>
-            <AppRoutes />
+            <ServerWakeUp>
+              <AppRoutes />
+            </ServerWakeUp>
           </AuthProvider>
         </Router>
       </TooltipProvider>
