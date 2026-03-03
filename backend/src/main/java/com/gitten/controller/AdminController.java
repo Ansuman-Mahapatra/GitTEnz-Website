@@ -42,7 +42,8 @@ public class AdminController {
         if (!isAdmin(principal))
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
 
-        // Exclude the permanent admin account from analytics where it would skew results
+        // Exclude the permanent admin account from analytics where it would skew
+        // results
         List<User> nonAdminUsers = userRepository.findAll().stream()
                 .filter(u -> u.getUsername() != null && !"admin".equals(u.getUsername()))
                 .toList();
@@ -211,6 +212,30 @@ public class AdminController {
         userRepository.save(user);
 
         return ResponseEntity.ok("Password updated successfully");
+    }
+
+    @GetMapping("/users/unverified")
+    public ResponseEntity<?> getUnverifiedUsers(Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        List<User> unverified = userRepository.findAll().stream()
+                .filter(u -> !u.isEmailVerified() && u.getEmail() != null && !"admin".equals(u.getUsername()))
+                .toList();
+
+        return ResponseEntity.ok(unverified);
+    }
+
+    @PutMapping("/users/{id}/verify-email")
+    public ResponseEntity<?> verifyUserEmail(@PathVariable String id, Principal principal) {
+        if (!isAdmin(principal))
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Access Denied");
+
+        User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "User email verified successfully", "username", user.getUsername()));
     }
 
 }

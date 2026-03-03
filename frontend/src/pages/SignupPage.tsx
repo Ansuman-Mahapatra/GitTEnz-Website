@@ -13,10 +13,8 @@ export function SignupPage() {
     const { signUpWithEmail } = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-    const [otpSent, setOtpSent] = useState(false);
-    const [isVerified, setIsVerified] = useState(false);
-    const [otp, setOtp] = useState("");
-    const [isSendingOtp, setIsSendingOtp] = useState(false);
+    const [isEmailChecked, setIsEmailChecked] = useState(false);
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const [formData, setFormData] = useState({
         username: "",
         email: "",
@@ -32,15 +30,15 @@ export function SignupPage() {
             return;
         }
 
-        if (!isVerified) {
-            toast.error("Please verify your email first.");
+        if (!isEmailChecked) {
+            toast.error("Please verify your email is available first.");
             return;
         }
 
         setIsLoading(true);
         try {
-            await signUpWithEmail({ ...formData, otp });
-            toast.success("Account created successfully!");
+            await signUpWithEmail({ ...formData, otp: "" });
+            toast.success("Account created! Your email will be verified by admin within a week.");
             navigate("/login");
         } catch (error: any) {
             toast.error(error.message);
@@ -49,12 +47,12 @@ export function SignupPage() {
         }
     };
 
-    const handleSendOtp = async () => {
+    const handleCheckEmail = async () => {
         if (!formData.email) {
             toast.error("Please enter your email first.");
             return;
         }
-        setIsSendingOtp(true);
+        setIsCheckingEmail(true);
         try {
             const res = await fetch(`${API_URL}/api/auth/send-signup-otp`, {
                 method: "POST",
@@ -63,14 +61,14 @@ export function SignupPage() {
             });
             if (!res.ok) {
                 const errorText = await res.text();
-                throw new Error(errorText || "Failed to send code.");
+                throw new Error(errorText || "Email check failed.");
             }
-            toast.info("Verification code sent to your email!");
-            setOtpSent(true);
+            toast.success("Email is available! You can proceed with signup.");
+            setIsEmailChecked(true);
         } catch (error: any) {
             toast.error(error.message);
         } finally {
-            setIsSendingOtp(false);
+            setIsCheckingEmail(false);
         }
     };
 
@@ -126,51 +124,31 @@ export function SignupPage() {
                                     placeholder="john@example.com"
                                     className="bg-black/20 border-white/10 focus:border-primary/50 flex-1"
                                     value={formData.email}
-                                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={(e) => {
+                                        setFormData({ ...formData, email: e.target.value });
+                                        setIsEmailChecked(false); // reset if email changes
+                                    }}
                                     required
-                                    disabled={otpSent || isVerified}
+                                    disabled={isEmailChecked}
                                 />
-                                {!isVerified && (
+                                {!isEmailChecked && (
                                     <Button
                                         type="button"
                                         variant="outline"
-                                        onClick={handleSendOtp}
-                                        disabled={!formData.email || isSendingOtp || otpSent}
+                                        onClick={handleCheckEmail}
+                                        disabled={!formData.email || isCheckingEmail}
                                         className="shrink-0"
                                     >
-                                        {isSendingOtp ? "Sending..." : (otpSent ? "Sent" : "Verify")}
+                                        {isCheckingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : "Check"}
                                     </Button>
                                 )}
                             </div>
                         </div>
 
-                        {otpSent && !isVerified && (
-                            <div className="space-y-2 p-3 border border-primary/20 bg-primary/5 rounded-lg">
-                                <Label className="text-primary">Verification Code</Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        placeholder="000000"
-                                        className="bg-black/20 border-primary/30 focus:border-primary/50 tracking-[0.3em] font-mono flex-1"
-                                        value={otp}
-                                        onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                                        maxLength={6}
-                                        required
-                                    />
-                                    <Button
-                                        type="button"
-                                        onClick={() => setIsVerified(true)}
-                                        disabled={otp.length !== 6}
-                                        className="glow-green font-semibold shrink-0"
-                                    >
-                                        Confirm
-                                    </Button>
-                                </div>
-                            </div>
-                        )}
-
-                        {isVerified && (
-                            <div className="text-sm text-green-400 flex items-center gap-2 mb-2 p-2 bg-green-500/10 rounded-lg">
-                                <CheckCircle2 className="w-4 h-4" /> Email Verified
+                        {isEmailChecked && (
+                            <div className="text-sm text-green-400 flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
+                                <CheckCircle2 className="w-4 h-4 shrink-0" />
+                                <span>Email available! Your account will be reviewed by admin within a week.</span>
                             </div>
                         )}
 
@@ -198,7 +176,7 @@ export function SignupPage() {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full glow-green font-semibold mt-6" disabled={isLoading || (!isVerified && !isLoading)}>
+                        <Button type="submit" className="w-full glow-green font-semibold mt-6" disabled={isLoading || !isEmailChecked}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign Up"}
                         </Button>
                     </form>

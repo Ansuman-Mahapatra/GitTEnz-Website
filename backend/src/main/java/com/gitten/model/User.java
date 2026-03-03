@@ -24,6 +24,9 @@ public class User {
 
     private boolean onboardingCompleted = false;
 
+    // Whether admin has manually verified this user's email (set to true by admin)
+    private boolean emailVerified = false;
+
     private String password;
 
     public String getId() {
@@ -96,6 +99,14 @@ public class User {
 
     public void setOnboardingCompleted(boolean onboardingCompleted) {
         this.onboardingCompleted = onboardingCompleted;
+    }
+
+    public boolean isEmailVerified() {
+        return emailVerified;
+    }
+
+    public void setEmailVerified(boolean emailVerified) {
+        this.emailVerified = emailVerified;
     }
 
     public String getPassword() {

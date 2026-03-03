@@ -11,9 +11,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // We n
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
-import java.security.SecureRandom;
-import java.util.concurrent.ConcurrentHashMap;
-import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -35,18 +32,6 @@ public class AuthController {
         this.emailService = emailService;
     }
 
-    private static class OtpData {
-        String otp;
-        LocalDateTime expiry;
-
-        OtpData(String otp, LocalDateTime expiry) {
-            this.otp = otp;
-            this.expiry = expiry;
-        }
-    }
-
-    private final ConcurrentHashMap<String, OtpData> signupOtpStore = new ConcurrentHashMap<>();
-
     @PostMapping("/send-signup-otp")
     public ResponseEntity<?> sendSignupOtp(@RequestBody java.util.Map<String, String> request) {
         String email = request.get("email");
@@ -58,23 +43,10 @@ public class AuthController {
                     "Error: Email already exists. One email is related to only one account and cannot be used for another.");
         }
 
-        SecureRandom secureRandom = new SecureRandom();
-        String otp = String.format("%06d", secureRandom.nextInt(1000000));
-        signupOtpStore.put(email, new OtpData(otp, LocalDateTime.now().plusMinutes(10)));
-
-        boolean emailSent = emailService.sendEmailVerification(email, otp);
-        if (!emailSent) {
-            // Don't crash the app — SMTP may be blocked in production (e.g. Render free
-            // tier).
-            // The OTP is stored in memory. Log the failure and return graceful success.
-            // Developer can check server logs for the [EMAIL FAILURE] entries for
-            // diagnosis.
-            log.warn(
-                    "[SIGNUP OTP] Email delivery failed for {}. OTP is stored but email was not sent. Check [EMAIL FAILURE] logs.",
-                    email);
-        }
-
-        return ResponseEntity.ok(java.util.Map.of("message", "Verification code sent to your email"));
+        // No OTP or email is sent. Email is simply confirmed as available.
+        // Admin will manually review and verify user emails after signup within a week.
+        log.info("[SIGNUP] Email availability checked for: {}", email);
+        return ResponseEntity.ok(java.util.Map.of("message", "Email is available"));
     }
 
     @PostMapping("/signup")
@@ -85,12 +57,10 @@ public class AuthController {
 
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             return ResponseEntity.badRequest().body(
-                    "Error: Email already exists. One email is related to only one account and cannot be used for another."); // Account
-                                                                                                                              // already
-                                                                                                                              // exists
+                    "Error: Email already exists. One email is related to only one account and cannot be used for another.");
         }
 
-        // Validate password strength first, before consuming the OTP
+        // Validate password strength first
         if (request.getPassword() == null || request.getPassword().length() < 8) {
             return ResponseEntity.badRequest().body("Error: Password must be at least 8 characters long");
         }
@@ -98,24 +68,16 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Password must contain both letters and numbers");
         }
 
-        OtpData otpData = signupOtpStore.get(request.getEmail());
-        if (otpData == null || request.getOtp() == null || !otpData.otp.equals(request.getOtp())) {
-            return ResponseEntity.badRequest().body("Error: Invalid or missing Verification Code");
-        }
-        if (otpData.expiry.isBefore(LocalDateTime.now())) {
-            return ResponseEntity.badRequest().body("Error: Verification Code Expired");
-        }
-
-        // Clear OTP so token isn't reused maliciously
-        signupOtpStore.remove(request.getEmail());
-
+        // OTP check removed — email verification is done manually by admin within 1
+        // week.
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setName(request.getName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.getName()); // Default avatar
+        user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.getName());
         user.setOnboardingCompleted(true);
+        user.setEmailVerified(false); // Admin will verify manually within 1 week
 
         userRepository.save(user);
 
