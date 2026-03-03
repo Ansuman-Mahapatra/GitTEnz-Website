@@ -10,7 +10,7 @@ Before deploying, ensure you have:
 
 - [ ] GitHub repository with latest code
 - [ ] MongoDB Atlas cluster (production-ready)
-- [ ] Gmail account with App Password configured
+- [ ] Resend Account with generated API Key
 - [ ] GitHub OAuth App credentials
 - [ ] OpenAI API key with credits
 - [ ] Redis instance (optional, for caching)
@@ -24,6 +24,7 @@ Before deploying, ensure you have:
 #### 1. Prepare for Deployment
 
 Create a `_redirects` file in `frontend/public/`:
+
 ```
 /*    /index.html   200
 ```
@@ -56,6 +57,7 @@ Your frontend will be live at `https://your-site-name.netlify.app`
 #### 1. Add Configuration
 
 Create `vercel.json` in `frontend/`:
+
 ```json
 {
   "rewrites": [
@@ -125,31 +127,31 @@ The `.dockerignore` file optimizes build size by excluding unnecessary files.
    - **Instance Type:** Starter ($7/month) or Free
 
 5. **Environment Variables** (Add all in Render dashboard):
+
    ```env
    # GitHub OAuth
    GITHUB_CLIENT_ID=your_github_client_id
    GITHUB_CLIENT_SECRET=your_github_client_secret
-   
+
    # OpenAI
    OPENAI_API_KEY=sk-your_openai_key
-   
+
    # MongoDB
    SPRING_DATA_MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/gitten
-   
+
    # Redis (Optional)
    SPRING_DATA_REDIS_HOST=your_redis_host
    SPRING_DATA_REDIS_PORT=6379
    SPRING_DATA_REDIS_USERNAME=default
    SPRING_DATA_REDIS_PASSWORD=your_redis_password
-   
+
    # Frontend URL (Update after frontend deployment)
    FRONTEND_URL=https://your-frontend.netlify.app
-   
-   # Gmail SMTP
-   SPRING_MAIL_USERNAME=your_email@gmail.com
-   SPRING_MAIL_PASSWORD=your_16_char_app_password
+
+   # Resend HTTP API
+   RESEND_API_KEY=re_your_api_key_here
    ADMIN_INITIAL_EMAIL=admin@example.com
-   
+
    # Server Port
    PORT=8080
    ```
@@ -163,6 +165,7 @@ The `.dockerignore` file optimizes build size by excluding unnecessary files.
 #### 3. Rebuild Instructions
 
 **Automatic Rebuild (Recommended):**
+
 - Every push to your GitHub branch triggers automatic rebuild
 - Render detects changes and rebuilds the Docker container
 
@@ -173,12 +176,14 @@ git push origin ansuman
 ```
 
 **Manual Rebuild:**
+
 1. Go to Render Dashboard
 2. Select your service
 3. Click **"Manual Deploy"** > **"Deploy latest commit"**
 
 **Force Fresh Build:**
 If you need to rebuild from scratch (clear cache):
+
 1. Go to **Settings** > **Build & Deploy**
 2. Click **"Clear build cache & deploy"**
 
@@ -205,11 +210,13 @@ If you need to rebuild from scratch (clear cache):
 After backend deployment:
 
 **For Netlify:**
+
 1. Go to **Site settings** > **Environment variables**
 2. Update `VITE_API_URL` to your backend URL
 3. **Trigger redeploy** from Deploys tab
 
 **For Vercel:**
+
 1. Go to **Settings** > **Environment Variables**
 2. Update `VITE_API_URL`
 3. **Redeploy** from Deployments tab
@@ -249,6 +256,7 @@ Ensure `FRONTEND_URL` environment variable in backend matches your frontend URL 
 ### Redis Configuration (Optional)
 
 **For Redis Cloud:**
+
 1. Create account at [Redis Cloud](https://redis.com/try-free/)
 2. Create database
 3. Get connection details
@@ -258,21 +266,21 @@ Ensure `FRONTEND_URL` environment variable in backend matches your frontend URL 
 
 ## 📧 PART 5: Email Configuration
 
-### Gmail SMTP Setup
+### Resend API Setup
 
-1. **Enable 2-Step Verification:**
-   - Go to [Google Account Security](https://myaccount.google.com/security)
-   - Enable 2-Step Verification
+1. **Create Account:**
+   - Go to [Resend](https://resend.com)
+   - Sign up for a free account
 
-2. **Generate App Password:**
-   - Go to [App Passwords](https://myaccount.google.com/apppasswords)
-   - Select "Mail" and "Other (Custom name)"
-   - Copy 16-character password
+2. **Generate API Key:**
+   - Go to [API Keys](https://resend.com/api-keys)
+   - Generate a key with "Sending Access"
+   - Copy the key (starts with `re_`)
 
 3. **Update Backend Environment:**
+
    ```env
-   SPRING_MAIL_USERNAME=your_email@gmail.com
-   SPRING_MAIL_PASSWORD=xxxx xxxx xxxx xxxx
+   RESEND_API_KEY=re_your_key_here
    ADMIN_INITIAL_EMAIL=admin@example.com
    ```
 
@@ -340,11 +348,13 @@ curl https://your-backend.onrender.com/api/public/health
 ### Frontend Issues
 
 **Build Fails:**
+
 - Check Node.js version (18+)
 - Verify all dependencies are in `package.json`
 - Check build logs for specific errors
 
 **Blank Page After Deploy:**
+
 - Verify `VITE_API_URL` is set correctly
 - Check browser console for errors
 - Ensure `_redirects` or `vercel.json` is configured
@@ -352,24 +362,28 @@ curl https://your-backend.onrender.com/api/public/health
 ### Backend Issues
 
 **Deployment Fails:**
+
 - Check Dockerfile syntax
 - Verify Java version (17+)
 - Check Maven build logs
 - Ensure all dependencies are in `pom.xml`
 
 **500 Internal Server Error:**
+
 - Check backend logs in Render/Railway
 - Verify MongoDB connection string
 - Check all environment variables are set
 - Verify email credentials
 
 **OTP Not Received:**
-- Check Gmail credentials
-- Verify App Password (not regular password)
+
+- Check Resend API Key in `.env`
+- Verify API Key has Sending permissions
 - Check spam folder
-- Verify `SPRING_MAIL_USERNAME` and `SPRING_MAIL_PASSWORD`
+- Monitor Resend Dashboard for bounce errors
 
 **GitHub OAuth Fails:**
+
 - Verify callback URL matches backend URL
 - Check `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`
 - Ensure `FRONTEND_URL` is set correctly
@@ -377,6 +391,7 @@ curl https://your-backend.onrender.com/api/public/health
 ### Database Issues
 
 **Connection Timeout:**
+
 - Check MongoDB network access settings
 - Verify connection string format
 - Ensure database user has correct permissions
@@ -388,11 +403,13 @@ curl https://your-backend.onrender.com/api/public/health
 ### Application Monitoring
 
 **Render:**
+
 - View logs in real-time from dashboard
 - Set up health checks
 - Monitor resource usage
 
 **Netlify/Vercel:**
+
 - Check deployment logs
 - Monitor function execution
 - Track bandwidth usage
@@ -400,6 +417,7 @@ curl https://your-backend.onrender.com/api/public/health
 ### Database Monitoring
 
 **MongoDB Atlas:**
+
 - Monitor cluster metrics
 - Set up alerts for high usage
 - Review slow queries
@@ -407,9 +425,9 @@ curl https://your-backend.onrender.com/api/public/health
 
 ### Email Monitoring
 
-- Track email delivery rates
-- Monitor Gmail quota (500 emails/day for free accounts)
-- Check for bounced emails
+- Track email delivery rates via Resend Dashboard
+- Monitor Resend quota (100 emails/day for free accounts)
+- Check Resend logs for bounced emails
 
 ---
 
@@ -426,10 +444,12 @@ Both Netlify/Vercel and Render support automatic deployments:
 ### Manual Deployments
 
 **Backend (Render):**
+
 - Go to dashboard
 - Click "Manual Deploy" > "Deploy latest commit"
 
 **Frontend (Netlify):**
+
 - Go to Deploys tab
 - Click "Trigger deploy"
 
@@ -438,6 +458,7 @@ Both Netlify/Vercel and Render support automatic deployments:
 ## 📝 Environment Variables Reference
 
 ### Backend (.env)
+
 ```env
 GITHUB_CLIENT_ID=
 GITHUB_CLIENT_SECRET=
@@ -448,13 +469,13 @@ SPRING_DATA_REDIS_PORT=
 SPRING_DATA_REDIS_USERNAME=
 SPRING_DATA_REDIS_PASSWORD=
 FRONTEND_URL=
-SPRING_MAIL_USERNAME=
-SPRING_MAIL_PASSWORD=
+RESEND_API_KEY=
 ADMIN_INITIAL_EMAIL=
 PORT=8080
 ```
 
 ### Frontend (.env)
+
 ```env
 VITE_API_URL=https://your-backend.onrender.com
 ```
@@ -490,7 +511,7 @@ If you encounter issues:
 
 ## 🎉 Success!
 
-Your GitTEnz application is now live! 
+Your GitTEnz application is now live!
 
 **Frontend:** `https://your-app.netlify.app`  
 **Backend:** `https://your-api.onrender.com`
