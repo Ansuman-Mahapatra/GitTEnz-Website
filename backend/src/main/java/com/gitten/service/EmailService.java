@@ -1,82 +1,74 @@
 package com.gitten.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import java.util.Map;
+import java.util.List;
 
 @Slf4j
 @Service
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender mailSender;
+    @Value("${RESEND_API_KEY:re_UHjY3RVA_8mrf7zmPa8QVQBqpA8KR7pRy}")
+    private String resendApiKey;
 
-    @org.springframework.beans.factory.annotation.Value("${spring.mail.username}")
-    private String fromEmail;
+    private final String url = "https://api.resend.com/emails";
+    private final RestTemplate restTemplate = new RestTemplate();
+
+    private boolean sendResendEmail(String to, String subject, String textBody) {
+        try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(resendApiKey);
+
+            // Resend API requires the exact verified domain email if provided, otherwise
+            // defaults to onboarding@resend.dev
+            // Using GitTEnz to ensure proper display name without Google overriding it
+            Map<String, Object> body = Map.of(
+                    "from", "GitTEnz <onboarding@resend.dev>",
+                    "to", List.of(to),
+                    "subject", subject,
+                    "text", textBody);
+
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);
+
+            if (response.getStatusCode().is2xxSuccessful()) {
+                log.info("Email sent via Resend API to {}", to);
+                return true;
+            } else {
+                log.error("Failed to send email via Resend API. Status: {}", response.getStatusCode());
+                return false;
+            }
+        } catch (Exception e) {
+            log.error("Failed to call Resend API: {}", e.getMessage());
+            return false;
+        }
+    }
 
     public void sendOtp(String to, String otp) {
-        try {
-            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
-                    mimeMessage, "utf-8");
-
-            helper.setFrom(fromEmail, "GitTEnz");
-            helper.setTo(to);
-            helper.setSubject("GitTEnz Admin Login OTP");
-            helper.setText("Your OTP for Admin Access is: " + otp
-                    + "\n\nThis code expires in 5 minutes.\n\nRegards,\nGitTEnz Team");
-
-            mailSender.send(mimeMessage);
-            log.info("OTP Email sent to {}", to);
-        } catch (Exception e) {
-            log.error("Failed to send OTP email: {}", e.getMessage());
-            // Fallback logging removed for security
-        }
+        String body = "Your OTP for Admin Access is: " + otp
+                + "\n\nThis code expires in 5 minutes.\n\nRegards,\nGitTEnz Team";
+        sendResendEmail(to, "GitTEnz Admin Login OTP", body);
     }
 
     public boolean sendEmailVerification(String to, String verificationToken) {
-        try {
-            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
-                    mimeMessage, "utf-8");
-
-            helper.setFrom(fromEmail, "GitTEnz");
-            helper.setTo(to);
-            helper.setSubject("GitTEnz - Verify Your Email Address");
-            helper.setText("Hello,\n\n"
-                    + "Please verify your email address by entering this verification code:\n\n"
-                    + verificationToken + "\n\n"
-                    + "This code expires in 10 minutes.\n\n"
-                    + "If you didn't request this, please ignore this email.\n\n"
-                    + "Regards,\nGitTEnz Team");
-
-            mailSender.send(mimeMessage);
-            log.info("Verification email sent to {}", to);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to send verification email: {}", e.getMessage());
-            return false;
-        }
+        String body = "Hello,\n\n"
+                + "Please verify your email address by entering this verification code:\n\n"
+                + verificationToken + "\n\n"
+                + "This code expires in 10 minutes.\n\n"
+                + "If you didn't request this, please ignore this email.\n\n"
+                + "Regards,\nGitTEnz Team";
+        return sendResendEmail(to, "GitTEnz - Verify Your Email Address", body);
     }
 
     public boolean sendEmail(String to, String subject, String body) {
-        try {
-            jakarta.mail.internet.MimeMessage mimeMessage = mailSender.createMimeMessage();
-            org.springframework.mail.javamail.MimeMessageHelper helper = new org.springframework.mail.javamail.MimeMessageHelper(
-                    mimeMessage, "utf-8");
-
-            helper.setFrom(fromEmail, "GitTEnz");
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(body);
-
-            mailSender.send(mimeMessage);
-            log.info("Email sent to {}", to);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to send email: {}", e.getMessage());
-            return false;
-        }
+        return sendResendEmail(to, subject, body);
     }
 }
