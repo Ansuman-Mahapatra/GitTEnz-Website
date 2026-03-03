@@ -6,12 +6,15 @@ import com.gitten.dto.SignupRequest;
 import com.gitten.model.User;
 import com.gitten.repository.UserRepository;
 import com.gitten.service.JwtService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder; // We need a password encoder
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 import java.util.HashMap;
+import java.security.SecureRandom;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
