@@ -1,0 +1,248 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* GitTEnz Design System - Dark GitHub-inspired theme with neon accents */
+
+@layer base {
+  :root {
+    --background: 220 16% 96%;
+    --foreground: 220 20% 10%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+
+    --primary: 217 91% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 90%;
+    --secondary-foreground: 220 20% 10%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 142 76% 36%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 217 91% 45%;
+
+    --radius: 0.75rem;
+
+    /* GitTEnz custom tokens */
+    --github-green: 217 91% 45%;
+    --github-purple: 142 76% 30%;
+    --github-blue: 142 76% 25%;
+    --github-orange: 142 76% 36%;
+    --github-red: 142 76% 40%;
+
+    --glow-blue: 217 91% 45%;
+    --glow-purple: 142 76% 36%;
+
+    --sidebar-background: 220 16% 98%;
+    --sidebar-foreground: 220 20% 20%;
+    --sidebar-primary: 217 91% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 220 20% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217 91% 45%;
+  }
+
+  .dark {
+    --background: 220 20% 6%;
+    --foreground: 220 14% 96%;
+
+    --card: 220 20% 9%;
+    --card-foreground: 220 14% 96%;
+
+    --popover: 220 20% 9%;
+    --popover-foreground: 220 14% 96%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 220 20% 6%;
+
+    --secondary: 220 20% 14%;
+    --secondary-foreground: 220 14% 96%;
+
+    --muted: 220 20% 14%;
+    --muted-foreground: 220 14% 65%;
+
+    --accent: 142 76% 46%;
+    --accent-foreground: 220 20% 6%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 20% 18%;
+    --input: 220 20% 18%;
+    --ring: 217 91% 60%;
+
+    --github-green: 217 91% 60%;
+    --github-purple: 142 76% 40%;
+    --github-blue: 142 76% 35%;
+    --github-orange: 142 76% 46%;
+    --github-red: 142 76% 50%;
+
+    --glow-blue: 217 91% 60%;
+    --glow-purple: 142 76% 46%;
+
+    --sidebar-background: 220 20% 8%;
+    --sidebar-foreground: 220 14% 90%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 20% 14%;
+    --sidebar-accent-foreground: 220 14% 96%;
+    --sidebar-border: 220 20% 14%;
+    --sidebar-ring: 217 91% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  
+  /* Desktop app specific wrapper when running in Electron to give spacing from OS borders */
+  .electron-wrapper {
+    @apply h-screen w-screen p-2 box-border bg-transparent overflow-hidden flex flex-col;
+  }
+  
+  .electron-inner {
+    @apply flex-1 bg-background rounded-xl border border-white/10 shadow-2xl overflow-hidden relative flex flex-col;
+  }
+  
+  /* Custom draggable region for the top of the desktop app */
+  .electron-titlebar {
+    -webkit-app-region: drag;
+    height: 32px;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 50;
+  }
+  
+  /* Buttons should not be draggable */
+  .electron-titlebar button, .electron-titlebar a {
+    -webkit-app-region: no-drag;
+  }
+}
+
+@layer utilities {
+  .glow-blue {
+    box-shadow: 0 0 20px hsl(var(--glow-blue) / 0.3),
+      0 0 40px hsl(var(--glow-blue) / 0.1);
+  }
+
+  .glow-purple {
+    box-shadow: 0 0 20px hsl(var(--glow-purple) / 0.3),
+      0 0 40px hsl(var(--glow-purple) / 0.1);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--github-green)), hsl(var(--github-green) / 0.6));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-github {
+    background: linear-gradient(135deg, hsl(var(--github-green) / 0.1), hsl(var(--background)));
+  }
+
+  .glass {
+    backdrop-filter: blur(12px) saturate(180%);
+    background-color: hsl(var(--background) / 0.8);
+    border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  .glass-card {
+    backdrop-filter: blur(16px) saturate(200%);
+    background-color: hsl(var(--card) / 0.9);
+    border: 1px solid hsl(var(--border) / 0.4);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted) / 0.5);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Custom animations for 404 page */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slower {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.animate-spin-slower {
+  animation: spin-slower 30s linear infinite reverse;
+}
+
+/* Inline AI Assistant - Typing indicator */
+@keyframes inline-ai-typing {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.inline-ai-typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: hsl(var(--primary));
+  animation: inline-ai-typing 1.2s ease-in-out infinite;
+}
