@@ -86,9 +86,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !token) return;
 
-    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
-    let activityTimer: ReturnType<typeof setTimeout> | null = null;
-
     const checkAndResetTimer = () => {
       const now = Date.now();
       const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
@@ -107,18 +104,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Update activity timestamp in local storage
       localStorage.setItem("lastActivityTimestamp", now.toString());
-
-      // Set the active session timeout
-      if (activityTimer) clearTimeout(activityTimer);
-      activityTimer = setTimeout(() => {
-        if (typeof window !== "undefined") {
-          window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
-        }
-        signOut();
-      }, INACTIVITY_TIMEOUT_MS);
     };
 
     // Throttle the local storage writes so they only happen max once every 30 seconds
+    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
     const handleActivity = () => {
       if (throttleTimer) return;
       throttleTimer = setTimeout(() => {
@@ -132,10 +121,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Initial check on mount
     checkAndResetTimer();
 
+    // Check periodically if the session has expired while tab is left open
+    const intervalTimer = setInterval(() => {
+      const now = Date.now();
+      const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
+      if (lastActivityStr) {
+        const lastActivity = parseInt(lastActivityStr, 10);
+        if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+          if (typeof window !== "undefined") {
+            window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
+          }
+          signOut();
+        }
+      }
+    }, 60000); // Check every minute
+
     events.forEach((ev) => window.addEventListener(ev, handleActivity));
     return () => {
       events.forEach((ev) => window.removeEventListener(ev, handleActivity));
-      if (activityTimer) clearTimeout(activityTimer);
+      clearInterval(intervalTimer);
       if (throttleTimer) clearTimeout(throttleTimer);
     };
   }, [user, token, signOut]);
