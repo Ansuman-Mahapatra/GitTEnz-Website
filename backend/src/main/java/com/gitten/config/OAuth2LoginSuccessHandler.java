@@ -67,13 +67,33 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                 }
 
                 if (userOpt.isEmpty()) {
-                        // Not registered. Return error.
-                        String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/login")
-                                        .queryParam("error",
-                                                        "GitHub login requires an existing account. Please sign up first and ensure your GitHub email or username matches.")
-                                        .build().toUriString();
-                        getRedirectStrategy().sendRedirect(request, response, targetUrl);
-                        return;
+                        // First-time GitHub login — auto-create account
+                        log.info("[GITHUB OAUTH] New user via GitHub: username={}, email={}", username, email);
+
+                        // Ensure username is unique — append suffix if taken
+                        String baseUsername = username;
+                        String finalUsername = baseUsername;
+                        int suffix = 1;
+                        while (userRepository.findByUsername(finalUsername).isPresent()) {
+                                finalUsername = baseUsername + suffix++;
+                        }
+
+                        Object nameObj2 = oAuth2User.getAttribute("name");
+                        Object avatarObj2 = oAuth2User.getAttribute("avatar_url");
+                        Object idObj2 = oAuth2User.getAttribute("id");
+
+                        User newUser = new User();
+                        newUser.setUsername(finalUsername);
+                        newUser.setEmail(email);
+                        newUser.setName(nameObj2 != null ? String.valueOf(nameObj2) : finalUsername);
+                        newUser.setAvatarUrl(avatarObj2 != null ? String.valueOf(avatarObj2) : null);
+                        newUser.setGithubId(idObj2 != null ? String.valueOf(idObj2) : null);
+                        newUser.setAccessToken(accessToken);
+                        newUser.setOnboardingCompleted(true);
+                        newUser.setEmailVerified(false); // admin will verify in background
+                        newUser.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
+                        userRepository.save(newUser);
+                        userOpt = java.util.Optional.of(newUser);
                 }
 
                 User user = userOpt.get();
