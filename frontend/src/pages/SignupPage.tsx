@@ -38,7 +38,7 @@ export function SignupPage() {
         setIsLoading(true);
         try {
             await signUpWithEmail({ ...formData, otp: "" });
-            toast.success("Account created! Your email will be verified by admin within a week.");
+            toast.success("Account created! You can log in right now.");
             navigate("/login");
         } catch (error: any) {
             toast.error(error.message);
@@ -148,7 +148,7 @@ export function SignupPage() {
                         {isEmailChecked && (
                             <div className="text-sm text-green-400 flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
                                 <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                <span>Email available! Your account will be reviewed by admin within a week.</span>
+                                <span>Email available! Your account will be created and you can <strong>log in immediately</strong>. Admin will verify your email in the background.</span>
                             </div>
                         )}
 
