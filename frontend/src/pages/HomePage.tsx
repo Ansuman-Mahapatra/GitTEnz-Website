@@ -1,10 +1,11 @@
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GitBranch, Code2, Bot, Zap, Shield, Globe, Star, Users, TrendingUp, Lock, Mail, BarChart } from "lucide-react";
+import { GitBranch, Code2, Bot, Zap, Shield, Globe, Star, Users, TrendingUp, Lock, Mail, BarChart, DownloadCloud } from "lucide-react";
 import { useEffect, useState } from "react";
 import AetherHero from "@/components/aether-hero";
 import { Particles } from "@/components/ui/particles";
+import { AboutSection } from "@/components/about/AboutSection";
 
 export function HomePage() {
     const { scrollY } = useScroll();
@@ -57,6 +58,17 @@ export function HomePage() {
                         </div>
                         <span className="text-xl font-bold text-gradient">GitTEnz</span>
                     </motion.div>
+
+                    <motion.div
+                        className="hidden md:flex items-center gap-8"
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
+                        <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</a>
+                        <a href="#download" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Download</a>
+                        <a href="#about" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">About</a>
+                    </motion.div>
+
                     <motion.div
                         initial={{ x: 20, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -232,6 +244,52 @@ export function HomePage() {
                 </div>
             </section>
 
+            {/* Download Section */}
+            <section id="download" className="py-24 bg-muted/20 relative">
+                <div className="container px-6 mx-auto">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-center max-w-3xl mx-auto mb-16"
+                    >
+                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-4">
+                            <DownloadCloud className="w-4 h-4 text-primary" />
+                            <span className="text-sm font-semibold text-primary">Desktop App</span>
+                        </div>
+                        <h2 className="text-3xl lg:text-4xl font-bold mb-4">Take GitTEnz to the Desktop</h2>
+                        <p className="text-muted-foreground text-lg mb-8">
+                            Experience the full power of GitTEnz natively on your machine, with faster performance and a distraction-free environment.
+                        </p>
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                            <Button 
+                                size="lg" 
+                                className="glow-green h-14 px-8 rounded-xl" 
+                                onClick={() => window.open(import.meta.env.VITE_DEVELOPER_GITHUB_URL + "/releases", "_blank")}
+                            >
+                                <DownloadCloud className="w-5 h-5 mr-2" />
+                                Download for Desktop
+                            </Button>
+                            <Button 
+                                size="lg" 
+                                variant="outline" 
+                                className="h-14 px-8 rounded-xl border-white/10"
+                                onClick={() => window.open(import.meta.env.VITE_DEVELOPER_GITHUB_URL, "_blank")}
+                            >
+                                View Source on GitHub
+                            </Button>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* About Section */}
+            <section id="about" className="py-24 relative overflow-hidden">
+                <div className="container px-6 mx-auto">
+                    <AboutSection />
+                </div>
+            </section>
+
             {/* CTA Section */}
             <section className="py-24 relative overflow-hidden">
                 <div className="absolute inset-0 bg-primary/5 bg-[size:50px_50px]" />
@@ -286,14 +344,14 @@ export function HomePage() {
                             <h3 className="font-semibold mb-4">Product</h3>
                             <ul className="space-y-2 text-sm text-muted-foreground">
                                 <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Pricing</a></li>
-                                <li><a href="#" className="hover:text-primary transition-colors">Documentation</a></li>
+                                <li><a href="#download" className="hover:text-primary transition-colors">Download App</a></li>
+                                <li><a href="#about" className="hover:text-primary transition-colors">About Us</a></li>
                             </ul>
                         </div>
                         <div>
                             <h3 className="font-semibold mb-4">Company</h3>
                             <ul className="space-y-2 text-sm text-muted-foreground">
-                                <li><a href="#" className="hover:text-primary transition-colors">About</a></li>
+                                <li><a href="#about" className="hover:text-primary transition-colors">About</a></li>
                                 <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
                                 <li><a href="#" className="hover:text-primary transition-colors">Contact</a></li>
                             </ul>
