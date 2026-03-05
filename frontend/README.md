@@ -59,8 +59,8 @@ cd ../backend
 - **Matrix Green Theme**: A futuristic, high-performance design system
 - **Tiled Lightning Background**: Immersive custom GLSL shader with dynamic reactive lighting
 - **Smart Server Wake-Up**: Transparent 800ms fast-ping — skips loading screen when backend is already up (local dev), shows animated wake-up UI for Render cold starts only
-- **Landing Page**: High-energy introduction with premium visuals
-- **Living UI**: Interactive particles and glassmorphism across every page
+- **Multi-Route Landing Experience**: High-energy and immersive pages for Home (`/`), Features (`/features`), Desktop Download (`/download`), and Developer About (`/about`)
+- **Living UI**: Interactive particles, a custom Nav/Footer, and glassmorphism across every page
 - **Email Signup**: No OTP required — user clicks "Check" to confirm email availability, then signs up directly. Admin verifies emails manually within a week.
 - **OAuth2 Login**: Secure authentication with GitHub
 - **Dashboard**: View repository stats (Stars, Forks, Languages) and Recent Activity

@@ -2,7 +2,7 @@
 
 [![Deploy Status](https://img.shields.io/badge/Status-Live-green)](https://gittenz.netlify.app)
 
-GitTEnz is a high-performance, full-stack web application designed with a futuristic **Matrix Green** aesthetic. It provides a living, interactive experience for GitHub developers, featuring a **Tiled Lightning** background, AI-powered assistance, secure admin OTP authentication, and comprehensive repository insights. Available as both a **web app** and an **Electron desktop app**. Built with React (WebGL), Spring Boot, and MongoDB.
+GitTEnz is a high-performance, full-stack web application designed with a futuristic **Matrix Green** aesthetic. It provides a living, interactive experience for GitHub developers, featuring a **Tiled Lightning** background, AI-powered assistance, secure admin OTP authentication, and comprehensive repository insights. Available as both a **web app** and an **Electron desktop app (named GitDense)**. Built with React (WebGL), Spring Boot, and MongoDB.
 
 ## 🚀 Features
 
@@ -17,7 +17,7 @@ GitTEnz is a high-performance, full-stack web application designed with a futuri
 - **Local Starring**: Star repositories within GitTEnz to create personalized lists without affecting GitHub stars
 - **Code Editor**: Built-in code viewer and editor with syntax highlighting and file tree navigation
 - **Repository Management**: Browse files, view commit history, create branches, and edit code directly in the browser
-- **Desktop App**: Full Electron wrapper that bundles the React frontend into a native cross-platform executable
+- **Desktop App**: Full Electron wrapper that bundles the React frontend into a native cross-platform executable, available in a separate repository as **GitDense**.
 
 ### **Admin Features**
 
@@ -62,9 +62,9 @@ GitTEnz is a high-performance, full-stack web application designed with a futuri
 - **RestTemplate** - HTTP client for external API calls
 - **Maven** - Dependency management
 
-### **Desktop**
+### **Desktop (GitDense)**
 
-- **Electron** - Cross-platform desktop wrapper
+- **Electron** - Cross-platform desktop wrapper (main source code located at [Ansuman-Mahapatra/GitDense](https://github.com/Ansuman-Mahapatra/GitDense))
 - **Vite Electron Mode** - Production build with `file://` relative paths
 
 ### **Database & Services**
@@ -211,13 +211,6 @@ npm run dev
 
 \*Frontend runs on **http://localhost:5180\***
 
-### Start Desktop App (Terminal 3, optional):
-
-```bash
-cd desktop
-npm start
-```
-
 _Ensure the backend and frontend dev server are running first_
 
 ## 🔐 Default Admin Credentials
@@ -283,11 +276,6 @@ GitTEnz/
 │   ├── .env.example       # Template for setting up .env
 │   ├── package.json       # NPM dependencies
 │   └── vite.config.ts     # Vite configuration
-│
-├── desktop/               # Electron desktop app
-│   ├── main.js            # Electron main process
-│   ├── package.json       # Desktop dependencies
-│   └── README.md          # Desktop-specific instructions
 │
 ├── README.md              # This file
 └── DEPLOYMENT.md          # Deployment guide

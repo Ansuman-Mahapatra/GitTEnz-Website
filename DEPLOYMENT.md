@@ -212,46 +212,7 @@ Railway does **not** block outbound SMTP, so admin OTP emails work on the free p
 
 ---
 
-## 🖥️ PART 3: Desktop App (Electron)
-
-The desktop app wraps the frontend in an Electron shell.
-
-### Development Mode
-
-1. Start the backend (`.\run-backend.ps1`)
-2. Start the frontend (`npm run dev` in `frontend/`)
-3. Start the desktop app:
-   ```bash
-   cd desktop
-   npm start
-   ```
-
-### Building a Production Executable
-
-1. Build the frontend for Electron mode:
-
-   ```bash
-   cd frontend
-   npx vite build --mode electron
-   ```
-
-   This creates `dist/` with `file://`-compatible relative paths.
-
-2. Package the desktop app:
-   ```bash
-   cd ../desktop
-   npm run dist
-   ```
-   The installer/executable will be output to `desktop/dist/`.
-
-### Desktop Configuration
-
-- The backend URL for the desktop app is set in `frontend/.env.electron`
-- Default is `http://localhost:8080` (requires local backend running)
-
----
-
-## 🔗 PART 4: Connecting Frontend & Backend
+## 🔗 PART 3: Connecting Frontend & Backend
 
 ### 1. Update Frontend Environment
 
@@ -284,7 +245,7 @@ Ensure `FRONTEND_URL` environment variable in backend matches your deployed fron
 
 ---
 
-## 🗄️ PART 5: Database Configuration
+## 🗄️ PART 4: Database Configuration
 
 ### MongoDB Atlas Production Setup
 
@@ -342,7 +303,7 @@ await client.close();
 
 ---
 
-## 📧 PART 6: Email Configuration (Admin OTP Only)
+## 📧 PART 5: Email Configuration (Admin OTP Only)
 
 > Email sends are only used for **admin login OTP**. Regular user signups do **not** send any emails — email verification is done manually by the admin in the dashboard.
 
@@ -388,7 +349,7 @@ Fix options ranked by cost:
 
 ---
 
-## ✅ PART 7: Verification & Testing
+## ✅ PART 6: Verification & Testing
 
 ### 1. Test User Signup Flow
 
