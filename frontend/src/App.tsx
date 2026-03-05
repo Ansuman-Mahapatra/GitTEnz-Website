@@ -15,6 +15,9 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { RepositoryDetailPage } from "./pages/RepositoryDetailPage";
 import { AuthSuccessPage } from "./pages/AuthSuccessPage";
 import { HomePage } from "./pages/HomePage";
+import { FeaturesPage } from "./pages/FeaturesPage";
+import { DownloadPage } from "./pages/DownloadPage";
+import { AboutPage } from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 import { DemoOne } from "@/components/ui/demo";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -74,6 +77,9 @@ function AppRoutes() {
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/" element={<HomePage />} />
+        <Route path="/features" element={<FeaturesPage />} />
+        <Route path="/download" element={<DownloadPage />} />
+        <Route path="/about" element={<AboutPage />} />
         <Route
           path="/login"
           element={
