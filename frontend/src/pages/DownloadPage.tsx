@@ -33,18 +33,11 @@ export function DownloadPage() {
                         </p>
                         
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-                            {/* 
-                              To update your download link: 
-                              Set VITE_DESKTOP_DOWNLOAD_URL in your `.env` file!
-                              If you don't have one yet, put the link directly in here.
-                            */}
                             <Button 
                                 size="lg" 
                                 className="glow-green h-16 px-10 rounded-2xl text-lg font-bold transition-all hover:scale-105"
                                 onClick={() => {
-                                    const link = import.meta.env.VITE_DESKTOP_DOWNLOAD_URL;
-                                    if(link) window.open(link, "_blank");
-                                    else alert("Download link coming soon! Please configure VITE_DESKTOP_DOWNLOAD_URL.");
+                                    window.open("https://github.com/Ansuman-Mahapatra/GitDense/raw/main/dist-electron/GitDense-Setup-1.0.0.exe", "_blank");
                                 }}
                             >
                                 <DownloadCloud className="w-6 h-6 mr-3" />

@@ -25,6 +25,7 @@ export function LandingNavbar() {
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                 >
+                    <Link to="/" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Home</Link>
                     <Link to="/features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Features</Link>
                     <Link to="/download" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">Download</Link>
                     <Link to="/about" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">About</Link>
