@@ -184,28 +184,44 @@ public class GitHubServiceImpl implements GitHubService {
     @Override
     public List<java.util.Map<String, Object>> getUserEvents(String username, String oauthToken) {
         log.info("Fetching events for user: {}", username);
-        if (oauthToken == null || oauthToken.isEmpty()) {
+        try {
+            List<java.util.Map<String, Object>> allEvents = new ArrayList<>();
+            for (int page = 1; page <= 3; page++) {
+                var request = restClient.get().uri("/users/" + username + "/events?per_page=100&page=" + page);
+                if (oauthToken != null && !oauthToken.isEmpty()) {
+                    request.header("Authorization", "Bearer " + oauthToken);
+                }
+                List<java.util.Map<String, Object>> responsePage = request.retrieve()
+                        .body(new ParameterizedTypeReference<>() {
+                        });
+                if (responsePage != null && !responsePage.isEmpty()) {
+                    allEvents.addAll(responsePage);
+                    if (responsePage.size() < 100)
+                        break;
+                } else {
+                    break;
+                }
+            }
+            return allEvents;
+        } catch (Exception e) {
+            log.error("Failed to fetch events for {}: {}", username, e.getMessage());
             return new ArrayList<>();
         }
-        return restClient.get()
-                .uri("/users/" + username + "/events?per_page=100")
-                .header("Authorization", "Bearer " + oauthToken)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {
-                });
     }
 
     @Override
     public List<java.util.Map<String, Object>> getStarredRepositories(String username, String oauthToken) {
         log.info("Fetching starred repositories for user: {}", username);
-        if (oauthToken == null || oauthToken.isEmpty()) {
+        try {
+            var request = restClient.get().uri("/users/" + username + "/starred?per_page=100&sort=created");
+            if (oauthToken != null && !oauthToken.isEmpty()) {
+                request.header("Authorization", "Bearer " + oauthToken);
+            }
+            return request.retrieve().body(new ParameterizedTypeReference<>() {
+            });
+        } catch (Exception e) {
+            log.error("Failed to fetch starred repos for {}: {}", username, e.getMessage());
             return new ArrayList<>();
         }
-        return restClient.get()
-                .uri("/users/" + username + "/starred?per_page=100&sort=created")
-                .header("Authorization", "Bearer " + oauthToken)
-                .retrieve()
-                .body(new ParameterizedTypeReference<>() {
-                });
     }
 }

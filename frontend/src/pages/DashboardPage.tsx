@@ -222,15 +222,16 @@ export function DashboardPage() {
   const [prevEventCount, setPrevEventCount] = useState(0);
 
   useEffect(() => {
-    if (activityEvents && activityEvents.length > 0) {
+    const safeEvents = Array.isArray(activityEvents) ? activityEvents : [];
+    if (safeEvents.length > 0) {
       // On first load, just set the count
       if (prevEventCount === 0) {
-        setPrevEventCount(activityEvents.length);
+        setPrevEventCount(safeEvents.length);
       }
       // If new events arrived
-      else if (activityEvents.length > prevEventCount) {
-        const newEventsCount = activityEvents.length - prevEventCount;
-        const latestEvent = activityEvents[0]; // Assuming API returns sorted by latest
+      else if (safeEvents.length > prevEventCount) {
+        const newEventsCount = safeEvents.length - prevEventCount;
+        const latestEvent = safeEvents[0]; // Assuming API returns sorted by latest
 
         // Find simpler message
         let eventType = "Activity";
@@ -245,7 +246,7 @@ export function DashboardPage() {
           });
         }
 
-        setPrevEventCount(activityEvents.length);
+        setPrevEventCount(safeEvents.length);
       }
     }
   }, [activityEvents, prevEventCount, user]);
@@ -264,6 +265,12 @@ export function DashboardPage() {
     refetchInterval: 5000,
   });
 
+  // Safely handle API objects vs arrays
+  let safeEvents: any[] = [];
+  if (Array.isArray(activityEvents)) {
+    safeEvents = activityEvents;
+  }
+  
   const calculateRealActivity = () => {
     // If no events loaded yet, just return zeros for the timeframe
     // This prevents "empty" chart flashing if loading is slow
@@ -281,8 +288,8 @@ export function DashboardPage() {
       activityMap[key] = 0;
     }
 
-    if (activityEvents) {
-      activityEvents.forEach((event: any) => {
+    if (safeEvents && safeEvents.length > 0) {
+      safeEvents.forEach((event: any) => {
         // We only care about PushEvent (commits), but also include specific other events for "User Activity"
         // Parsing dates from API which are UTC
         const eventDate = new Date(event.created_at);
@@ -324,13 +331,14 @@ export function DashboardPage() {
 
   const realActivityData = calculateRealActivity();
 
-  const totalPushes = activityEvents
-    ? activityEvents.filter((e: any) => e.type === "PushEvent").length
-    : 0;
+  // Filter for Last 90 Days activity metrics to capture the user's historical pushes
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  
+  const last90DaysEvents = safeEvents.filter((e: any) => new Date(e.created_at) >= ninetyDaysAgo);
 
-  const totalPRs = activityEvents
-    ? activityEvents.filter((e: any) => e.type === "PullRequestEvent").length
-    : 0;
+  const totalPushes = last90DaysEvents.filter((e: any) => e.type === "PushEvent").length;
+  const totalPRs = last90DaysEvents.filter((e: any) => e.type === "PullRequestEvent").length;
 
   // Filter Data based on Search Query
   const filteredRepos = displayRepos.filter((repo: any) => {
@@ -343,7 +351,7 @@ export function DashboardPage() {
     );
   });
 
-  const filteredActivity = activityEvents ? activityEvents.filter((event: any) => {
+  const filteredActivity = safeEvents.filter((event: any) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
 
@@ -364,7 +372,7 @@ export function DashboardPage() {
     }
 
     return false;
-  }) : [];
+  });
 
   const filteredLocalRepos = localReposResults.filter((repo: any) => {
     if (!searchQuery) return true;
@@ -374,8 +382,8 @@ export function DashboardPage() {
 
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
-    { title: "Total Pushes", value: totalPushes, icon: GitCommit, trend: "Recent Activity", trendUp: totalPushes > 0 },
-    { title: "Total Pull Requests", value: totalPRs, icon: GitBranch, trend: "Recent Activity", trendUp: totalPRs > 0 },
+    { title: "Total Pushes", value: totalPushes, icon: GitCommit, trend: "Last 90 Days", trendUp: totalPushes > 0 },
+    { title: "Total Pull Requests", value: totalPRs, icon: GitBranch, trend: "Last 90 Days", trendUp: totalPRs > 0 },
     { title: "Total Open Issues", value: displayRepos.reduce((acc: number, r: any) => acc + (r.openIssuesCount || 0), 0), icon: GitCommit, trend: "Needs attention", trendUp: false },
   ];
 
@@ -435,8 +443,8 @@ export function DashboardPage() {
                   const recentRepoNames = new Set<string>();
                   const recentRepos: any[] = [];
 
-                  if (activityEvents) {
-                    activityEvents.forEach((event: any) => {
+                  if (safeEvents && safeEvents.length > 0) {
+                    safeEvents.forEach((event: any) => {
                       if (event.repo && !recentRepoNames.has(event.repo.name)) {
                         recentRepoNames.add(event.repo.name);
                         // Find full repo details from displayRepos if available
