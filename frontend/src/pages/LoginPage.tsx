@@ -124,7 +124,7 @@ export function LoginPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold uppercase tracking-wider opacity-70">Password</Label>
-                    <Link to="/forgot-password" className="text-[10px] text-primary uppercase font-bold tracking-widest cursor-pointer hover:underline">Forgot?</Link>
+                    <button type="button" onClick={() => toast.info('Please contact the system administrator to reset your password.')} className="text-[10px] text-primary uppercase font-bold tracking-widest cursor-pointer hover:underline bg-transparent border-none p-0">Forgot?</button>
                   </div>
                   <Input
                     type="password"

@@ -13,11 +13,8 @@ export function SignupPage() {
     const { signUpWithEmail } = useAuth();
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(false);
-    const [isEmailChecked, setIsEmailChecked] = useState(false);
-    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const [formData, setFormData] = useState({
         username: "",
-        email: "",
         password: "",
         confirmPassword: "",
         name: ""
@@ -27,11 +24,6 @@ export function SignupPage() {
         e.preventDefault();
         if (formData.password !== formData.confirmPassword) {
             toast.error("Passwords do not match");
-            return;
-        }
-
-        if (!isEmailChecked) {
-            toast.error("Please verify your email is available first.");
             return;
         }
 
@@ -47,30 +39,6 @@ export function SignupPage() {
         }
     };
 
-    const handleCheckEmail = async () => {
-        if (!formData.email) {
-            toast.error("Please enter your email first.");
-            return;
-        }
-        setIsCheckingEmail(true);
-        try {
-            const res = await fetch(`${API_URL}/api/auth/send-signup-otp`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: formData.email }),
-            });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(errorText || "Email check failed.");
-            }
-            toast.success("Email is available! You can proceed with signup.");
-            setIsEmailChecked(true);
-        } catch (error: any) {
-            toast.error(error.message);
-        } finally {
-            setIsCheckingEmail(false);
-        }
-    };
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-github p-4 relative overflow-hidden">
@@ -116,41 +84,7 @@ export function SignupPage() {
                             />
                         </div>
 
-                        <div className="space-y-2">
-                            <Label>Email</Label>
-                            <div className="flex gap-2">
-                                <Input
-                                    type="email"
-                                    placeholder="john@example.com"
-                                    className="bg-black/20 border-white/10 focus:border-primary/50 flex-1"
-                                    value={formData.email}
-                                    onChange={(e) => {
-                                        setFormData({ ...formData, email: e.target.value });
-                                        setIsEmailChecked(false); // reset if email changes
-                                    }}
-                                    required
-                                    disabled={isEmailChecked}
-                                />
-                                {!isEmailChecked && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleCheckEmail}
-                                        disabled={!formData.email || isCheckingEmail}
-                                        className="shrink-0"
-                                    >
-                                        {isCheckingEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : "Check"}
-                                    </Button>
-                                )}
-                            </div>
-                        </div>
 
-                        {isEmailChecked && (
-                            <div className="text-sm text-green-400 flex items-center gap-2 p-2 bg-green-500/10 rounded-lg border border-green-500/20">
-                                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                                <span>Email available! Your account will be created and you can <strong>log in immediately</strong>. Admin will verify your email in the background.</span>
-                            </div>
-                        )}
 
                         <div className="space-y-2 mt-4">
                             <Label>Password</Label>
@@ -176,7 +110,7 @@ export function SignupPage() {
                             />
                         </div>
 
-                        <Button type="submit" className="w-full glow-green font-semibold mt-6" disabled={isLoading || !isEmailChecked}>
+                        <Button type="submit" className="w-full glow-green font-semibold mt-6" disabled={isLoading}>
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign Up"}
                         </Button>
                     </form>

@@ -35,32 +35,10 @@ public class AuthController {
         this.emailService = emailService;
     }
 
-    @PostMapping("/send-signup-otp")
-    public ResponseEntity<?> sendSignupOtp(@RequestBody java.util.Map<String, String> request) {
-        String email = request.get("email");
-        if (email == null || email.trim().isEmpty())
-            return ResponseEntity.badRequest().body("Error: Email is required");
-
-        if (userRepository.findByEmail(email).isPresent()) {
-            return ResponseEntity.badRequest().body(
-                    "Error: Email already exists. One email is related to only one account and cannot be used for another.");
-        }
-
-        // No OTP or email is sent. Email is simply confirmed as available.
-        // Admin will manually review and verify user emails after signup within a week.
-        log.info("[SIGNUP] Email availability checked for: {}", email);
-        return ResponseEntity.ok(java.util.Map.of("message", "Email is available"));
-    }
-
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody SignupRequest request) {
         if (userRepository.findByUsername(request.getUsername()).isPresent()) {
             return ResponseEntity.badRequest().body("Error: Username is already taken!");
-        }
-
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            return ResponseEntity.badRequest().body(
-                    "Error: Email already exists. One email is related to only one account and cannot be used for another.");
         }
 
         // Validate password strength first
@@ -71,16 +49,13 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Password must contain both letters and numbers");
         }
 
-        // OTP check removed — email verification is done manually by admin within 1
-        // week.
         User user = new User();
         user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
         user.setName(request.getName());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setAvatarUrl("https://ui-avatars.com/api/?name=" + request.getName());
         user.setOnboardingCompleted(true);
-        user.setEmailVerified(false); // Admin will verify manually within 1 week
+        user.setEmailVerified(true);
 
         userRepository.save(user);
 
@@ -103,29 +78,6 @@ public class AuthController {
         if (!user.isOnboardingCompleted()) {
             return ResponseEntity.status(401)
                     .body("Error: Email not verified. Please complete signup verification first.");
-        }
-
-        // Enforce GitHub verification (Except for Admins)
-        boolean githubVerificationRequired = false;
-        if (!"ADMIN".equalsIgnoreCase(user.getRole())) {
-            if (user.getLastGithubVerifiedAt() == null) {
-                githubVerificationRequired = true;
-            } else {
-                if (user.getLastActiveAt() != null) {
-                    java.time.LocalDateTime now = java.time.LocalDateTime.now();
-                    java.time.Duration sinceLastActive = java.time.Duration.between(user.getLastActiveAt(), now);
-                    if (sinceLastActive.toDays() >= 2) {
-                        githubVerificationRequired = true;
-                    }
-                } else {
-                    githubVerificationRequired = true;
-                }
-            }
-        }
-
-        if (githubVerificationRequired) {
-            return ResponseEntity.status(401)
-                    .body("GitHub verification required: You must verify with GitHub to continue using this account.");
         }
 
         if (user.getPassword() == null || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
