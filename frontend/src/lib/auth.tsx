@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (lastActivityStr) {
           const lastActivity = parseInt(lastActivityStr, 10);
           if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+            window.alert("Session expired due to 15 minutes of inactivity. Please log in again.");
             localStorage.removeItem("token");
             localStorage.removeItem("lastActivityTimestamp");
             setTokenState(null);
