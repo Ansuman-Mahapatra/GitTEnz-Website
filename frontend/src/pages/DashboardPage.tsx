@@ -380,15 +380,17 @@ export function DashboardPage() {
   const totalPRs = last90DaysEvents.filter((e: any) => e.type === "PullRequestEvent").length;
 
   // Filter Data based on Search Query
-  const filteredRepos = displayRepos.filter((repo: any) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      repo.name?.toLowerCase().includes(query) ||
-      repo.description?.toLowerCase().includes(query) ||
-      repo.language?.toLowerCase().includes(query)
-    );
-  });
+  const filteredRepos = displayRepos
+    .filter((repo: any) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        repo.name?.toLowerCase().includes(query) ||
+        repo.description?.toLowerCase().includes(query) ||
+        repo.language?.toLowerCase().includes(query)
+      );
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const filteredActivity = safeEvents.filter((event: any) => {
     if (!searchQuery) return true;
@@ -413,11 +415,13 @@ export function DashboardPage() {
     return false;
   });
 
-  const filteredLocalRepos = localReposResults.filter((repo: any) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return repo.name.toLowerCase().includes(query);
-  });
+  const filteredLocalRepos = localReposResults
+    .filter((repo: any) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return repo.name.toLowerCase().includes(query);
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   const statsData = [
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
