@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell, Menu } = require('electron');
+const { app, BrowserWindow, shell, Menu, ipcMain } = require('electron');
 const path = require('path');
+const { exec } = require('child_process');
 
 const isDev = !app.isPackaged;
 
@@ -78,4 +79,22 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+// IPC Git Command Handler
+ipcMain.handle('run-git-command', async (event, { cwd, args }) => {
+  return new Promise((resolve) => {
+    // Basic verification of args to prevent common malicious commands
+    const validArgs = args.filter(a => typeof a === 'string');
+    const command = `git ${validArgs.join(' ')}`;
+    
+    exec(command, { cwd }, (error, stdout, stderr) => {
+      resolve({
+        success: !error,
+        stdout,
+        stderr,
+        error: error ? error.message : null
+      });
+    });
+  });
 });

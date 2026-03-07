@@ -150,12 +150,11 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
       }
 
       // Fix 3: Create GitHub Repo & Add Origin
-      let originUrl = analysis.hasOrigin ? null : `https://github.com/${username}/${dirHandle.name}.git`;
+      let finalOriginUrl = analysis.hasOrigin ? null : `https://github.com/${username}/${dirHandle.name}.git`;
       
       if (publishToGithub && !analysis.hasOrigin) {
         setProgress(60);
         try {
-          // Call backend to create repository on GitHub
           const token = localStorage.getItem('token');
           const response = await fetch('/api/repos', {
             method: 'POST',
@@ -172,11 +171,12 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
 
           if (response.ok) {
             const repoData = await response.json();
-            originUrl = repoData.clone_url || repoData.html_url + '.git';
+            finalOriginUrl = repoData.clone_url || repoData.html_url + '.git';
             toast.success(`Successfully created ${isPrivate ? 'private' : 'public'} repo on GitHub!`);
           } else {
             console.error("Failed to create GitHub repo");
-            toast.error("Could not create GitHub repository, skipping link step.");
+            toast.error("Cloud creation failed. This repo name might already exist on your GitHub.");
+            // We use the default origin URL as a fallback if the creation semi-failed or was a name collision
           }
         } catch (err) {
           console.error("GitHub API error", err);
@@ -184,7 +184,7 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         }
       }
 
-      if (originUrl) {
+      if (finalOriginUrl) {
         setProgress(80);
         let existingConfig = "";
         try {
@@ -193,18 +193,28 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
           existingConfig = await file.text();
         } catch (e) {}
 
-        const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
-        const writable = await configHandle.createWritable();
-        
-        const newRemote = `\n[remote "origin"]\n\turl = ${originUrl}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`;
-        await writable.write(existingConfig + newRemote);
-        await writable.close();
-        toast.success(`Linked origin to GitHub: ${dirHandle.name}`);
+        // Check if origin already exists in text to avoid duplication
+        if (!existingConfig.includes('[remote "origin"]')) {
+           const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
+           const writable = await configHandle.createWritable();
+           const newRemote = `\n[remote "origin"]\n\turl = ${finalOriginUrl}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`;
+           await writable.write(existingConfig + newRemote);
+           await writable.close();
+           toast.success("Remote origin linked successfully.");
+        }
       }
 
       setProgress(100);
       setTimeout(() => {
-        onContinue({ ...analysis, isGit: true, hasOrigin: !!originUrl || analysis.hasOrigin, gitDirHandle: updatedGitDir });
+        // Show success state with commands
+        setAnalysis((prev: any) => ({ 
+           ...prev, 
+           isGit: true, 
+           hasOrigin: true, 
+           originUrl: finalOriginUrl || prev.originUrl,
+           showSuccessCommands: true,
+           gitDirHandle: updatedGitDir 
+        }));
         setFixing(false);
       }, 500);
       
@@ -215,11 +225,57 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
     }
   };
 
+  if (analysis?.showSuccessCommands) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md glass-card border-primary/20 backdrop-blur-xl transition-all">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-500">
+              <CheckCircle2 className="w-6 h-6" /> Success! Repository Linked
+            </DialogTitle>
+            <DialogDescription>
+              We've prepared your local project. To finish pushing your code to GitHub, run these commands in your terminal:
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+             <div className="bg-zinc-950 p-4 rounded-lg font-mono text-xs text-primary/90 space-y-2 border border-white/5 relative group">
+                <p>git add .</p>
+                <p>git commit -m "Initial commit via GitTEnz"</p>
+                <p>git branch -M main</p>
+                <p>git push -u origin main</p>
+                <Button 
+                   size="icon" 
+                   variant="ghost" 
+                   className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                   onClick={() => {
+                      navigator.clipboard.writeText(`git add .\ngit commit -m "Initial commit via GitTEnz"\ngit branch -M main\ngit push -u origin main`);
+                      toast.success("Commands copied!");
+                   }}
+                >
+                   <GitCommit className="w-3 h-3" />
+                </Button>
+             </div>
+             <p className="text-[10px] text-muted-foreground italic">
+                Note: Ensure you have Git installed on your system to run these commands.
+             </p>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => onContinue(analysis)} className="w-full glow-green">
+              Go to Project Dashboard
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   const hasIssues = !analysis?.isGit || !analysis?.hasOrigin || analysis?.sensitiveFilesFound.length > 0;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && !fixing && onClose()}>
-      <DialogContent className="sm:max-w-md glass-card border-primary/20 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-md glass-card border-primary/20 backdrop-blur-xl transition-all">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="w-5 h-5 text-primary" />
@@ -238,9 +294,14 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
               <Progress value={progress} className="h-2 transition-all duration-500" />
             </div>
           ) : analysis ? (
-            <AnimatePresence>
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key="analysis-view"
+                initial={{ opacity: 0, y: 10 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-4"
+              >
                 {/* Project Overview */}
                 <div className="flex items-center gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
                   <FileCode2 className="w-6 h-6 text-blue-400" />
