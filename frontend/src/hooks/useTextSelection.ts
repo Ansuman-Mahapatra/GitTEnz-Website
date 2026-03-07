@@ -6,7 +6,7 @@ interface TextSelectionState {
   isActive: boolean;
 }
 
-export function useTextSelection() {
+export function useTextSelection(containerRef?: React.RefObject<HTMLElement>) {
   const [selection, setSelection] = useState<TextSelectionState>({
     text: "",
     rect: null,
@@ -61,14 +61,15 @@ export function useTextSelection() {
   }, []);
 
   useEffect(() => {
-    document.addEventListener("mouseup", handleMouseUp);
+    const target = containerRef?.current || document;
+    target.addEventListener("mouseup", handleMouseUp);
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.removeEventListener("mouseup", handleMouseUp);
+      target.removeEventListener("mouseup", handleMouseUp);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleMouseUp, handleKeyDown]);
+  }, [handleMouseUp, handleKeyDown, containerRef]);
 
   return {
     ...selection,

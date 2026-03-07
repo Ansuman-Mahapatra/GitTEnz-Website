@@ -1,16 +1,30 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { InlineAiButton } from "./InlineAiButton";
 import { InlineAiChatPopup } from "./InlineAiChatPopup";
 
-export function InlineAiProvider() {
-  const { text, rect, isActive, clearSelection, setIgnoreNextDeselect } = useTextSelection();
+interface InlineAiProviderProps {
+  containerRef?: React.RefObject<HTMLElement>;
+  externalContext?: { text: string; rect: DOMRect | null } | null;
+  onCloseExternal?: () => void;
+}
+
+export function InlineAiProvider({ containerRef, externalContext, onCloseExternal }: InlineAiProviderProps) {
+  const { text, rect, isActive, clearSelection, setIgnoreNextDeselect } = useTextSelection(containerRef);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatContext, setChatContext] = useState<{
     text: string;
     rect: DOMRect | null;
   }>({ text: "", rect: null });
+
+  // Sync with external context
+  useEffect(() => {
+    if (externalContext) {
+      setChatContext(externalContext);
+      setIsChatOpen(true);
+    }
+  }, [externalContext]);
 
   const handleButtonClick = useCallback(() => {
     // Prevent deselection on next mouseup (since we're clicking our UI)
@@ -25,13 +39,17 @@ export function InlineAiProvider() {
     setIsChatOpen(false);
     setChatContext({ text: "", rect: null });
     clearSelection();
-  }, [clearSelection]);
+    if (onCloseExternal) onCloseExternal();
+  }, [clearSelection, onCloseExternal]);
+
+  const activeText = chatContext.text || (isActive ? text : "");
+  const activeRect = chatContext.rect || (isActive ? rect : null);
 
   return (
     <>
       <AnimatePresence>
         {/* Show floating AI button when text is selected and chat is NOT open */}
-        {isActive && rect && !isChatOpen && (
+        {isActive && rect && !isChatOpen && !externalContext && (
           <InlineAiButton
             key="inline-ai-button"
             rect={rect}
@@ -42,11 +60,11 @@ export function InlineAiProvider() {
 
       <AnimatePresence>
         {/* Show chat popup */}
-        {isChatOpen && chatContext.text && (
+        {isChatOpen && activeText && (
           <InlineAiChatPopup
             key="inline-ai-chat"
-            selectedText={chatContext.text}
-            anchorRect={chatContext.rect}
+            selectedText={activeText}
+            anchorRect={activeRect}
             onClose={handleCloseChat}
           />
         )}

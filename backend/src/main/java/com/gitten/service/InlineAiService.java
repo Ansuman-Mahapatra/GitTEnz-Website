@@ -11,6 +11,9 @@ import org.springframework.web.client.RestClient;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
+import com.gitten.repository.UserRepository;
+import java.util.Optional;
 
 @Service
 public class InlineAiService {
@@ -18,6 +21,7 @@ public class InlineAiService {
     private static final Logger log = LoggerFactory.getLogger(InlineAiService.class);
 
     private final RestClient.Builder restClientBuilder;
+    private final UserRepository userRepository;
 
     /**
      * In-memory conversation history keyed by "username:sessionId".
@@ -25,11 +29,22 @@ public class InlineAiService {
      */
     private final ConcurrentHashMap<String, List<Map<String, String>>> conversationStore = new ConcurrentHashMap<>();
 
-    @Value("${openai.api.key:placeholder_key}")
+    @Value("${openai.api.key}")
     private String openAiApiKey;
 
-    public InlineAiService(RestClient.Builder restClientBuilder) {
+    public InlineAiService(RestClient.Builder restClientBuilder, UserRepository userRepository) {
         this.restClientBuilder = restClientBuilder;
+        this.userRepository = userRepository;
+    }
+
+    private String getEffectiveKey(String username) {
+        if (username != null) {
+            Optional<com.gitten.model.User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isPresent() && userOpt.get().getAiApiKey() != null && !userOpt.get().getAiApiKey().isBlank()) {
+                return userOpt.get().getAiApiKey().trim();
+            }
+        }
+        return openAiApiKey != null ? openAiApiKey.trim() : null;
     }
 
     public InlineAiResponse chat(String username, InlineAiRequest request) {
@@ -54,36 +69,41 @@ public class InlineAiService {
         // Append user message
         String userMessage = request.getUserMessage();
         if (userMessage == null || userMessage.isBlank()) {
-            userMessage = "Explain this code/commit.";
+            userMessage = "Explain this code block.";
         }
         history.add(Map.of("role", "user", "content", userMessage));
 
-        // Trim history if too long (keep system + last 20 messages)
-        if (history.size() > 21) {
+        // Trim history if too long (keep system + last 10 messages for better context)
+        if (history.size() > 11) {
             Map<String, String> systemMsg = history.get(0);
             List<Map<String, String>> trimmed = new ArrayList<>();
             trimmed.add(systemMsg);
-            trimmed.addAll(history.subList(history.size() - 20, history.size()));
+            trimmed.addAll(history.subList(history.size() - 10, history.size()));
             history.clear();
             history.addAll(trimmed);
         }
 
-        // Call OpenAI
+        // Call OpenAI - Upgraded to gpt-4o-mini for better performance
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-3.5-turbo",
+                "model", "gpt-4o-mini",
                 "messages", new ArrayList<>(history),
                 "temperature", 0.7,
-                "max_tokens", 1024
-        );
+                "max_tokens", 2048);
+
+        String effectiveKey = getEffectiveKey(username);
+        if (effectiveKey == null || effectiveKey.isBlank()) {
+            return new InlineAiResponse("No OpenAI API Key found. Please configure it in Settings -> Developer.",
+                    sessionId);
+        }
 
         RestClient openAiClient = restClientBuilder.build();
 
         try {
             Map response = openAiClient.post()
                     .uri("https://api.openai.com/v1/chat/completions")
-                    .header("Authorization", "Bearer " + openAiApiKey)
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .body(requestBody)
+                    .header("Authorization", "Bearer " + effectiveKey)
+                    .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
+                    .body(Objects.requireNonNull(requestBody))
                     .retrieve()
                     .body(Map.class);
 
@@ -101,14 +121,21 @@ public class InlineAiService {
                 }
             }
         } catch (Exception e) {
-            log.error("Error calling OpenAI for inline AI chat", e);
-            return new InlineAiResponse(
-                    "I'm sorry, I'm having trouble connecting right now. Please check the API key and try again.",
-                    sessionId
-            );
+            log.error("OpenAI API call failed for user {}: {}", username, e.getMessage());
+            String fallbackMessage = "I encountered an issue connecting to OpenAI. ";
+            if (e.getMessage() != null
+                    && (e.getMessage().contains("401") || e.getMessage().contains("invalid_api_key"))) {
+                fallbackMessage += "The API key seems to be invalid or expired. Please check your settings.";
+            } else if (e.getMessage() != null && e.getMessage().contains("429")) {
+                fallbackMessage += "Quota limit reached. If you're using a shared key, consider providing your own in Settings -> Developer.";
+            } else {
+                fallbackMessage += "Details: "
+                        + (e.getMessage() != null ? e.getMessage() : "Unknown connection error.");
+            }
+            return new InlineAiResponse(fallbackMessage, sessionId);
         }
 
-        return new InlineAiResponse("No response from AI.", sessionId);
+        return new InlineAiResponse("The AI service returned an empty response. Please try again.", sessionId);
     }
 
     /**
@@ -120,28 +147,32 @@ public class InlineAiService {
 
     private String buildSystemPrompt(String selectedText, String commitId) {
         StringBuilder sb = new StringBuilder();
-        sb.append("You are an AI code review assistant.\n");
+        sb.append("You are 'GitTEnz AI', a senior engineering assistant specialized in code analysis.\n\n");
+        sb.append(
+                "Your goal is to provide deep, technical, and accurate explanations or suggestions based on the provided code block.\n");
+        sb.append("Use Markdown for formatting, especially for code snippets, bold text, and lists.\n\n");
 
         if (selectedText != null && !selectedText.isBlank()) {
-            sb.append("Here is the selected commit/code:\n");
-            sb.append("---\n");
-            // Limit selected text to avoid token overflow
-            if (selectedText.length() > 3000) {
-                sb.append(selectedText, 0, 3000).append("...(truncated)");
+            sb.append("### Context (Selected Code):\n");
+            sb.append("```\n");
+            // Limit selected text to avoid token overflow but allow more for gpt-4o-mini
+            if (selectedText.length() > 6000) {
+                sb.append(selectedText, 0, 6000).append("\n...(content truncated for context length)");
             } else {
                 sb.append(selectedText);
             }
-            sb.append("\n---\n");
+            sb.append("\n```\n\n");
         }
 
         if (commitId != null && !commitId.isBlank()) {
-            sb.append("Commit ID: ").append(commitId).append("\n");
+            sb.append("Current Reference Commit: ").append(commitId).append("\n\n");
         }
 
-        sb.append("\nAnswer clearly and technically. ");
-        sb.append("If asked to explain, provide concise explanations. ");
-        sb.append("If asked to improve, suggest concrete code improvements. ");
-        sb.append("If asked about bugs, identify potential issues and fixes.");
+        sb.append("Guidelines:\n");
+        sb.append("- Explain logic clearly and concisely.\n");
+        sb.append("- Identify potential edge cases or bugs if visible.\n");
+        sb.append("- Suggest modern alternatives (e.g., ES6+, Java 17+ features) when relevant.\n");
+        sb.append("- Always respond in a professional and helpful tone.");
 
         return sb.toString();
     }

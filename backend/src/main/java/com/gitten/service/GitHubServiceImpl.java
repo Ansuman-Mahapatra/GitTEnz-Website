@@ -16,6 +16,8 @@ import org.springframework.http.MediaType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -153,7 +155,7 @@ public class GitHubServiceImpl implements GitHubService {
         return restClient.put()
                 .uri("/repos/" + owner + "/" + repo + "/contents/" + path)
                 .header("Authorization", "Bearer " + oauthToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(Objects.requireNonNull(org.springframework.http.MediaType.APPLICATION_JSON))
                 .body(body)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {
@@ -237,7 +239,7 @@ public class GitHubServiceImpl implements GitHubService {
         return restClient.post()
                 .uri("/user/repos")
                 .header("Authorization", "Bearer " + oauthToken)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {

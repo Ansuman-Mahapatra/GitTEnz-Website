@@ -1,10 +1,10 @@
-import { Copy, Check, Maximize2, Minimize2, Save } from "lucide-react";
+import { Copy, Check, Maximize2, Minimize2, Save, Sparkles, Wand2, Info } from "lucide-react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
@@ -13,34 +13,21 @@ interface CodeEditorProps {
   language?: string;
   onChange?: (code: string) => void;
   readOnly?: boolean;
+  onAiExplain?: (code: string) => void;
 }
 
-export function CodeEditor({ initialCode, language = "typescript", onChange, readOnly = true }: CodeEditorProps) {
+export function CodeEditor({ initialCode, language = "typescript", onChange, readOnly = true, onAiExplain }: CodeEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const [copied, setCopied] = useState(false);
 
   // Map common extensions or names to prism-supported languages
   const getLanguage = (lang: string) => {
     const map: Record<string, string> = {
-      'js': 'javascript',
-      'ts': 'typescript',
-      'tsx': 'tsx',
-      'jsx': 'jsx',
-      'py': 'python',
-      'java': 'java',
-      'cpp': 'cpp',
-      'c': 'c',
-      'go': 'go',
-      'rs': 'rust',
-      'yml': 'yaml',
-      'yaml': 'yaml',
-      'md': 'markdown',
-      'json': 'json',
-      'xml': 'xml',
-      'html': 'html',
-      'css': 'css',
-      'sh': 'bash',
-      'bash': 'bash'
+      'js': 'javascript', 'ts': 'typescript', 'tsx': 'tsx', 'jsx': 'jsx',
+      'py': 'python', 'java': 'java', 'cpp': 'cpp', 'c': 'c',
+      'go': 'go', 'rs': 'rust', 'yml': 'yaml', 'yaml': 'yaml',
+      'md': 'markdown', 'json': 'json', 'xml': 'xml', 'html': 'html',
+      'css': 'css', 'sh': 'bash', 'bash': 'bash'
     };
     return map[lang.toLowerCase()] || lang.toLowerCase() || 'typescript';
   };
@@ -50,6 +37,31 @@ export function CodeEditor({ initialCode, language = "typescript", onChange, rea
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  // Divide code into logical "blocks" based on double newlines
+  const blocks = useMemo(() => {
+    if (!initialCode) return [];
+    
+    const lines = initialCode.split('\n');
+    const result: { content: string, startLine: number }[] = [];
+    let currentBlock: string[] = [];
+    let startLine = 1;
+
+    lines.forEach((line, index) => {
+      currentBlock.push(line);
+      // Segment at double newlines (paragraphs) or after closing braces that are followed by newlines
+      if ((line.trim() === '' && currentBlock.length > 3) || index === lines.length - 1) {
+        result.push({
+          content: currentBlock.join('\n'),
+          startLine: startLine
+        });
+        startLine = index + 2;
+        currentBlock = [];
+      }
+    });
+
+    return result;
+  }, [initialCode]);
 
   return (
     <Card className={cn(
@@ -71,13 +83,24 @@ export function CodeEditor({ initialCode, language = "typescript", onChange, rea
           {!readOnly && <Badge className="h-5 bg-blue-600/20 text-blue-400 border-blue-500/30 text-[10px] px-2">EDIT MODE</Badge>}
         </div>
 
-        <div className="flex gap-1">
+        <div className="flex items-center gap-2">
+          {onAiExplain && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs text-primary hover:text-primary hover:bg-primary/10 border border-primary/20"
+              onClick={() => onAiExplain(initialCode)}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Full Analysis</span>
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"
             className="h-6 w-6 text-[#858585] hover:text-white hover:bg-[#3e3e42]"
             onClick={handleCopy}
-            title="Copy Code"
+            title="Copy All"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
           </Button>
@@ -85,57 +108,69 @@ export function CodeEditor({ initialCode, language = "typescript", onChange, rea
       </CardHeader>
 
       <CardContent className="p-0 flex-1 overflow-hidden relative font-mono text-[13px]">
-        <div className="absolute inset-0 flex bg-[#1e1e1e]">
-          {/* Editor Area */}
-          <div className="flex-1 relative overflow-hidden">
-            {readOnly ? (
-              <ScrollArea className="h-full w-full">
-                <div className="min-w-max">
+        {readOnly ? (
+          <ScrollArea className="h-full w-full">
+            <div className="min-w-max p-0">
+              {blocks.map((block, bIdx) => (
+                <div key={bIdx} className="group relative border-b border-[#3e3e42]/20 hover:bg-primary/5 transition-colors">
+                  {/* Block Action Button */}
+                  {onAiExplain && (
+                    <button
+                      onClick={() => onAiExplain(block.content)}
+                      className="absolute right-4 top-2 z-10 opacity-0 group-hover:opacity-100 flex items-center gap-1.5 px-2 py-1 rounded bg-primary/20 text-primary border border-primary/30 text-[10px] backdrop-blur-sm transition-all hover:bg-primary/30"
+                      title="Explain this block"
+                    >
+                      <Sparkles className="w-3 h-3" />
+                      <span>Explain Block</span>
+                    </button>
+                  )}
+                  
                   <SyntaxHighlighter
                     language={getLanguage(language)}
                     style={vscDarkPlus}
                     showLineNumbers={true}
+                    startingLineNumber={block.startLine}
                     lineNumberStyle={{
-                      minWidth: '3em',
+                      minWidth: '3.5em',
                       paddingRight: '1em',
                       color: '#858585',
                       textAlign: 'right',
                       userSelect: 'none',
+                      borderRight: '1px solid #3e3e42',
+                      marginRight: '1em',
                     }}
-                    containerStyle={{
+                    customStyle={{
                       margin: 0,
-                      padding: '16px 8px',
+                      padding: '8px 0',
                       background: 'transparent',
                     }}
                     codeTagProps={{
-                      style: {
-                        fontFamily: 'inherit',
-                      }
+                      style: { fontFamily: 'inherit' }
                     }}
                   >
-                    {initialCode || " "}
+                    {block.content}
                   </SyntaxHighlighter>
                 </div>
-              </ScrollArea>
-            ) : (
-              <div className="flex h-full w-full">
-                 <div className="w-12 bg-[#1e1e1e] text-[#858585] text-right pr-3 select-none py-4 border-r border-[#3e3e42]/30 flex flex-col pt-[16px]">
-                  {initialCode.split("\n").map((_, i) => (
-                    <div key={i} className="leading-6 h-6">{i + 1}</div>
-                  ))}
-                </div>
-                <textarea
-                  className="flex-1 p-4 bg-transparent text-[#d4d4d4] resize-none focus:outline-none placeholder-muted-foreground/50 leading-6 whitespace-pre font-mono outline-none"
-                  value={initialCode}
-                  onChange={(e) => onChange?.(e.target.value)}
-                  spellCheck={false}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                />
-              </div>
-            )}
+              ))}
+            </div>
+          </ScrollArea>
+        ) : (
+          <div className="flex h-full w-full bg-[#1e1e1e]">
+            <div className="w-12 bg-[#1e1e1e] text-[#858585] text-right pr-3 select-none py-4 border-r border-[#3e3e42]/30 flex flex-col pt-[16px]">
+              {initialCode.split("\n").map((_, i) => (
+                <div key={i} className="leading-6 h-6">{i + 1}</div>
+              ))}
+            </div>
+            <textarea
+              className="flex-1 p-4 bg-transparent text-[#d4d4d4] resize-none focus:outline-none placeholder-muted-foreground/50 leading-6 whitespace-pre font-mono outline-none"
+              value={initialCode}
+              onChange={(e) => onChange?.(e.target.value)}
+              spellCheck={false}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+            />
           </div>
-        </div>
+        )}
       </CardContent>
     </Card>
   );

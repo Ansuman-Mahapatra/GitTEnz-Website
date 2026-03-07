@@ -102,7 +102,11 @@ export function InlineAiChatPopup({ selectedText, anchorRect, onClose }: InlineA
         }),
       });
 
-      if (!res.ok) throw new Error("Failed to get AI response");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ response: "Failed to connect to AI server." }));
+        throw new Error(errorData.response || "Failed to get AI response");
+      }
+      
       const data = await res.json();
 
       if (data.sessionId) {
@@ -116,12 +120,12 @@ export function InlineAiChatPopup({ selectedText, anchorRect, onClose }: InlineA
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Inline AI error:", error);
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "Failed to connect to AI service. Please check if the backend is running.",
+        content: error.message || "Failed to connect to AI service. Please check if the backend is running.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
@@ -159,11 +163,13 @@ export function InlineAiChatPopup({ selectedText, anchorRect, onClose }: InlineA
 
   return (
     <motion.div
+      drag
+      dragMomentum={false}
       initial={{ opacity: 0, scale: 0.92, y: 10 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.92, y: 10 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="fixed z-[9998] w-[400px] h-[520px] flex flex-col rounded-2xl border border-primary/20 shadow-2xl shadow-black/40 overflow-hidden"
+      className="fixed z-[9998] w-[400px] h-[520px] flex flex-col rounded-2xl border border-primary/20 shadow-2xl shadow-black/40 overflow-hidden cursor-move"
       style={{
         ...getPopupStyle(),
         backdropFilter: "blur(20px) saturate(200%)",

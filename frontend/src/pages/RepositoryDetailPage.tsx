@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth";
@@ -192,9 +192,24 @@ export function RepositoryDetailPage() {
         }
     };
 
+    const [aiTriggerContext, setAiTriggerContext] = useState<{ text: string, rect: DOMRect | null } | null>(null);
+
+    const handleAiExplain = (content: string) => {
+        setAiTriggerContext({
+            text: content,
+            rect: null // Centered popup
+        });
+    };
+
+    const editorContainerRef = useRef<HTMLDivElement>(null);
+
     return (
         <div className="flex h-screen bg-transparent overflow-hidden relative">
-            <InlineAiProvider />
+            <InlineAiProvider 
+                containerRef={editorContainerRef} 
+                externalContext={aiTriggerContext}
+                onCloseExternal={() => setAiTriggerContext(null)}
+            />
             {/* Simple Commit Dialog */}
             {showCommitDialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -332,7 +347,7 @@ export function RepositoryDetailPage() {
                                 </Card>
 
                                 {/* Editor/Viewer */}
-                                <div className="col-span-9 h-full">
+                                <div className="col-span-9 h-full" ref={editorContainerRef}>
                                     {selectedFile ? (
                                         contentLoading ? (
                                             <div className="h-full flex items-center justify-center border rounded-xl glass-card">
@@ -344,6 +359,7 @@ export function RepositoryDetailPage() {
                                                 language={selectedFile.path.split('.').pop() || 'text'}
                                                 readOnly={!isEditing}
                                                 onChange={setCodeContent}
+                                                onAiExplain={handleAiExplain}
                                             />
                                         )
                                     ) : (

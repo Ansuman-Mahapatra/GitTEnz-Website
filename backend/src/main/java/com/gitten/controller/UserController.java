@@ -49,6 +49,8 @@ public class UserController {
             user.setAvatarUrl(userUpdates.getAvatarUrl());
         if (userUpdates.getNotificationPreferences() != null)
             user.setNotificationPreferences(userUpdates.getNotificationPreferences());
+        if (userUpdates.getAiApiKey() != null)
+            user.setAiApiKey(userUpdates.getAiApiKey());
 
         return userRepository.save(user);
     }

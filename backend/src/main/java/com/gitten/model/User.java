@@ -193,7 +193,16 @@ public class User {
         this.emailVerificationExpiry = emailVerificationExpiry;
     }
 
+    private String aiApiKey;
     private NotificationPreferences notificationPreferences = new NotificationPreferences();
+
+    public String getAiApiKey() {
+        return aiApiKey;
+    }
+
+    public void setAiApiKey(String aiApiKey) {
+        this.aiApiKey = aiApiKey;
+    }
 
     public NotificationPreferences getNotificationPreferences() {
         return notificationPreferences;

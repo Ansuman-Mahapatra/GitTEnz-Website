@@ -1,4 +1,10 @@
 # ======================
+# Remove GitDense folder (separate repo)
+# ======================
+GitDense/
+desktop/
+
+# ======================
 # Environment / Credentials
 # ======================
 .env
@@ -16,6 +22,21 @@ node_modules/
 dist/
 build/
 target/
+
+# ======================
+# Electron Build Output
+# ======================
+dist-electron/
+release/
+out/
+
+# ======================
+# Binary / Build Files
+# ======================
+*.exe
+*.asar
+*.node
+*-Setup-*.exe
 
 # ======================
 # Logs
@@ -36,24 +57,9 @@ logs/
 .DS_Store
 
 # ======================
-# Package locks (any folder)
+# Package Locks
 # ======================
-# Ignore package-lock.json anywhere
 package-lock.json
 **/package-lock.json
-GitDense/
 
 
-# Large files exception
-
-# Electron / Binary files
-*.exe
-*.asar
-*.node
-
-# Electron builder output
-release/
-out/
-
-# Installers
-*-Setup-*.exe
