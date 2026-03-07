@@ -8,16 +8,14 @@ import com.gitten.repository.RepositoryRepository;
 import com.gitten.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.http.MediaType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -155,7 +153,7 @@ public class GitHubServiceImpl implements GitHubService {
         return restClient.put()
                 .uri("/repos/" + owner + "/" + repo + "/contents/" + path)
                 .header("Authorization", "Bearer " + oauthToken)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {
@@ -174,7 +172,7 @@ public class GitHubServiceImpl implements GitHubService {
         return restClient.post()
                 .uri("/repos/" + owner + "/" + repo + "/git/refs")
                 .header("Authorization", "Bearer " + oauthToken)
-                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON)
                 .body(body)
                 .retrieve()
                 .body(new ParameterizedTypeReference<>() {
@@ -223,5 +221,26 @@ public class GitHubServiceImpl implements GitHubService {
             log.error("Failed to fetch starred repos for {}: {}", username, e.getMessage());
             return new ArrayList<>();
         }
+    }
+
+    @Override
+    public java.util.Map<String, Object> createRepository(String name, String description, boolean isPrivate,
+            String oauthToken) {
+        log.info("Creating repository on GitHub: {}", name);
+
+        java.util.Map<String, Object> body = new java.util.HashMap<>();
+        body.put("name", name);
+        body.put("description", description);
+        body.put("private", isPrivate);
+        body.put("auto_init", false); // We'll push our own local git history
+
+        return restClient.post()
+                .uri("/user/repos")
+                .header("Authorization", "Bearer " + oauthToken)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(body)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {
+                });
     }
 }

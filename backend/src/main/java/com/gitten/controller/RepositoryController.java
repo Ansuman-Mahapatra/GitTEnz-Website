@@ -166,6 +166,18 @@ public class RepositoryController {
                 .ok(gitHubService.createBranch(owner, repo, body.get("branchName"), body.get("sha"), token));
     }
 
+    @org.springframework.web.bind.annotation.PostMapping
+    public ResponseEntity<?> createRepository(
+            @org.springframework.web.bind.annotation.RequestBody java.util.Map<String, Object> body,
+            java.security.Principal principal) {
+        String token = getToken(principal.getName());
+        String name = (String) body.get("name");
+        String description = (String) body.get("description");
+        boolean isPrivate = (boolean) body.getOrDefault("private", false);
+
+        return ResponseEntity.ok(gitHubService.createRepository(name, description, isPrivate, token));
+    }
+
     private String getToken(String username) {
         return userRepository.findByUsername(username)
                 .map(com.gitten.model.User::getAccessToken)

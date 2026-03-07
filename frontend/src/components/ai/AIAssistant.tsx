@@ -6,21 +6,45 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const FAQ_OPTIONS = [
-  { id: "what-is-gittenz", label: "What is GitTEnz?" },
-  { id: "how-to-start", label: "How to get started?" },
-  { id: "where-code", label: "Where do I view code?" },
-  { id: "how-local-repos", label: "How do Local Repos work?" },
-  { id: "what-is-streak", label: "What is the Activity Streak?" },
-  { id: "how-to-edit", label: "How to edit and commit?" },
+  { id: "what-is-gittenz", label: "✨ What is GitTEnz?" },
+  { id: "project-details", label: "📋 Project Details & Subpoints" },
+  { id: "tech-stack", label: "🚀 Tech Stack & Infrastructure" },
+  { id: "security-info", label: "🔒 Security & Privacy" },
+  { id: "how-to-start", label: "🌱 How to get started?" },
+  { id: "how-local-repos", label: "💻 How do Local Repos work?" },
 ];
 
 const FAQ_ANSWERS: Record<string, string> = {
-  "what-is-gittenz": "GitTEnz is a comprehensive Git and GitHub repository management dashboard. It allows you to monitor your coding streak, track commits and pull requests, browse your repository structures, and securely analyze repositories stored locally on your device without uploading them.",
-  "how-to-start": "1) Sign up using a unique username, your email, and a secure password.\n2) Verify your email using the OTP sent to your inbox.\n3) Log in and click 'Connect GitHub' on the Dashboard.\n4) Authorize GitTEnz to sync your public repositories and activity!",
-  "where-code": "Go to the 'Repositories' tab from the sidebar menu and click on any repository card. You'll be taken to the Repository Detail View where you can explore the file tree, switch branches, read commit history, and view code directly in the browser!",
-  "how-local-repos": "Navigate to the 'Local Repos' tab. Click 'Select Project Folder' and pick any local folder on your computer that has a .git directory. GitTEnz uses secure browser APIs to read the files purely locally—your code never leaves your machine!",
-  "what-is-streak": "Your Personal Streak tracks the consecutive days you log into GitTEnz. You can see your heatmap calendar resolving your daily logins right on the main Dashboard!",
-  "how-to-edit": "In the Repository Detail View, click on a file to read it. Click the 'Edit' button, make changes in the built-in editor, and click 'Save Changes' to securely push a commit directly from the browser (only applicable if you own the repository)."
+  "what-is-gittenz": "GitTEnz is a next-generation Git and GitHub management platform designed to streamline your development workflow.\n\nKey Highlights:\n• Real-time GitHub Activity Tracking\n• Multi-platform support (Web & Desktop)\n• Intelligent Code Analysis\n• Seamless Repository Management",
+  "project-details": "GitTEnz is built as a high-performance developer companion. Which part would you like to dive into?",
+  "arch-deep-dive": "1. Modern Architecture:\n   - Frontend: React 18 / Vite with framer-motion for 60fps glassmorphism.\n   - Backend: Robust Java Spring Boot 3 with Clean Architecture.\n   - Persistence: MongoDB (User Data) & Redis (Session Cache).",
+  "feature-roadmap": "2. Advanced Feature Set:\n   - Real-time Sync: Automatic polling with GitHub's Event API.\n   - Heatmaps: Visual streak tracking for contributions.\n   - Code Explorer: Full file tree and in-browser code editing.\n   - Local Sec: 100% private local repo analysis via File System API.",
+  "tech-stack": "We use a modern stack to ensure speed and reliability. What section interests you?",
+  "frontend-tech": "• Framework: React 18 & TypeScript\n• Styling: Tailwind CSS & Framer Motion\n• Tooling: Vite (Fast HMR)\n• UI: Shadcn UI & Radix Primitives",
+  "backend-tech": "• Core: Java 17+, Spring Boot 3\n• Auth: Spring Security 6 with OAuth2\n• API: RESTful architecture with optimized rate-limiting\n• Clouds: Render (Backend) & Vercel (Frontend)",
+  "security-info": "Security is our top priority. What would you like to verify?",
+  "privacy-details": "• Local Privacy: Local repository scanning happens entirely within your browser's sandbox—your code is NEVER uploaded.\n• Session: 15-minute inactivity auto-logout protection.",
+  "auth-details": "• OAuth2: We use GitHub's official portal—we never see your password.\n• JWT: All API communication is secured with industry-standard tokens.",
+  "how-to-start": "Getting started is easy:\n1) Create an account with a secure password.\n2) Verify your identity via the OTP sent to your email.\n3) Connect your GitHub account via our secure OAuth portal.\n4) Start exploring your repositories and activity history!",
+  "how-local-repos": "Navigate to the 'Local Repos' tab. Click 'Select Project Folder'. GitTEnz uses the File System Access API to interact with your code purely locally—ensuring 100% privacy and security.",
+};
+
+const FAQ_SUB_OPTIONS: Record<string, { id: string; label: string }[]> = {
+  "project-details": [
+    { id: "arch-deep-dive", label: "🏗️ Core Architecture" },
+    { id: "feature-roadmap", label: "💎 Key Features" },
+    { id: "back-to-main", label: "⬅️ Main Menu" }
+  ],
+  "tech-stack": [
+    { id: "frontend-tech", label: "⚛️ Frontend Stack" },
+    { id: "backend-tech", label: "☕ Backend Stack" },
+    { id: "back-to-main", label: "⬅️ Main Menu" }
+  ],
+  "security-info": [
+    { id: "privacy-details", label: "🛡️ Privacy & Local Data" },
+    { id: "auth-details", label: "🔑 Authentication Safety" },
+    { id: "back-to-main", label: "⬅️ Main Menu" }
+  ]
 };
 
 type Message = {
@@ -29,6 +53,7 @@ type Message = {
   text: string;
   isOptions?: boolean;
   options?: { id: string; label: string }[];
+  parentTopic?: string;
 };
 
 export function AIAssistant() {
@@ -55,7 +80,7 @@ export function AIAssistant() {
     }
   }, [messages, isOpen]);
 
-  const handleOptionClick = (optionId: string, label: string) => {
+  const handleOptionClick = (optionId: string, label: string, parentTopic?: string) => {
     const userMsg: Message = {
       id: Date.now().toString() + "-user",
       sender: "user",
@@ -63,9 +88,7 @@ export function AIAssistant() {
     };
 
     setMessages((prev) => {
-      // Remove old options block to clean up history, keep the text flow smooth
       const cleaned = prev.filter(m => !m.isOptions);
-      
       let newMessages: Message[] = [userMsg];
 
       if (optionId === "yes") {
@@ -77,40 +100,67 @@ export function AIAssistant() {
         newMessages.push({
           id: Date.now().toString() + "-opts",
           sender: "bot",
-          text: "Select next topic:",
-          isOptions: true,
-          options: FAQ_OPTIONS
-        });
-      } else if (optionId === "no") {
-        newMessages.push({
-          id: Date.now().toString() + "-bot",
-          sender: "bot",
-          text: "I'm sorry to hear that! You might find more detailed information by exploring the other sections. Meanwhile, feel free to ask about another topic:",
-        });
-        newMessages.push({
-          id: Date.now().toString() + "-opts",
-          sender: "bot",
           text: "",
           isOptions: true,
           options: FAQ_OPTIONS
         });
+      } else if (optionId === "no") {
+        const currentParent = parentTopic;
+        if (currentParent && FAQ_SUB_OPTIONS[currentParent]) {
+          newMessages.push({
+            id: Date.now().toString() + "-bot",
+            sender: "bot",
+            text: "Let me provide more specific details about that. Which point would you like to explore?",
+            isOptions: true,
+            options: FAQ_SUB_OPTIONS[currentParent]
+          });
+        } else {
+          newMessages.push({
+            id: Date.now().toString() + "-bot",
+            sender: "bot",
+            text: "I'm sorry! Let's try another topic. What would you like to know?",
+            isOptions: true,
+            options: FAQ_OPTIONS
+          });
+        }
+      } else if (optionId === "back-to-main") {
+        newMessages.push({
+          id: Date.now().toString() + "-bot",
+          sender: "bot",
+          text: "Sure! What else can I help you with?",
+          isOptions: true,
+          options: FAQ_OPTIONS
+        });
       } else {
-        // Normal FAQ
+        // Handle normal FAQ and check for sub-options
         newMessages.push({
           id: Date.now().toString() + "-bot",
           sender: "bot",
           text: FAQ_ANSWERS[optionId] || "I don't have more information on that.",
         });
-        newMessages.push({
-          id: Date.now().toString() + "-opts",
-          sender: "bot",
-          text: "Did this solve your problem?",
-          isOptions: true,
-          options: [
-            { id: "yes", label: "✅ Yes, that helped!" },
-            { id: "no", label: "❌ No, I'm still confused." }
-          ]
-        });
+
+        if (FAQ_SUB_OPTIONS[optionId]) {
+          newMessages.push({
+            id: Date.now().toString() + "-opts-sub",
+            sender: "bot",
+            text: "Explore more specific points:",
+            isOptions: true,
+            parentTopic: optionId,
+            options: FAQ_SUB_OPTIONS[optionId]
+          });
+        } else {
+          newMessages.push({
+            id: Date.now().toString() + "-opts-solve",
+            sender: "bot",
+            text: "Did this solve your problem?",
+            isOptions: true,
+            parentTopic: parentTopic || optionId, // Preserve the parent context
+            options: [
+              { id: "yes", label: "✅ Yes, that helped!" },
+              { id: "no", label: "❌ No, I'm still confused." }
+            ]
+          });
+        }
       }
 
       return [...cleaned, ...newMessages];
@@ -180,7 +230,7 @@ export function AIAssistant() {
                                   whileHover={{ scale: 1.02, x: 2 }}
                                   whileTap={{ scale: 0.98 }}
                                   key={opt.id}
-                                  onClick={() => handleOptionClick(opt.id, opt.label)}
+                                  onClick={() => handleOptionClick(opt.id, opt.label, msg.parentTopic)}
                                   className="text-left w-full text-xs font-medium bg-background border border-primary/30 hover:bg-primary/10 text-primary px-3 py-2 rounded-xl transition-colors shadow-sm"
                                 >
                                   {opt.label}

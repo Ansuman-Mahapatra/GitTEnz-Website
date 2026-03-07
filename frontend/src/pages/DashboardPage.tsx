@@ -445,6 +445,21 @@ export function DashboardPage() {
             exit={{ opacity: 0, x: -20 }}
             className="space-y-6"
           >
+            {/* Sync Data Button (Top Left) */}
+            <div className="flex justify-start">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 text-xs h-8 bg-background/50 hover:bg-primary/10 border-white/10"
+                onClick={() => {
+                  window.location.reload();
+                }}
+              >
+                <Rocket className="w-3.5 h-3.5" />
+                Sync Data
+              </Button>
+            </div>
+
             {/* Onboarding Modal */}
             <OnboardingModal isOpen={showOnboarding} onClose={handleOnboardingComplete} />
 
@@ -757,17 +772,7 @@ export function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-2 text-xs h-8"
-                onClick={() => {
-                  window.location.reload();
-                }}
-              >
-                <Rocket className="w-3.5 h-3.5" />
-                Sync Data
-              </Button>
+              {/* Sync Data button moved to Dashboard tab */}
             </div>
           </header>
 

@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { ShieldAlert, GitCommit, FileCode2, CheckCircle2, Loader2, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { ShieldAlert, GitCommit, FileCode2, CheckCircle2, Loader2, AlertTriangle, ShieldCheck, Github, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -16,8 +18,11 @@ interface GitPushAnalyzerModalProps {
 
 export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, username }: GitPushAnalyzerModalProps) {
   const [analyzing, setAnalyzing] = useState(false);
+  const [fixing, setFixing] = useState(false);
   const [progress, setProgress] = useState(0);
   const [analysis, setAnalysis] = useState<any>(null);
+  const [publishToGithub, setPublishToGithub] = useState(true);
+  const [isPrivate, setIsPrivate] = useState(false);
 
   useEffect(() => {
     if (isOpen && dirHandle) {
@@ -25,6 +30,7 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
     } else {
       setAnalysis(null);
       setProgress(0);
+      setFixing(false);
     }
   }, [isOpen, dirHandle]);
 
@@ -110,17 +116,21 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
   };
 
   const handleApplyFixes = async () => {
+    setFixing(true);
+    setProgress(0);
     try {
       let updatedGitDir = analysis.gitDirHandle;
       
       // Fix 1: Init Git
       if (!analysis.isGit) {
+        setProgress(20);
         updatedGitDir = await dirHandle.getDirectoryHandle('.git', { create: true });
         toast.success("Initialized empty Git repository.");
       }
 
       // Fix 2: Create .gitignore for detected sensitive files
       if (analysis.sensitiveFilesFound.length > 0) {
+        setProgress(40);
         try {
           const gitignoreHandle = await dirHandle.getFileHandle('.gitignore', { create: true });
           const writable = await gitignoreHandle.createWritable();
@@ -133,19 +143,59 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         }
       }
 
-      // Fix 3: Add Origin
-      if (!analysis.hasOrigin) {
-        const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
-        const writable = await configHandle.createWritable();
-        const originUrl = `https://github.com/${username}/${dirHandle.name}.git`;
-        await writable.write(`[remote "origin"]\nurl = ${originUrl}\n`);
-        await writable.close();
-        toast.success(`Linked origin to github.com/${username}/${dirHandle.name}`);
+      // Fix 3: Create GitHub Repo & Add Origin
+      let originUrl = analysis.hasOrigin ? null : `https://github.com/${username}/${dirHandle.name}.git`;
+      
+      if (publishToGithub && !analysis.hasOrigin) {
+        setProgress(60);
+        try {
+          // Call backend to create repository on GitHub
+          const token = localStorage.getItem('token');
+          const response = await fetch('/api/repos', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              name: dirHandle.name,
+              description: `Project onboarded via GitTEnz dashboard.`,
+              private: isPrivate
+            })
+          });
+
+          if (response.ok) {
+            const repoData = await response.json();
+            originUrl = repoData.clone_url || repoData.html_url + '.git';
+            toast.success(`Successfully created ${isPrivate ? 'private' : 'public'} repo on GitHub!`);
+          } else {
+            console.error("Failed to create GitHub repo");
+            toast.error("Could not create GitHub repository, skipping link step.");
+          }
+        } catch (err) {
+          console.error("GitHub API error", err);
+          toast.error("Network error during GitHub project creation.");
+        }
       }
 
-      onContinue({ ...analysis, isGit: true, hasOrigin: true, gitDirHandle: updatedGitDir });
+      if (originUrl) {
+        setProgress(80);
+        const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
+        const writable = await configHandle.createWritable();
+        await writable.write(`[remote "origin"]\nurl = ${originUrl}\n`);
+        await writable.close();
+        toast.success(`Linked origin to GitHub: ${dirHandle.name}`);
+      }
+
+      setProgress(100);
+      setTimeout(() => {
+        onContinue({ ...analysis, isGit: true, hasOrigin: !!originUrl || analysis.hasOrigin, gitDirHandle: updatedGitDir });
+        setFixing(false);
+      }, 500);
+      
     } catch (e) {
       console.error(e);
+      setFixing(false);
       toast.error("Failed to apply automatic fixes. Please check permissions.");
     }
   };
@@ -153,7 +203,7 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
   const hasIssues = !analysis?.isGit || !analysis?.hasOrigin || analysis?.sensitiveFilesFound.length > 0;
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && !fixing && onClose()}>
       <DialogContent className="sm:max-w-md glass-card border-primary/20 backdrop-blur-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -161,16 +211,16 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
             GitTEnz Smart Analyzer
           </DialogTitle>
           <DialogDescription>
-            Scanning your local project for Git readiness and security risks.
+            {fixing ? "Applying security fixes and linking cloud..." : "Scanning your local project for Git readiness and security risks."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="py-6">
-          {analyzing ? (
+          {analyzing || fixing ? (
             <div className="space-y-4 text-center">
               <Loader2 className="w-10 h-10 animate-spin text-primary mx-auto mb-4" />
-              <p className="text-sm font-medium animate-pulse">Running Deep Project Analysis...</p>
-              <Progress value={progress} className="h-2" />
+              <p className="text-sm font-medium animate-pulse">{fixing ? "Applying Smart Fixes..." : "Running Deep Project Analysis..."}</p>
+              <Progress value={progress} className="h-2 transition-all duration-500" />
             </div>
           ) : analysis ? (
             <AnimatePresence>
@@ -206,6 +256,43 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
                   </ul>
                 </div>
 
+                {/* GitHub Creation Option */}
+                {(!analysis.hasOrigin || !analysis.isGit) && (
+                   <div className="bg-primary/5 border border-primary/20 p-4 rounded-xl space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="publish" 
+                          checked={publishToGithub} 
+                          onCheckedChange={(checked) => setPublishToGithub(!!checked)}
+                        />
+                        <Label htmlFor="publish" className="text-sm flex items-center gap-2 font-semibold cursor-pointer">
+                          <Github className="w-4 h-4" /> Create repository on GitHub
+                        </Label>
+                      </div>
+                      
+                      {publishToGithub && (
+                        <div className="flex items-center justify-between pl-6 gap-4">
+                          <Button 
+                            variant={!isPrivate ? "secondary" : "ghost"} 
+                            size="sm" 
+                            className="flex-1 h-8 text-xs gap-2"
+                            onClick={() => setIsPrivate(false)}
+                          >
+                            <Globe className="w-3 h-3" /> Public
+                          </Button>
+                          <Button 
+                            variant={isPrivate ? "secondary" : "ghost"} 
+                            size="sm" 
+                            className="flex-1 h-8 text-xs gap-2"
+                            onClick={() => setIsPrivate(true)}
+                          >
+                            <Lock className="w-3 h-3" /> Private
+                          </Button>
+                        </div>
+                      )}
+                   </div>
+                )}
+
                 {/* Security Alerts */}
                 {analysis.sensitiveFilesFound.length > 0 && (
                   <div className="bg-destructive/10 border border-destructive/20 p-3 rounded-lg space-y-2">
@@ -233,14 +320,14 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
           ) : null}
         </div>
 
-        {!analyzing && analysis && (
+        {!analyzing && !fixing && analysis && (
           <DialogFooter>
             <Button variant="outline" onClick={onClose} className="border-white/10">
               Cancel
             </Button>
             {hasIssues ? (
               <Button onClick={handleApplyFixes} className="glow-green gap-2">
-                <ShieldCheck className="w-4 h-4" /> Auto-Fix & Proceed
+                <ShieldCheck className="w-4 h-4" /> Auto-Fix & Publish
               </Button>
             ) : (
               <Button onClick={() => onContinue(analysis)} className="gap-2">
