@@ -208,7 +208,7 @@ export function DashboardPage() {
       return data;
     },
     enabled: !!token,
-    refetchInterval: 60000, 
+    refetchInterval: 300000, 
   });
 
 
@@ -248,7 +248,7 @@ export function DashboardPage() {
       return data;
     },
     enabled: !!token,
-    refetchInterval: 60000,
+    refetchInterval: 300000,
   });
 
   // Toaster Notification for Real-Time Activity
@@ -301,7 +301,7 @@ export function DashboardPage() {
       return data;
     },
     enabled: !!token,
-    refetchInterval: 60000,
+    refetchInterval: 300000,
   });
 
   // Safely handle API objects vs arrays
@@ -486,17 +486,15 @@ export function DashboardPage() {
                     safeEvents.forEach((event: any) => {
                       if (event.repo && !recentRepoNames.has(event.repo.name)) {
                         recentRepoNames.add(event.repo.name);
-                        // Find full repo details from displayRepos if available
                         const fullRepo = displayRepos.find((r: any) => r.full_name === event.repo.name || r.name === event.repo.name);
                         if (fullRepo) {
                           recentRepos.push(fullRepo);
                         } else {
-                          // If not in fetch list (maybe public repo not owned), construct partial
                           recentRepos.push({
                             id: event.repo.id,
                             name: event.repo.name,
                             description: "Recently active",
-                            language: "Unknown", // API event doesn't always have lang
+                            language: "Unknown",
                             stargazers_count: 0,
                             forks_count: 0,
                             updated_at: event.created_at
@@ -504,6 +502,15 @@ export function DashboardPage() {
                         }
                       }
                     });
+                  }
+
+                  // Fallback: If no activity found, show latest updated repos from the general list
+                  if (recentRepos.length === 0 && displayRepos.length > 0) {
+                    const sortedRepos = [...displayRepos].sort((a, b) => 
+                      new Date(b.updated_at || b.pushed_at || 0).getTime() - 
+                      new Date(a.updated_at || a.pushed_at || 0).getTime()
+                    );
+                    recentRepos.push(...sortedRepos.slice(0, 4));
                   }
 
                   // Take top 4
@@ -736,14 +743,34 @@ export function DashboardPage() {
           </motion.div>
         )}
         <div className="flex-1 flex flex-col overflow-hidden relative">
-          <Button
-            variant="outline"
-            size="icon"
-            className="lg:hidden fixed top-4 left-4 z-40"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            <Menu className="w-5 h-5" />
-          </Button>
+          <header className="flex items-center justify-between p-4 lg:p-6 border-b border-border/50 sticky top-0 bg-background/50 backdrop-blur-md z-30">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                <Menu className="w-5 h-5" />
+              </Button>
+              <h1 className="text-xl font-bold text-gradient hidden sm:block">GitTEnz</h1>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 text-xs h-8"
+                onClick={() => {
+                  window.location.reload();
+                }}
+              >
+                <Rocket className="w-3.5 h-3.5" />
+                Sync Data
+              </Button>
+            </div>
+          </header>
+
           <main className="flex-1 overflow-auto p-4 lg:p-6">
             {activeTab === "repositories" && (
               <div className="mb-6 flex items-center gap-4">

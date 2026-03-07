@@ -47,19 +47,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = await response.json();
         setUser(userData);
       } else {
-        localStorage.removeItem("token");
-        setTokenState(null);
-        setUser(null);
+        signOut(false);
       }
     } catch (error) {
       console.error("Failed to fetch user:", error);
     }
   }, []);
 
-  const signOut = useCallback(() => {
+  const signOut = useCallback((withAlert = true) => {
     localStorage.removeItem("token");
+    localStorage.removeItem("lastActivityTimestamp");
     setTokenState(null);
     setUser(null);
+    if (withAlert && typeof window !== "undefined") {
+      // Small delay to ensure state updates or just direct redirect
+    }
     window.location.href = "/login";
   }, []);
 
@@ -82,72 +84,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", handleStorageChange);
   }, [fetchUser]);
 
-  // 30-day inactivity auto-logout (rolling session)
+  // 15-minute inactivity auto-logout (rolling session)
   useEffect(() => {
-    if (!user || !token) return;
+    if (!token) return;
 
-    const checkAndResetTimer = () => {
+    const checkTimeout = () => {
       const now = Date.now();
       const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
       
-      // If returning after being away too long, log out immediately
       if (lastActivityStr) {
         const lastActivity = parseInt(lastActivityStr, 10);
         if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
-          if (typeof window !== "undefined") {
-            window.alert("Session expired. You have been logged out due to 15 minutes of inactivity. Please log in with your username and password again.");
-          }
-          signOut();
-          return;
+          window.alert("Session expired due to 15 minutes of inactivity. Please log in again.");
+          signOut(false);
+          return true;
         }
       }
-      
-      // Update activity timestamp in local storage
-      localStorage.setItem("lastActivityTimestamp", now.toString());
+      return false;
     };
 
-    // Throttle the local storage writes so they only happen max once every 30 seconds
-    let throttleTimer: ReturnType<typeof setTimeout> | null = null;
+    // Initial check
+    if (checkTimeout()) return;
+
     const handleActivity = () => {
-      if (throttleTimer) return;
-      throttleTimer = setTimeout(() => {
-        checkAndResetTimer();
-        throttleTimer = null;
-      }, 30000); 
+      localStorage.setItem("lastActivityTimestamp", Date.now().toString());
     };
 
     const events = ["mousedown", "mousemove", "keydown", "scroll", "touchstart"];
-    
-    // Initial check on mount
-    checkAndResetTimer();
-
-    // Check periodically if the session has expired while tab is left open
-    const intervalTimer = setInterval(() => {
-      const now = Date.now();
-      const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
-      if (lastActivityStr) {
-        const lastActivity = parseInt(lastActivityStr, 10);
-        if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
-          if (typeof window !== "undefined") {
-            window.alert("Session expired. You have been logged out due to 15 minutes of inactivity. Please log in with your username and password again.");
-          }
-          signOut();
-        }
-      }
-    }, 60000); // Check every minute
+    const intervalTimer = setInterval(checkTimeout, 30000); // Check every 30s
 
     events.forEach((ev) => window.addEventListener(ev, handleActivity));
     return () => {
       events.forEach((ev) => window.removeEventListener(ev, handleActivity));
       clearInterval(intervalTimer);
-      if (throttleTimer) clearTimeout(throttleTimer);
     };
-  }, [user, token, signOut]);
+  }, [token, signOut]);
 
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem("token");
+      const lastActivityStr = localStorage.getItem("lastActivityTimestamp");
+      
       if (storedToken) {
+        // Sync check for timeout before fetching user to avoid blank page
+        const now = Date.now();
+        if (lastActivityStr) {
+          const lastActivity = parseInt(lastActivityStr, 10);
+          if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("lastActivityTimestamp");
+            setTokenState(null);
+            setLoading(false);
+            return;
+          }
+        }
+        
         setTokenState(storedToken);
         await fetchUser(storedToken);
       }
