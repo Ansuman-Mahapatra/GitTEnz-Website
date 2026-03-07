@@ -42,3 +42,18 @@ logs/
 package-lock.json
 **/package-lock.json
 GitDense/
+
+
+# Large files exception
+
+# Electron / Binary files
+*.exe
+*.asar
+*.node
+
+# Electron builder output
+release/
+out/
+
+# Installers
+*-Setup-*.exe
