@@ -8,53 +8,14 @@ import { LandingNavbar } from "@/components/layout/LandingNavbar";
 import { LandingFooter } from "@/components/layout/LandingFooter";
 
 export function HomePage() {
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-
-    useEffect(() => {
-        const handleMouseMove = (e: MouseEvent) => {
-            setMousePosition({ x: e.clientX, y: e.clientY });
-        };
-        window.addEventListener("mousemove", handleMouseMove);
-        return () => window.removeEventListener("mousemove", handleMouseMove);
-    }, []);
-
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="min-h-screen bg-background text-foreground overflow-hidden relative"
+            className="min-h-screen text-foreground overflow-hidden relative"
         >
-            {/* Animated Background */}
-            <div className="fixed inset-0 pointer-events-none z-0">
-                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-                <motion.div
-                    className="absolute w-[500px] h-[500px] rounded-full bg-primary/20 blur-[120px]"
-                    animate={{
-                        x: mousePosition.x - 250,
-                        y: mousePosition.y - 250,
-                    }}
-                    transition={{ type: "spring", damping: 30, stiffness: 200 }}
-                />
-                <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-                <div className="absolute bottom-20 left-20 w-96 h-96 bg-primary/5 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }} />
-            </div>
-
             <LandingNavbar />
-
-            {/* Global Tile Background with Lightning */}
-            <div className="fixed inset-0 z-0 opacity-50">
-                <AetherHero
-                    title=""
-                    subtitle=""
-                    ctaLabel=""
-                    ctaHref=""
-                    align="center"
-                    height="100vh"
-                    textColor="transparent"
-                    overlayGradient="radial-gradient(circle at center, transparent, hsl(var(--background)))"
-                />
-            </div>
 
             {/* Hero Section Content */}
             <div className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden min-h-screen flex items-center">

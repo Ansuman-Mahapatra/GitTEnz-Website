@@ -86,12 +86,32 @@ export function DashboardPage() {
     });
   };
 
+  // ─── Caching Helpers (User-Specific) ──────────────────────────
+  const getCached = (key: string) => {
+    try {
+      const userKey = user?.username || "anon";
+      const cached = localStorage.getItem(`gittenz_cache_${userKey}_${key}`);
+      return cached ? JSON.parse(cached) : undefined;
+    } catch {
+      return undefined;
+    }
+  };
+  const setCached = (key: string, data: any) => {
+    try {
+      const userKey = user?.username;
+      if (!userKey) return;
+      localStorage.setItem(`gittenz_cache_${userKey}_${key}`, JSON.stringify(data));
+    } catch (e) {
+      console.warn("Failed to cache data", e);
+    }
+  };
+
   // Clear search when switching tabs
   useEffect(() => {
     setSearchQuery("");
   }, [activeTab]);
 
-  const { token, user, setToken } = useAuth(); // Assuming setToken or setUser is available or we trigger refetch?
+  const { token, user, setToken, signOut } = useAuth();
   // We can't update user easily in AuthContext without a setUser exposed. 
   // For now we just hide modal, next reload will be fine if backend updated.
 
@@ -173,15 +193,22 @@ export function DashboardPage() {
 
   const { data: repositories, isLoading } = useQuery({
     queryKey: ["repositories"],
+    initialData: getCached("repos"),
     queryFn: async () => {
       if (!token) return [];
       const res = await fetch(`${API_URL}/api/repos`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error("Failed to fetch");
-      return res.json();
+      if (!res.ok) {
+        if (res.status === 401) signOut();
+        throw new Error("Failed to fetch repositories");
+      }
+      const data = await res.json();
+      setCached("repos", data);
+      return data;
     },
     enabled: !!token,
+    refetchInterval: 60000, 
   });
 
 
@@ -206,16 +233,22 @@ export function DashboardPage() {
   // Fetch Real GitHub Activity
   const { data: activityEvents } = useQuery({
     queryKey: ["github-activity", activityTimeframe],
+    initialData: getCached(`activity_${activityTimeframe}`),
     queryFn: async () => {
       if (!token) return [];
       const res = await fetch(`${API_URL}/api/user/activity`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) return [];
-      return res.json();
+      if (!res.ok) {
+        if (res.status === 401) signOut();
+        throw new Error("Failed to fetch activity");
+      }
+      const data = await res.json();
+      setCached(`activity_${activityTimeframe}`, data);
+      return data;
     },
     enabled: !!token,
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
   // Toaster Notification for Real-Time Activity
@@ -253,16 +286,22 @@ export function DashboardPage() {
 
   const { data: starredRepos } = useQuery({
     queryKey: ["starred-repositories"],
+    initialData: getCached("starred"),
     queryFn: async () => {
       if (!token) return [];
       const res = await fetch(`${API_URL}/api/user/starred`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!res.ok) return [];
-      return res.json();
+      if (!res.ok) {
+        if (res.status === 401) signOut();
+        throw new Error("Failed to fetch starred repos");
+      }
+      const data = await res.json();
+      setCached("starred", data);
+      return data;
     },
     enabled: !!token,
-    refetchInterval: 5000,
+    refetchInterval: 60000,
   });
 
   // Safely handle API objects vs arrays
@@ -671,15 +710,7 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="flex h-screen bg-black overflow-hidden relative">
-      <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
-        <EtheralShadow
-          color="#10b981"
-          animation={{ scale: 80, speed: 40 }}
-          noise={{ opacity: 0.5, scale: 1 }}
-          showTitle={false}
-        />
-      </div>
+    <div className="flex h-screen bg-transparent overflow-hidden relative">
       <div className="relative z-10 flex w-full h-full">
         <AIAssistant />
         <InlineAiProvider />

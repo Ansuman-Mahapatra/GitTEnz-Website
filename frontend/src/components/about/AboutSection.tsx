@@ -18,7 +18,7 @@ export function AboutSection() {
         "AI-Powered Code Assistant",
         "Real-time Repository Sync",
         "Advanced Analytics Dashboard",
-        "Secure OTP Authentication",
+        "Secure OTP Authentication (Right now not available)",
         "Custom WebGL Shaders",
         "Premium UI/UX Design",
     ];

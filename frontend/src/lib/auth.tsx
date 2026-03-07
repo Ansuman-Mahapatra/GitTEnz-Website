@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { API_URL } from "@/config";
 
-const INACTIVITY_TIMEOUT_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes as requested
 
 export interface User {
   username: string;
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const lastActivity = parseInt(lastActivityStr, 10);
         if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
           if (typeof window !== "undefined") {
-            window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
+            window.alert("Session expired. You have been logged out due to 15 minutes of inactivity. Please log in with your username and password again.");
           }
           signOut();
           return;
@@ -129,7 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const lastActivity = parseInt(lastActivityStr, 10);
         if (now - lastActivity > INACTIVITY_TIMEOUT_MS) {
           if (typeof window !== "undefined") {
-            window.alert("Session expired. You have been logged out due to 30 days of inactivity. Please log in again.");
+            window.alert("Session expired. You have been logged out due to 15 minutes of inactivity. Please log in with your username and password again.");
           }
           signOut();
         }

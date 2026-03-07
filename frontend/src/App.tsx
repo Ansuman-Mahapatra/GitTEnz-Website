@@ -141,6 +141,8 @@ function AppRoutes() {
   );
 }
 
+import { GlobalBackground } from "./components/layout/GlobalBackground";
+
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
@@ -148,6 +150,7 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
+        <GlobalBackground />
         <Router>
           <AuthProvider>
             <ServerWakeUp>

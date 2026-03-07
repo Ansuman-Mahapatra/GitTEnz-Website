@@ -70,19 +70,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden font-['Space_Grotesk']">
-      {/* Background Texture (Aether Hero + Particles) */}
-      <div className="absolute inset-0 z-0">
-        <AetherHero
-          height="100vh"
-          align="center"
-          textColor="transparent"
-          overlayGradient="radial-gradient(circle at center, transparent, hsl(var(--background) / 0.85))"
-        />
-      </div>
-      <Particles count={30} className="z-0" />
-      <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px] pointer-events-none z-0" />
-
+    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden font-['Space_Grotesk'] bg-transparent">
       {/* Main Content (Inspired by shadcnblocks/signup-1) */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}

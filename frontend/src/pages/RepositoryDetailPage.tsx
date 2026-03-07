@@ -193,7 +193,7 @@ export function RepositoryDetailPage() {
     };
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden relative">
+        <div className="flex h-screen bg-transparent overflow-hidden relative">
             <InlineAiProvider />
             {/* Simple Commit Dialog */}
             {showCommitDialog && (

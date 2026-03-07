@@ -202,6 +202,16 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
             </motion.button>
           ))}
 
+        <motion.div variants={itemVariants} className="px-3 pb-2">
+          <div className="p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10 text-[10px] text-yellow-600 dark:text-yellow-500/70 leading-tight">
+            <p className="font-bold mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-yellow-500 animate-pulse" />
+              Security Notice
+            </p>
+            Auto-logout after 15 min of inactivity.
+          </div>
+        </motion.div>
+
         <motion.div variants={itemVariants}>
           <Button
             variant="ghost"

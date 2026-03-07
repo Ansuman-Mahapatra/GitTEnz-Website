@@ -26,15 +26,9 @@ function FeatureCard({ icon: Icon, title, description, delay }: { icon: any; tit
 
 export function FeaturesPage() {
     return (
-        <div className="min-h-screen bg-background text-foreground overflow-hidden flex flex-col">
+        <div className="min-h-screen bg-transparent text-foreground overflow-hidden flex flex-col">
             <LandingNavbar />
             
-            {/* Animated Background */}
-            <div className="fixed inset-0 pointer-events-none z-0 opacity-50">
-                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-                <div className="absolute top-20 right-20 w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
-            </div>
-
             <main className="flex-1 relative z-10 pt-32 pb-24">
                 <div className="container px-6 mx-auto">
                     <motion.div

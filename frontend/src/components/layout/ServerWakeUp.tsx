@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const HEALTH_URL = `${API_URL}/api/public/health`;
 const FAST_PING_TIMEOUT_MS = 800;       // if backend responds within 800ms, skip overlay entirely
 const PING_INTERVAL_MS = 3000;          // retry every 3s when offline
-const BACKGROUND_PING_MS = 5 * 60 * 1000; // check every 5 mins when online
+const BACKGROUND_PING_MS = 15 * 60 * 1000; // check every 15 mins (aligned with inactivity logout)
 const LONG_WAIT_THRESHOLD_MS = 5000;    // show full card after 5s
 
 // ─── helpers ──────────────────────────────────────────────────

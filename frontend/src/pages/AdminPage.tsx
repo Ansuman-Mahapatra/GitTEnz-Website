@@ -295,13 +295,7 @@ export function AdminPage() {
     const STATUS_COLORS = ['#00C49F', '#FF8042']; // Active (Green), Pending (Orange)
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden relative">
-            {/* Animated background similar to landing page */}
-            <div className="fixed inset-0 pointer-events-none -z-10">
-                <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:50px_50px]" />
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[400px] bg-primary/20 blur-[120px] rounded-full opacity-30" />
-                <div className="absolute bottom-10 right-10 w-72 h-72 bg-primary/10 rounded-full blur-[100px]" />
-            </div>
+        <div className="flex h-screen bg-transparent overflow-hidden relative">
             <div className="hidden lg:block">
                 <Sidebar activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
@@ -333,7 +327,7 @@ export function AdminPage() {
                     <Menu className="w-5 h-5" />
                 </Button>
                 <main className="flex-1 overflow-auto p-4 lg:p-6">
-                    <div className="p-8 space-y-8 max-w-7xl mx-auto min-h-screen bg-background text-foreground">
+                    <div className="p-8 space-y-8 max-w-7xl mx-auto min-h-screen bg-transparent text-foreground">
                         <header className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-3xl font-bold flex items-center gap-3">
