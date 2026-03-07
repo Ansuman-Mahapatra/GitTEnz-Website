@@ -53,9 +53,15 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         gitDirHandle = await dirHandle.getDirectoryHandle('.git');
         isGit = true;
         try {
-          await gitDirHandle.getFileHandle('config');
-          hasOrigin = true; // simplified check
-        } catch (e) {}
+          const configHandle = await gitDirHandle.getFileHandle('config');
+          const file = await configHandle.getFile();
+          const content = await file.text();
+          if (content.includes('[remote "origin"]')) {
+            hasOrigin = true;
+          }
+        } catch (e) {
+          console.warn("Could not read .git/config", e);
+        }
       } catch (e) {}
 
       // 2. Check for .gitignore
@@ -180,9 +186,18 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
 
       if (originUrl) {
         setProgress(80);
+        let existingConfig = "";
+        try {
+          const configHandle = await updatedGitDir.getFileHandle('config');
+          const file = await configHandle.getFile();
+          existingConfig = await file.text();
+        } catch (e) {}
+
         const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
         const writable = await configHandle.createWritable();
-        await writable.write(`[remote "origin"]\nurl = ${originUrl}\n`);
+        
+        const newRemote = `\n[remote "origin"]\n\turl = ${originUrl}\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n`;
+        await writable.write(existingConfig + newRemote);
         await writable.close();
         toast.success(`Linked origin to GitHub: ${dirHandle.name}`);
       }
