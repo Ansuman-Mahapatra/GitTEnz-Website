@@ -16,11 +16,14 @@ export interface User {
     pushNotifications: boolean;
     commitActivityAlerts: boolean;
   };
+  githubId?: string;
+  lastGithubVerifiedAt?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  githubVerificationRequired: boolean;
   signInWithGitHub: () => void;
   signInWithEmail: (data: any) => Promise<any>;
   signUpWithEmail: (data: any) => Promise<any>;
@@ -227,8 +230,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await res.json();
   };
 
+  const githubVerificationRequired = !!user && (!user.githubId || (user.lastGithubVerifiedAt ? (Date.now() - new Date(user.lastGithubVerifiedAt).getTime() > 3 * 24 * 60 * 60 * 1000) : true));
+
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGitHub, signInWithEmail, signUpWithEmail, verifySignupOtp, verifyOtp, signOut, token, setToken }}>
+    <AuthContext.Provider value={{ user, loading, githubVerificationRequired, signInWithGitHub, signInWithEmail, signUpWithEmail, verifySignupOtp, verifyOtp, signOut, token, setToken }}>
       {children}
     </AuthContext.Provider>
   );

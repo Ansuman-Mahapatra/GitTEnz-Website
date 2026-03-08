@@ -12,6 +12,7 @@ export function AboutSection() {
         { name: "MongoDB", icon: "🍃" },
         { name: "WebGL/GLSL", icon: "🎨" },
         { name: "Tailwind CSS", icon: "💨" },
+        { name: "Electron (GitDense)", icon: "💻" },
     ];
 
     const features = [

@@ -50,6 +50,7 @@ public class GitHubServiceImpl implements GitHubService {
         user.setName(gitHubUser.getName());
         user.setEmail(gitHubUser.getEmail());
         user.setAvatarUrl(gitHubUser.getAvatarUrl());
+        user.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
 
         return userRepository.save(user);
     }

@@ -21,9 +21,9 @@ export function DownloadPage() {
                             <Monitor className="w-5 h-5 text-primary" />
                             <span className="text-sm font-semibold text-primary">Native App - GitDense</span>
                         </div>
-                        <h1 className="text-4xl lg:text-6xl font-bold mb-6 tracking-tight text-gradient">Take GitTEnz to the Desktop</h1>
+                        <h1 className="text-4xl lg:text-6xl font-bold mb-6 tracking-tight text-gradient">Experience GitDense</h1>
                         <p className="text-muted-foreground text-xl mb-12">
-                            Experience the full power of GitTEnz natively on your machine under the name <strong className="text-white">GitDense</strong>. Enjoy faster local performance, better OS integration, and a distraction-free environment.
+                            The native desktop extension of GitTEnz. Get faster local performance, deeper OS integration, and a dedicated environment for your version control.
                         </p>
                         
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
