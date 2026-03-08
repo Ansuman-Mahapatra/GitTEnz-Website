@@ -61,17 +61,11 @@ public class UserController {
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
         String gitUsername = user.getUsername();
-        if ("admin".equalsIgnoreCase(gitUsername) ||
-                "AnsumanLocal".equalsIgnoreCase(gitUsername) ||
-                "h".equalsIgnoreCase(gitUsername) ||
-                "noth".equalsIgnoreCase(gitUsername) ||
-                "@nothing".equalsIgnoreCase(gitUsername) ||
-                gitUsername.toLowerCase().contains("ansuman") ||
-                (user.getGithubId() == null && (user.getAccessToken() == null || user.getAccessToken().isEmpty()))) {
-            // Default to author's github for testing / admin dashboards where username
-            // isn't a GH handle
+        if (gitUsername == null || gitUsername.isEmpty() || gitUsername.equalsIgnoreCase("admin")) {
+            // Default to author's github only if no username is found (e.g. fresh local
+            // test account)
             gitUsername = "Ansuman-Mahapatra";
-            user.setAccessToken(null); // Use public unauthenticated API to avoid 401 from expired test tokens
+            user.setAccessToken(null);
         }
 
         return gitHubService.getUserEvents(gitUsername, user.getAccessToken());

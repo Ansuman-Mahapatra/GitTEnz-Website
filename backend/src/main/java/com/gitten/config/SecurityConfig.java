@@ -64,6 +64,9 @@ public class SecurityConfig {
                 allowedOrigins.add("http://localhost:5173");
                 allowedOrigins.add("https://gittenz.netlify.app");
                 allowedOrigins.add("https://gittenz.vercel.app");
+                allowedOrigins.add("https://gittenz.onrender.com");
+                allowedOrigins.add("https://gittenz-frontend.onrender.com");
+                allowedOrigins.add("https://gitdense.vercel.app");
                 if (frontendUrl != null && !frontendUrl.isEmpty()) {
                         allowedOrigins.add(frontendUrl);
                 }

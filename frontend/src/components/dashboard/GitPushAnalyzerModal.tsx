@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { ShieldAlert, GitCommit, FileCode2, CheckCircle2, Loader2, AlertTriangle, ShieldCheck, Github, Globe, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "@/config";
 
 interface GitPushAnalyzerModalProps {
   isOpen: boolean;
@@ -156,7 +157,7 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         setProgress(60);
         try {
           const token = localStorage.getItem('token');
-          const response = await fetch('/api/repos', {
+          const response = await fetch(`${API_URL}/api/repos`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
