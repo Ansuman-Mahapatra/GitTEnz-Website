@@ -101,16 +101,16 @@ public class AuthController {
             return ResponseEntity.ok(new AuthResponse(null, user, true));
         }
 
-        // Rolling GitHub Verification: If user is active within 3 days, keep them
-        // verified
-        if (user.getGithubId() != null && user.getLastGithubVerifiedAt() != null) {
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            if (user.getLastGithubVerifiedAt().isAfter(now.minusDays(3))) {
+        // Rolling GitHub Verification: If user returns within 3 days of last activity,
+        // keep them verified
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (user.getGithubId() != null && user.getLastActiveAt() != null) {
+            if (user.getLastActiveAt().isAfter(now.minusDays(3))) {
                 user.setLastGithubVerifiedAt(now);
             }
         }
 
-        user.setLastActiveAt(java.time.LocalDateTime.now());
+        user.setLastActiveAt(now);
         userRepository.save(user);
 
         String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
@@ -142,16 +142,16 @@ public class AuthController {
         user.setOtp(null);
         user.setOtpExpiry(null);
 
-        // Rolling GitHub Verification: If user is active within 3 days, keep them
-        // verified
-        if (user.getGithubId() != null && user.getLastGithubVerifiedAt() != null) {
-            java.time.LocalDateTime now = java.time.LocalDateTime.now();
-            if (user.getLastGithubVerifiedAt().isAfter(now.minusDays(3))) {
+        // Rolling GitHub Verification: If user returns within 3 days of last activity,
+        // keep them verified
+        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        if (user.getGithubId() != null && user.getLastActiveAt() != null) {
+            if (user.getLastActiveAt().isAfter(now.minusDays(3))) {
                 user.setLastGithubVerifiedAt(now);
             }
         }
 
-        user.setLastActiveAt(java.time.LocalDateTime.now());
+        user.setLastActiveAt(now);
         userRepository.save(user);
 
         String token = jwtService.generateToken(new HashMap<>(), user.getUsername());
