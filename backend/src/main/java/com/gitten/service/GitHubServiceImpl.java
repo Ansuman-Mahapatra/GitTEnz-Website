@@ -16,7 +16,6 @@ import org.springframework.http.MediaType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @Service
@@ -50,7 +49,7 @@ public class GitHubServiceImpl implements GitHubService {
         user.setName(gitHubUser.getName());
         user.setEmail(gitHubUser.getEmail());
         user.setAvatarUrl(gitHubUser.getAvatarUrl());
-        user.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
+        user.setLastGithubVerifiedAt(java.time.Instant.now());
 
         return userRepository.save(user);
     }

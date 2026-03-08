@@ -56,7 +56,8 @@ public class AdminController {
         Map<String, Long> userGrowth = nonAdminUsers.stream()
                 .filter(u -> u.getCreatedAt() != null)
                 .collect(java.util.stream.Collectors.groupingBy(
-                        u -> u.getCreatedAt().toLocalDate().toString(),
+                        u -> java.time.LocalDate.ofInstant(u.getCreatedAt(), java.time.ZoneOffset.UTC).toString(),
+                        java.util.TreeMap::new,
                         java.util.stream.Collectors.counting()));
 
         // Active Users (Users with most Repos)

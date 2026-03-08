@@ -20,7 +20,7 @@ public class User {
     private String accessToken;
 
     // Last time the user successfully verified via GitHub OAuth
-    private java.time.LocalDateTime lastGithubVerifiedAt;
+    private java.time.Instant lastGithubVerifiedAt;
 
     private boolean onboardingCompleted = false;
 
@@ -85,11 +85,11 @@ public class User {
         this.accessToken = accessToken;
     }
 
-    public java.time.LocalDateTime getLastGithubVerifiedAt() {
+    public java.time.Instant getLastGithubVerifiedAt() {
         return lastGithubVerifiedAt;
     }
 
-    public void setLastGithubVerifiedAt(java.time.LocalDateTime lastGithubVerifiedAt) {
+    public void setLastGithubVerifiedAt(java.time.Instant lastGithubVerifiedAt) {
         this.lastGithubVerifiedAt = lastGithubVerifiedAt;
     }
 
@@ -117,29 +117,29 @@ public class User {
         this.password = password;
     }
 
-    private java.time.LocalDateTime createdAt = java.time.LocalDateTime.now();
+    private java.time.Instant createdAt = java.time.Instant.now();
 
-    public java.time.LocalDateTime getCreatedAt() {
+    public java.time.Instant getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(java.time.LocalDateTime createdAt) {
+    public void setCreatedAt(java.time.Instant createdAt) {
         this.createdAt = createdAt;
     }
 
-    private java.time.LocalDateTime lastActiveAt;
+    private java.time.Instant lastActiveAt;
 
-    public java.time.LocalDateTime getLastActiveAt() {
+    public java.time.Instant getLastActiveAt() {
         return lastActiveAt;
     }
 
-    public void setLastActiveAt(java.time.LocalDateTime lastActiveAt) {
+    public void setLastActiveAt(java.time.Instant lastActiveAt) {
         this.lastActiveAt = lastActiveAt;
     }
 
     private String role = "USER";
     private String otp;
-    private java.time.LocalDateTime otpExpiry;
+    private java.time.Instant otpExpiry;
 
     public String getRole() {
         return role;
@@ -157,17 +157,17 @@ public class User {
         this.otp = otp;
     }
 
-    public java.time.LocalDateTime getOtpExpiry() {
+    public java.time.Instant getOtpExpiry() {
         return otpExpiry;
     }
 
-    public void setOtpExpiry(java.time.LocalDateTime otpExpiry) {
+    public void setOtpExpiry(java.time.Instant otpExpiry) {
         this.otpExpiry = otpExpiry;
     }
 
     private String pendingEmail;
     private String emailVerificationToken;
-    private java.time.LocalDateTime emailVerificationExpiry;
+    private java.time.Instant emailVerificationExpiry;
 
     public String getPendingEmail() {
         return pendingEmail;
@@ -185,11 +185,11 @@ public class User {
         this.emailVerificationToken = emailVerificationToken;
     }
 
-    public java.time.LocalDateTime getEmailVerificationExpiry() {
+    public java.time.Instant getEmailVerificationExpiry() {
         return emailVerificationExpiry;
     }
 
-    public void setEmailVerificationExpiry(java.time.LocalDateTime emailVerificationExpiry) {
+    public void setEmailVerificationExpiry(java.time.Instant emailVerificationExpiry) {
         this.emailVerificationExpiry = emailVerificationExpiry;
     }
 

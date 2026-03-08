@@ -90,7 +90,7 @@ public class AuthController {
             SecureRandom secureRandom = new SecureRandom();
             String otp = String.format("%06d", secureRandom.nextInt(1000000));
             user.setOtp(otp);
-            user.setOtpExpiry(java.time.LocalDateTime.now().plusMinutes(5));
+            user.setOtpExpiry(java.time.Instant.now().plus(5, java.time.temporal.ChronoUnit.MINUTES));
             userRepository.save(user);
 
             // Send OTP via Email
@@ -103,9 +103,9 @@ public class AuthController {
 
         // Rolling GitHub Verification: If user returns within 3 days of last activity,
         // keep them verified
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.Instant now = java.time.Instant.now();
         if (user.getGithubId() != null && user.getLastActiveAt() != null) {
-            if (user.getLastActiveAt().isAfter(now.minusDays(3))) {
+            if (user.getLastActiveAt().isAfter(now.minus(3, java.time.temporal.ChronoUnit.DAYS))) {
                 user.setLastGithubVerifiedAt(now);
             }
         }
@@ -134,7 +134,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Invalid OTP");
         }
 
-        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(java.time.LocalDateTime.now())) {
+        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(java.time.Instant.now())) {
             return ResponseEntity.badRequest().body("Error: OTP Expired");
         }
 
@@ -144,9 +144,9 @@ public class AuthController {
 
         // Rolling GitHub Verification: If user returns within 3 days of last activity,
         // keep them verified
-        java.time.LocalDateTime now = java.time.LocalDateTime.now();
+        java.time.Instant now = java.time.Instant.now();
         if (user.getGithubId() != null && user.getLastActiveAt() != null) {
-            if (user.getLastActiveAt().isAfter(now.minusDays(3))) {
+            if (user.getLastActiveAt().isAfter(now.minus(3, java.time.temporal.ChronoUnit.DAYS))) {
                 user.setLastGithubVerifiedAt(now);
             }
         }
@@ -169,7 +169,7 @@ public class AuthController {
 
         String token = java.util.UUID.randomUUID().toString();
         user.setEmailVerificationToken(token);
-        user.setEmailVerificationExpiry(java.time.LocalDateTime.now().plusMinutes(15));
+        user.setEmailVerificationExpiry(java.time.Instant.now().plus(15, java.time.temporal.ChronoUnit.MINUTES));
         userRepository.save(user);
 
         String origin = httpRequest.getHeader("Origin");
@@ -218,7 +218,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body("Error: Invalid or expired token");
         }
         if (user.getEmailVerificationExpiry() == null
-                || user.getEmailVerificationExpiry().isBefore(java.time.LocalDateTime.now())) {
+                || user.getEmailVerificationExpiry().isBefore(java.time.Instant.now())) {
             return ResponseEntity.badRequest().body("Error: Token expired");
         }
 

@@ -91,7 +91,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
                         newUser.setAccessToken(accessToken);
                         newUser.setOnboardingCompleted(true);
                         newUser.setEmailVerified(false); // admin will verify in background
-                        newUser.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
+                        newUser.setLastGithubVerifiedAt(java.time.Instant.now());
                         userRepository.save(newUser);
                         userOpt = java.util.Optional.of(newUser);
                 }
@@ -112,7 +112,7 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
                 user.setAccessToken(accessToken);
                 // Record time of successful GitHub verification for 72h re-auth logic
-                user.setLastGithubVerifiedAt(java.time.LocalDateTime.now());
+                user.setLastGithubVerifiedAt(java.time.Instant.now());
 
                 userRepository.save(user);
 

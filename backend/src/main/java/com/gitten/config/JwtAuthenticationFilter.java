@@ -1,6 +1,5 @@
 package com.gitten.config;
 
-import com.gitten.model.User;
 import com.gitten.repository.UserRepository;
 import com.gitten.service.JwtService;
 import jakarta.servlet.FilterChain;
@@ -74,9 +73,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             userRepository.findByUsername(username).ifPresent(user -> {
                 // Only update if last activity was more than 1 minute ago to reduce DB writes
                 if (user.getLastActiveAt() == null ||
-                        java.time.Duration.between(user.getLastActiveAt(), java.time.LocalDateTime.now())
+                        java.time.Duration.between(user.getLastActiveAt(), java.time.Instant.now())
                                 .toMinutes() >= 1) {
-                    user.setLastActiveAt(java.time.LocalDateTime.now());
+                    user.setLastActiveAt(java.time.Instant.now());
                     userRepository.save(user);
                 }
             });

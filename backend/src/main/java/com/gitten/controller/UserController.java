@@ -84,7 +84,6 @@ public class UserController {
                 String type = (String) event.get("type");
                 java.util.Map<String, Object> repo = (java.util.Map<String, Object>) event.get("repo");
                 String repoName = repo != null ? (String) repo.get("name") : "unknown repo";
-                String eventId = (String) event.get("id");
 
                 // Check if we already notified for this eventId (use a unique message prefix or
                 // similar)
