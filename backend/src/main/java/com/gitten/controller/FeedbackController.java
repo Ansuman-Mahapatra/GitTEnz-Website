@@ -15,10 +15,13 @@ public class FeedbackController {
 
     private final FeedbackRepository feedbackRepository;
     private final UserRepository userRepository;
+    private final com.gitten.service.NotificationService notificationService;
 
-    public FeedbackController(FeedbackRepository feedbackRepository, UserRepository userRepository) {
+    public FeedbackController(FeedbackRepository feedbackRepository, UserRepository userRepository,
+            com.gitten.service.NotificationService notificationService) {
         this.feedbackRepository = feedbackRepository;
         this.userRepository = userRepository;
+        this.notificationService = notificationService;
     }
 
     @PostMapping
@@ -33,6 +36,13 @@ public class FeedbackController {
         feedback.setComment(request.getComment());
 
         feedbackRepository.save(feedback);
+
+        notificationService.createNotification(
+                user.getId(),
+                "FEEDBACK",
+                "Thank you for your valuable feedback! We appreciate your support in making GitTEnz better.",
+                null);
+
         return ResponseEntity.ok("Feedback submitted successfully");
     }
 }

@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { motion } from "framer-motion";
-import { FolderGit2, GitBranch, GitCommit, Star, Menu, Search, Rocket, RefreshCw } from "lucide-react";
+import { FolderGit2, GitBranch, GitCommit, Star, Menu, Search, Rocket, RefreshCw, Bell } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
@@ -227,8 +227,34 @@ export function DashboardPage() {
 
   const realLanguageData = Array.from(languageMap.entries())
     .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
     .slice(0, 10); // Show top 10
+    
+  // Fetch Notifications
+  const { data: notifications, refetch: refetchNotifications } = useQuery({
+    queryKey: ["notifications"],
+    queryFn: async () => {
+      if (!token) return [];
+      const res = await fetch(`${API_URL}/api/notifications`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch notifications");
+      return await res.json();
+    },
+    enabled: !!token,
+    refetchInterval: 60000, // Refresh every minute
+  });
+
+  const markNotificationRead = async (id: string) => {
+    try {
+      await fetch(`${API_URL}/api/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      refetchNotifications();
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
   // Fetch Real GitHub Activity
   const { data: activityEvents } = useQuery({
@@ -427,7 +453,7 @@ export function DashboardPage() {
     { title: "Total Repositories", value: displayRepos.length, icon: FolderGit2, trend: "Synced from GitHub", trendUp: true },
     { title: "Total Pushes", value: totalPushes, icon: GitCommit, trend: "Last 90 Days", trendUp: totalPushes > 0 },
     { title: "Total Pull Requests", value: totalPRs, icon: GitBranch, trend: "Last 90 Days", trendUp: totalPRs > 0 },
-    { title: "Total Open Issues", value: displayRepos.reduce((acc: number, r: any) => acc + (r.openIssuesCount || 0), 0), icon: GitCommit, trend: "Needs attention", trendUp: false },
+    { title: "Unread Notifications", value: notifications?.filter((n: any) => !n.read).length || 0, icon: Bell, trend: "New alerts", trendUp: (notifications?.filter((n: any) => !n.read).length || 0) > 0 },
   ];
 
   if (isLoading) {
@@ -692,6 +718,66 @@ export function DashboardPage() {
           <motion.div key="settings" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
             <h2 className="text-2xl font-bold mb-6">Settings</h2>
             <SettingsPanel />
+          </motion.div>
+        );
+
+      case "notifications":
+        return (
+          <motion.div key="notifications" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Notifications</h2>
+                <p className="text-muted-foreground text-sm">Read notifications will be automatically cleared on next refresh.</p>
+              </div>
+              {(notifications || []).some((n: any) => !n.read) && (
+                <Button variant="outline" size="sm" onClick={() => notifications.forEach((n: any) => !n.read && markNotificationRead(n.id))} className="border-primary/20 text-primary">
+                  Mark all as read
+                </Button>
+              )}
+            </div>
+
+            <div className="max-w-2xl space-y-3">
+              {notifications && notifications.length > 0 ? (
+                notifications.map((notif: any) => (
+                  <Card key={notif.id} className={`glass-card transition-all ${notif.read ? 'opacity-60 grayscale' : 'border-primary/20 bg-primary/5'}`}>
+                    <CardContent className="p-4 flex items-start gap-4">
+                      <div className={`mt-1 w-2 h-2 rounded-full shrink-0 ${notif.read ? 'bg-muted-foreground' : 'bg-primary animate-pulse'}`} />
+                      <div className="flex-1 space-y-1">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                            notif.type === 'PUSH' ? 'bg-blue-400/10 text-blue-400' :
+                            notif.type === 'PULL' ? 'bg-purple-400/10 text-purple-400' :
+                            notif.type === 'ISSUE' ? 'bg-orange-400/10 text-orange-400' :
+                            'bg-green-400/10 text-green-400'
+                          }`}>
+                            {notif.type}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {new Date(notif.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-sm font-medium">{notif.message}</p>
+                        {notif.link && (
+                          <a href={notif.link} target="_blank" rel="noreferrer" className="text-xs text-primary hover:underline flex items-center gap-1">
+                            <Rocket className="w-3 h-3" /> View Source
+                          </a>
+                        )}
+                      </div>
+                      {!notif.read && (
+                        <Button variant="ghost" size="sm" onClick={() => markNotificationRead(notif.id)} className="h-8 text-xs">
+                          Mark Read
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              ) : (
+                <div className="py-20 text-center text-muted-foreground">
+                  <Bell className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                  <p>No new notifications. Everything looks clear!</p>
+                </div>
+              )}
+            </div>
           </motion.div>
         );
 
