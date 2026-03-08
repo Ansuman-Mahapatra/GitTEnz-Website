@@ -101,6 +101,15 @@ public class AuthController {
             return ResponseEntity.ok(new AuthResponse(null, user, true));
         }
 
+        // Rolling GitHub Verification: If user is active within 3 days, keep them
+        // verified
+        if (user.getGithubId() != null && user.getLastGithubVerifiedAt() != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            if (user.getLastGithubVerifiedAt().isAfter(now.minusDays(3))) {
+                user.setLastGithubVerifiedAt(now);
+            }
+        }
+
         user.setLastActiveAt(java.time.LocalDateTime.now());
         userRepository.save(user);
 
@@ -132,6 +141,16 @@ public class AuthController {
         // Clear OTP
         user.setOtp(null);
         user.setOtpExpiry(null);
+
+        // Rolling GitHub Verification: If user is active within 3 days, keep them
+        // verified
+        if (user.getGithubId() != null && user.getLastGithubVerifiedAt() != null) {
+            java.time.LocalDateTime now = java.time.LocalDateTime.now();
+            if (user.getLastGithubVerifiedAt().isAfter(now.minusDays(3))) {
+                user.setLastGithubVerifiedAt(now);
+            }
+        }
+
         user.setLastActiveAt(java.time.LocalDateTime.now());
         userRepository.save(user);
 
