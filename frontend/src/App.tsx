@@ -143,12 +143,14 @@ function AppRoutes() {
 }
 
 import { GlobalBackground } from "./components/layout/GlobalBackground";
+import { SecurityShield } from "./components/SecurityShield";
 
 const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <TooltipProvider>
+        <SecurityShield />
         <Toaster />
         <Sonner />
         <GlobalBackground />
