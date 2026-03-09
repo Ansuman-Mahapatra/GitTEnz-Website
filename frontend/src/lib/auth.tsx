@@ -230,7 +230,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await res.json();
   };
 
-  const githubVerificationRequired = !!user && (!user.githubId || (user.lastGithubVerifiedAt ? (Date.now() - new Date(user.lastGithubVerifiedAt).getTime() > 3 * 24 * 60 * 60 * 1000) : true));
+  const githubVerificationRequired = !!user && (
+    !user.githubId || 
+    (() => {
+      if (!user.lastGithubVerifiedAt) return true;
+      const verifiedAt = new Date(user.lastGithubVerifiedAt).getTime();
+      if (isNaN(verifiedAt)) return true;
+      
+      // 3 days in milliseconds (plus a 5-minute buffer for server/client clock drift)
+      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+      const BUFFER_MS = 5 * 60 * 1000;
+      
+      return (Date.now() - verifiedAt) > (THREE_DAYS_MS + BUFFER_MS);
+    })()
+  );
 
   return (
     <AuthContext.Provider value={{ user, loading, githubVerificationRequired, signInWithGitHub, signInWithEmail, signUpWithEmail, verifySignupOtp, verifyOtp, signOut, token, setToken }}>

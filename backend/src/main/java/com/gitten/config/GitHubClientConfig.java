@@ -16,6 +16,7 @@ public class GitHubClientConfig {
         return RestClient.builder()
                 .baseUrl(githubApiUrl)
                 .defaultHeader("Accept", "application/vnd.github.v3+json")
+                .defaultHeader("User-Agent", "GitTEnz-App")
                 .build();
     }
 }

@@ -102,11 +102,19 @@ public class AuthController {
         }
 
         // Rolling GitHub Verification: If user returns within 3 days of last activity,
-        // keep them verified
+        // keep them verified. Using UTC comparison for environment consistency.
         java.time.Instant now = java.time.Instant.now();
-        if (user.getGithubId() != null && user.getLastActiveAt() != null) {
-            if (user.getLastActiveAt().isAfter(now.minus(3, java.time.temporal.ChronoUnit.DAYS))) {
+        java.time.Instant threeDaysAgo = now.minus(3, java.time.temporal.ChronoUnit.DAYS);
+
+        if (user.getGithubId() != null) {
+            // Check if they were active recently OR if they were verified recently
+            boolean activeRecently = user.getLastActiveAt() != null && user.getLastActiveAt().isAfter(threeDaysAgo);
+            boolean verifiedRecently = user.getLastGithubVerifiedAt() != null
+                    && user.getLastGithubVerifiedAt().isAfter(threeDaysAgo);
+
+            if (activeRecently || verifiedRecently) {
                 user.setLastGithubVerifiedAt(now);
+                log.info("[AUTH] Extended GitHub verification for user: {}", user.getUsername());
             }
         }
 
@@ -145,8 +153,14 @@ public class AuthController {
         // Rolling GitHub Verification: If user returns within 3 days of last activity,
         // keep them verified
         java.time.Instant now = java.time.Instant.now();
-        if (user.getGithubId() != null && user.getLastActiveAt() != null) {
-            if (user.getLastActiveAt().isAfter(now.minus(3, java.time.temporal.ChronoUnit.DAYS))) {
+        java.time.Instant threeDaysAgo = now.minus(3, java.time.temporal.ChronoUnit.DAYS);
+
+        if (user.getGithubId() != null) {
+            boolean activeRecently = user.getLastActiveAt() != null && user.getLastActiveAt().isAfter(threeDaysAgo);
+            boolean verifiedRecently = user.getLastGithubVerifiedAt() != null
+                    && user.getLastGithubVerifiedAt().isAfter(threeDaysAgo);
+
+            if (activeRecently || verifiedRecently) {
                 user.setLastGithubVerifiedAt(now);
             }
         }
