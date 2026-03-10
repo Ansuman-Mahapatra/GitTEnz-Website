@@ -7,9 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
+import { useDeveloperInfo } from "@/hooks/useDeveloperInfo";
 
 export function HelpSection() {
     const { token } = useAuth();
+    const devInfo = useDeveloperInfo();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [feedback, setFeedback] = useState("");
@@ -72,10 +74,10 @@ export function HelpSection() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <a href={`mailto:${import.meta.env.VITE_DEVELOPER_EMAIL}`}>
+                        <a href={`mailto:${devInfo.email}`}>
                             <Button className="w-full gap-2" variant="outline">
                                 <Mail className="w-4 h-4" />
-                                {import.meta.env.VITE_DEVELOPER_EMAIL}
+                                {devInfo.email}
                             </Button>
                         </a>
                     </CardContent>
@@ -94,7 +96,7 @@ export function HelpSection() {
                     </CardHeader>
                     <CardContent>
                         <a
-                            href={import.meta.env.VITE_DEVELOPER_LINKEDIN_URL}
+                            href={devInfo.linkedin}
                             target="_blank"
                             rel="noopener noreferrer"
                         >

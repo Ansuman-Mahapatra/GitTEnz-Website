@@ -12,8 +12,16 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/public")
 public class PublicController {
-
     private final SystemConfigRepository systemConfigRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${developer.linkedin.url:https://www.linkedin.com/in/ansuman197463/}")
+    private String developerLinkedinUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${developer.github.url:https://github.com/Ansuman-Mahapatra}")
+    private String developerGithubUrl;
+
+    @org.springframework.beans.factory.annotation.Value("${developer.email:ansuman197463@gmail.com}")
+    private String developerEmail;
 
     public PublicController(SystemConfigRepository systemConfigRepository) {
         this.systemConfigRepository = systemConfigRepository;
@@ -31,5 +39,13 @@ public class PublicController {
         String content = systemConfigRepository.findByKey("terms_of_service")
                 .map(SystemConfig::getValue).orElse("Default Terms of Service");
         return ResponseEntity.ok(Map.of("content", content));
+    }
+
+    @GetMapping("/developer-info")
+    public ResponseEntity<?> getDeveloperInfo() {
+        return ResponseEntity.ok(Map.of(
+                "linkedin", developerLinkedinUrl,
+                "github", developerGithubUrl,
+                "email", developerEmail));
     }
 }

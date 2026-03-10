@@ -3,8 +3,10 @@ import { Github, Mail, Linkedin, Code2, Coffee, Heart, Sparkles, Terminal, Rocke
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { useDeveloperInfo } from "@/hooks/useDeveloperInfo";
 
 export function AboutSection() {
+    const devInfo = useDeveloperInfo();
     const techStack = [
         { name: "React 18", icon: "⚛️" },
         { name: "TypeScript", icon: "📘" },
@@ -88,7 +90,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2 glow-green"
-                                        onClick={() => window.open(import.meta.env.VITE_DEVELOPER_GITHUB_URL, "_blank")}
+                                        onClick={() => window.open(devInfo.github, "_blank")}
                                     >
                                         <Github className="w-4 h-4" />
                                         GitHub
@@ -97,7 +99,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2"
-                                        onClick={() => window.location.href = `mailto:${import.meta.env.VITE_DEVELOPER_EMAIL}`}
+                                        onClick={() => window.location.href = `mailto:${devInfo.email}`}
                                     >
                                         <Mail className="w-4 h-4" />
                                         Email
@@ -106,7 +108,7 @@ export function AboutSection() {
                                         variant="outline"
                                         size="sm"
                                         className="gap-2"
-                                        onClick={() => window.open(import.meta.env.VITE_DEVELOPER_LINKEDIN_URL, "_blank")}
+                                        onClick={() => window.open(devInfo.linkedin, "_blank")}
                                     >
                                         <Linkedin className="w-4 h-4" />
                                         LinkedIn
