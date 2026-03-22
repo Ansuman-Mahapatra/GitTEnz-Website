@@ -42,6 +42,31 @@ export function SecurityShield() {
       e.preventDefault();
     };
 
+    // Optional: Infinite debugger loop (activates if devtools is open)
+    const debuggerInterval = setInterval(() => {
+      (function() {
+        try {
+          // This will pause the application if DevTools is open
+          // @ts-ignore
+          (function() { return false; }['constructor']('debugger')['call']());
+        } catch (e) {}
+      })();
+    }, 1000);
+
+    // Detect Headless / Automation (navigator.webdriver)
+    if (navigator.webdriver) {
+      console.warn("Automation detected. Security protocols active.");
+      // You could redirect or block access here if desired
+    }
+
+    // Console Clear trick
+    const clearConsole = setInterval(() => {
+      // @ts-ignore
+      if (window.console && window.console.clear) {
+        // console.clear(); // Uncomment to actively clear console every second
+      }
+    }, 1000);
+
     // Add event listeners
     document.addEventListener("contextmenu", handleContextMenu);
     document.addEventListener("keydown", handleKeyDown);
@@ -50,6 +75,8 @@ export function SecurityShield() {
 
     return () => {
       // Cleanup event listeners on unmount
+      clearInterval(debuggerInterval);
+      clearInterval(clearConsole);
       document.removeEventListener("contextmenu", handleContextMenu);
       document.removeEventListener("keydown", handleKeyDown);
       document.removeEventListener("dragstart", handleDragStart);

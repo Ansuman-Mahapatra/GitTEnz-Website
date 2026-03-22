@@ -19,7 +19,7 @@ public interface GitHubService {
         java.util.Map<String, Object> getFileContent(String owner, String repo, String path, String oauthToken);
 
         java.util.Map<String, Object> updateFile(String owner, String repo, String path, String content, String message,
-                        String sha, String oauthToken);
+                        String sha, String oauthToken, boolean isBase64);
 
         java.util.Map<String, Object> createBranch(String owner, String repo, String branchName, String sha,
                         String oauthToken);

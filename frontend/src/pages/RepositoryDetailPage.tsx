@@ -91,23 +91,47 @@ export function RepositoryDetailPage() {
     });
 
     // 4. Fetch File Content
-    const { data: fileContent, isLoading: contentLoading } = useQuery({
+    const { data: fileData, isLoading: contentLoading } = useQuery({
         queryKey: ["content", owner, repo, selectedFile?.path],
         queryFn: async () => {
-            if (!selectedFile) return "";
+            if (!selectedFile) return null;
             const res = await fetch(`${API_URL}/api/repos/${owner}/${repo}/contents/${selectedFile.path}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Failed to fetch content");
             const data = await res.json();
+
+            const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp'];
+            const pdfExtensions = ['pdf'];
+            const ext = selectedFile.path.split('.').pop()?.toLowerCase() || '';
+
             // Content is base64 encoded usually
             if (data.content && data.encoding === "base64") {
-                return atob(data.content.replace(/\n/g, ""));
+                const base64Content = data.content.replace(/\n/g, "");
+                
+                if (imageExtensions.includes(ext)) {
+                    const mime = ext === 'svg' ? 'image/svg+xml' : `image/${ext}`;
+                    return { type: 'image', content: `data:${mime};base64,${base64Content}` };
+                } else if (pdfExtensions.includes(ext)) {
+                    return { type: 'pdf', content: `data:application/pdf;base64,${base64Content}` };
+                } else {
+                    try {
+                        // Decode base64 to UTF-8
+                        const binaryString = atob(base64Content);
+                        const bytes = new Uint8Array(binaryString.length);
+                        for (let i = 0; i < binaryString.length; i++) {
+                            bytes[i] = binaryString.charCodeAt(i);
+                        }
+                        return { type: 'text', content: new TextDecoder().decode(bytes) };
+                    } catch (e) {
+                        console.error("Failed to decode text file:", e);
+                        return { type: 'text', content: atob(base64Content) }; // Fallback
+                    }
+                }
             }
-            return "";
+            return { type: 'text', content: "" };
         },
         enabled: !!token && !!owner && !!repo && !!selectedFile && activeTab === "code",
-        refetchInterval: 5000,
     });
 
     const handleFileClick = (file: any) => {
@@ -131,10 +155,12 @@ export function RepositoryDetailPage() {
 
     // Update code content when file is loaded
     useEffect(() => {
-        if (fileContent) {
-            setCodeContent(fileContent);
+        if (fileData?.type === 'text') {
+            setCodeContent(fileData.content);
+        } else {
+            setCodeContent("");
         }
-    }, [fileContent]);
+    }, [fileData]);
 
     const handleSave = async () => {
         if (!selectedFile || !token) return;
@@ -313,12 +339,12 @@ export function RepositoryDetailPage() {
                                         Structure
                                     </Button>
 
-                                    {selectedFile && !isEditing && (
+                                    {selectedFile && !isEditing && fileData?.type === 'text' && (
                                         <Button size="sm" variant="secondary" onClick={() => setIsEditing(true)}>Edit</Button>
                                     )}
                                     {isEditing && (
                                         <>
-                                            <Button size="sm" variant="ghost" onClick={() => { setIsEditing(false); setCodeContent(fileContent); }}>Cancel</Button>
+                                            <Button size="sm" variant="ghost" onClick={() => { setIsEditing(false); setCodeContent(fileData?.content || ""); }}>Cancel</Button>
                                             <Button size="sm" className="glow-green" onClick={() => setShowCommitDialog(true)}>Save Changes</Button>
                                         </>
                                     )}
@@ -354,13 +380,25 @@ export function RepositoryDetailPage() {
                                                 <div className="animate-spin w-8 h-8 border-4 border-primary rounded-full border-t-transparent" />
                                             </div>
                                         ) : (
-                                            <CodeEditor
-                                                initialCode={isEditing ? codeContent : fileContent}
-                                                language={selectedFile.path.split('.').pop() || 'text'}
-                                                readOnly={!isEditing}
-                                                onChange={setCodeContent}
-                                                onAiExplain={handleAiExplain}
-                                            />
+                                            <>
+                                                {fileData?.type === 'image' ? (
+                                                    <div className="h-full flex items-center justify-center p-4 border rounded-xl glass-card overflow-auto bg-black/20">
+                                                        <img src={fileData.content} alt={selectedFile.path} className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" />
+                                                    </div>
+                                                ) : fileData?.type === 'pdf' ? (
+                                                    <div className="h-full w-full border rounded-xl overflow-hidden glass-card">
+                                                        <iframe src={fileData.content} className="w-full h-full border-0 bg-white" title={selectedFile.path} />
+                                                    </div>
+                                                ) : (
+                                                    <CodeEditor
+                                                        initialCode={isEditing ? codeContent : fileData?.content || ""}
+                                                        language={selectedFile.path.split('.').pop() || 'text'}
+                                                        readOnly={!isEditing}
+                                                        onChange={setCodeContent}
+                                                        onAiExplain={handleAiExplain}
+                                                    />
+                                                )}
+                                            </>
                                         )
                                     ) : (
                                         <div className="h-full flex flex-col items-center justify-center border rounded-xl glass-card text-muted-foreground p-8 text-center">

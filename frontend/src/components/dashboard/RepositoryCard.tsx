@@ -16,7 +16,9 @@ interface Repository {
   visibility: string;
   updatedAt: string;
   htmlUrl: string;
-  likedUserIds?: string[]; // Add this field
+  likedUserIds?: string[];
+  deletedOnGithub?: boolean;
+  deletedAt?: string;
 }
 
 interface RepositoryCardProps {
@@ -99,12 +101,19 @@ export function RepositoryCard({ repository, index }: RepositoryCardProps) {
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <motion.h3
-                className="font-semibold text-foreground group-hover:text-primary transition-colors truncate"
-                whileHover={{ x: 2 }}
-              >
-                {repository.name}
-              </motion.h3>
+              <div className="flex items-center gap-2">
+                <motion.h3
+                  className="font-semibold text-foreground group-hover:text-primary transition-colors truncate"
+                  whileHover={{ x: 2 }}
+                >
+                  {repository.name}
+                </motion.h3>
+                {repository.deletedOnGithub && (
+                  <Badge variant="destructive" className="text-[10px] h-4 px-1.5 animate-pulse shrink-0">
+                    Deleted
+                  </Badge>
+                )}
+              </div>
               <Badge variant="outline" className="mt-1 text-xs capitalize">
                 {repository.visibility}
               </Badge>

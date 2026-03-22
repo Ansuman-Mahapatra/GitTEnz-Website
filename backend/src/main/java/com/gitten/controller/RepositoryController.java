@@ -6,10 +6,7 @@ import com.gitten.repository.UserRepository;
 import com.gitten.service.RepositoryService;
 import com.gitten.service.LocalGitService;
 import com.gitten.service.GitHubService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,6 +43,12 @@ public class RepositoryController {
         String username = principal.getName();
         List<Repository> repos = repositoryService.getRepositoriesByUsername(username);
         return ResponseEntity.ok(repos);
+    }
+
+    @GetMapping("/deleted")
+    public ResponseEntity<List<Repository>> getDeletedRepositories(java.security.Principal principal) {
+        String username = principal.getName();
+        return ResponseEntity.ok(repositoryService.getDeletedRepositories(username));
     }
 
     @GetMapping("/local")
@@ -147,8 +150,9 @@ public class RepositoryController {
         }
 
         String token = getToken(principal.getName());
+        boolean isBase64 = body.containsKey("isBase64") && body.get("isBase64").equalsIgnoreCase("true");
         return ResponseEntity.ok(gitHubService.updateFile(owner, repo, path, body.get("content"), body.get("message"),
-                body.get("sha"), token));
+                body.get("sha"), token, isBase64));
     }
 
     @org.springframework.web.bind.annotation.PostMapping("/{owner}/{repo}/branches")
@@ -175,7 +179,28 @@ public class RepositoryController {
         String description = (String) body.get("description");
         boolean isPrivate = (boolean) body.getOrDefault("private", false);
 
-        return ResponseEntity.ok(gitHubService.createRepository(name, description, isPrivate, token));
+        java.util.Map<String, Object> gitHubData = gitHubService.createRepository(name, description, isPrivate, token);
+        
+        // Save to our DB as well
+        com.gitten.model.User user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        Repository repo = new Repository();
+        repo.setName((String) gitHubData.get("name"));
+        repo.setFullName((String) gitHubData.get("full_name"));
+        repo.setDescription((String) gitHubData.get("description"));
+        repo.setHtmlUrl((String) gitHubData.get("html_url"));
+        repo.setGithubId(Long.valueOf(gitHubData.get("id").toString()));
+        repo.setOwner(user);
+        repo.setLanguage((String) gitHubData.get("language"));
+        repo.setVisibility(isPrivate ? "private" : "public");
+        repo.setStargazersCount(0);
+        repo.setForksCount(0);
+        repo.setUpdatedAt(java.time.LocalDateTime.now());
+        
+        repositoryRepository.save(repo);
+        
+        return ResponseEntity.ok(gitHubData);
     }
 
     private String getToken(String username) {

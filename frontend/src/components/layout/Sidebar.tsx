@@ -10,7 +10,9 @@ import {
   Bell,
   Users,
   MessageSquare,
-  HelpCircle
+  HelpCircle,
+  Trash2,
+  Download
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -27,6 +29,7 @@ const userMenuItems = [
   { id: "dashboard", icon: Home, label: "Dashboard" },
   { id: "repositories", icon: FolderGit2, label: "Repositories" },
   { id: "local-repos", icon: FolderGit2, label: "Local Repos" },
+  { id: "deleted-repos", icon: Trash2, label: "Deleted Repos" },
   { id: "activity", icon: History, label: "Activity" },
   { id: "starred", icon: Star, label: "Starred" },
   { id: "settings", icon: Settings, label: "Settings" },
@@ -201,6 +204,22 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
               {item.label}
             </motion.button>
           ))}
+
+        <motion.div variants={itemVariants} className="px-3 pb-2 pt-1">
+          <Button
+            asChild
+            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 shadow-lg"
+            size="sm"
+          >
+            <a 
+              href="https://github.com/Ansuman-Mahapatra/GitDense/raw/main/dist-electron/GitDense-Setup-1.0.0.exe"
+              download
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Download Desktop
+            </a>
+          </Button>
+        </motion.div>
 
         <motion.div variants={itemVariants} className="px-3 pb-2">
           <div className="p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10 text-[10px] text-yellow-600 dark:text-yellow-500/70 leading-tight">

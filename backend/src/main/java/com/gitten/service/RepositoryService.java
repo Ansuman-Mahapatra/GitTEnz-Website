@@ -33,19 +33,43 @@ public class RepositoryService {
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             if (user.getAccessToken() != null && !user.getAccessToken().isEmpty()) {
-                syncRepositories(user);
+                // Sync and get the LIVE repos from GitHub
+                List<Repository> liveGithubRepos = syncRepositories(user);
+                
+                // Also get local-only repos (those that don't have a githubId yet)
+                List<Repository> localOnlyRepos = repositoryRepository.findByOwner(user)
+                    .stream()
+                    .filter(r -> r.isLocal() && r.getGithubId() == null && !r.isDeletedOnGithub())
+                    .toList();
+                
+                // Combine them
+                java.util.List<Repository> allActive = new java.util.ArrayList<>(liveGithubRepos);
+                allActive.addAll(localOnlyRepos);
+                return allActive;
             }
             return repositoryRepository.findByOwner(user);
         }
         return List.of();
     }
 
-    private void syncRepositories(User user) {
+    public List<Repository> getDeletedRepositories(String username) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            return repositoryRepository.findByOwner(user)
+                .stream()
+                .filter(Repository::isDeletedOnGithub)
+                .toList();
+        }
+        return List.of();
+    }
+
+    private List<Repository> syncRepositories(User user) {
         try {
-            gitHubService.syncRepositories(user, user.getAccessToken());
+            return gitHubService.syncRepositories(user, user.getAccessToken());
         } catch (Exception e) {
-            // Log error but continue to return cached repos
             e.printStackTrace();
+            return List.of();
         }
     }
 }

@@ -62,6 +62,7 @@ public class SecurityConfig {
                 java.util.List<String> allowedOrigins = new java.util.ArrayList<>();
                 allowedOrigins.add("http://localhost:5180");
                 allowedOrigins.add("http://localhost:5173");
+                allowedOrigins.add("http://localhost:5175");
                 allowedOrigins.add("https://gittenz.netlify.app");
                 allowedOrigins.add("https://gittenz.vercel.app");
                 allowedOrigins.add("https://gittenz.onrender.com");

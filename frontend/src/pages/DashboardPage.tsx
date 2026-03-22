@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { motion } from "framer-motion";
-import { FolderGit2, GitBranch, GitCommit, Star, Menu, Search, Rocket, RefreshCw, Bell } from "lucide-react";
+import { FolderGit2, GitBranch, GitCommit, Star, Menu, Search, Rocket, RefreshCw, Bell, Trash2 } from "lucide-react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { RepositoryCard } from "@/components/dashboard/RepositoryCard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
@@ -191,7 +191,7 @@ export function DashboardPage() {
   };
 
 
-  const { data: repositories, isLoading } = useQuery({
+  const { data: repositories, isLoading, refetch: refetchRepos } = useQuery({
     queryKey: ["repositories"],
     initialData: getCached("repos"),
     queryFn: async () => {
@@ -211,10 +211,24 @@ export function DashboardPage() {
     refetchInterval: 300000, 
   });
 
-
+  const { data: deletedRepositoriesData, refetch: refetchDeleted } = useQuery({
+    queryKey: ["deleted-repositories"],
+    queryFn: async () => {
+      if (!token) return [];
+      const res = await fetch(`${API_URL}/api/repos/deleted`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) throw new Error("Failed to fetch deleted repositories");
+      return await res.json();
+    },
+    enabled: !!token,
+    refetchInterval: 300000,
+  });
 
   // Data processing
-  const displayRepos = repositories || [];
+  const activeRepos = repositories || [];
+  const deletedRepos = deletedRepositoriesData || [];
+  const displayRepos = activeRepos; // Default list and charts focus on live projects
 
   // FIXED: Use a Map to aggregate totals across ALL repos for accuracy
   const languageMap = new Map<string, number>();
@@ -816,6 +830,39 @@ export function DashboardPage() {
           </motion.div>
         );
 
+      case "deleted-repos":
+        return (
+          <motion.div key="deleted-repos" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold">Deleted Repositories</h2>
+                <p className="text-muted-foreground text-sm">Repositories that were found in our data but are now missing from GitHub.</p>
+              </div>
+              <div className="text-sm text-muted-foreground">
+                {deletedRepos.length} total
+              </div>
+            </div>
+
+            {deletedRepos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {deletedRepos.map((repo: any, index: number) => (
+                  <div key={repo.id} className="relative group grayscale">
+                    <RepositoryCard repository={repo} index={index} />
+                    <div className="absolute top-2 right-2 bg-destructive/10 text-destructive text-[10px] px-2 py-0.5 rounded border border-destructive/20 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      Deleted: {repo.deletedAt ? new Date(repo.deletedAt).toLocaleDateString() : 'Unknown'}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-20 bg-white/5 border border-dashed rounded-xl border-white/10">
+                <Trash2 className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                <p className="text-muted-foreground">No deleted repositories found. Your sync is healthy!</p>
+              </div>
+            )}
+          </motion.div>
+        );
+
       default:
         return null;
     }
@@ -862,7 +909,19 @@ export function DashboardPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              {/* Sync Data button moved to Dashboard tab */}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="gap-2 border-primary/20 hover:border-primary/50 hidden sm:flex"
+                onClick={() => {
+                  refetchRepos();
+                  refetchDeleted();
+                  toast.success("Synchronizing with GitHub...");
+                }}
+              >
+                <RefreshCw className="w-4 h-4" />
+                <span>Sync Data</span>
+              </Button>
             </div>
           </header>
 

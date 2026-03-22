@@ -28,6 +28,25 @@ public class Repository {
     private String localPath;
 
     private LocalDateTime updatedAt;
+    private boolean deletedOnGithub = false;
+
+    private LocalDateTime deletedAt;
+
+    public boolean isDeletedOnGithub() {
+        return deletedOnGithub;
+    }
+
+    public void setDeletedOnGithub(boolean deletedOnGithub) {
+        this.deletedOnGithub = deletedOnGithub;
+    }
+
+    public LocalDateTime getDeletedAt() {
+        return deletedAt;
+    }
+
+    public void setDeletedAt(LocalDateTime deletedAt) {
+        this.deletedAt = deletedAt;
+    }
 
     public boolean isLocal() {
         return local;

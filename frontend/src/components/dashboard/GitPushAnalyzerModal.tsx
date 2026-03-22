@@ -130,14 +130,14 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
       
       // Fix 1: Init Git
       if (!analysis.isGit) {
-        setProgress(20);
+        setProgress(10);
         updatedGitDir = await dirHandle.getDirectoryHandle('.git', { create: true });
         toast.success("Initialized empty Git repository.");
       }
 
       // Fix 2: Create .gitignore for detected sensitive files
       if (analysis.sensitiveFilesFound.length > 0) {
-        setProgress(40);
+        setProgress(20);
         try {
           const gitignoreHandle = await dirHandle.getFileHandle('.gitignore', { create: true });
           const writable = await gitignoreHandle.createWritable();
@@ -154,7 +154,7 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
       let finalOriginUrl = analysis.hasOrigin ? null : `https://github.com/${username}/${dirHandle.name}.git`;
       
       if (publishToGithub && !analysis.hasOrigin) {
-        setProgress(60);
+        setProgress(40);
         try {
           const token = localStorage.getItem('token');
           const response = await fetch(`${API_URL}/api/repos`, {
@@ -177,7 +177,6 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
           } else {
             console.error("Failed to create GitHub repo");
             toast.error("Cloud creation failed. This repo name might already exist on your GitHub.");
-            // We use the default origin URL as a fallback if the creation semi-failed or was a name collision
           }
         } catch (err) {
           console.error("GitHub API error", err);
@@ -185,8 +184,9 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         }
       }
 
+      // Fix 4: Link Origin
       if (finalOriginUrl) {
-        setProgress(80);
+        setProgress(50);
         let existingConfig = "";
         try {
           const configHandle = await updatedGitDir.getFileHandle('config');
@@ -194,7 +194,6 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
           existingConfig = await file.text();
         } catch (e) {}
 
-        // Check if origin already exists in text to avoid duplication
         if (!existingConfig.includes('[remote "origin"]')) {
            const configHandle = await updatedGitDir.getFileHandle('config', { create: true });
            const writable = await configHandle.createWritable();
@@ -205,9 +204,63 @@ export function GitPushAnalyzerModal({ isOpen, onClose, dirHandle, onContinue, u
         }
       }
 
+      // Fix 5: NEW - Automatic Push (Upload files)
+      if (publishToGithub) {
+        setProgress(60);
+        const token = localStorage.getItem('token');
+        const repoName = dirHandle.name;
+        
+        // Recursive upload
+        const uploadDir = async (handle: any, path: string = "") => {
+          // @ts-ignore
+          for await (const entry of handle.values()) {
+            const fullPath = path ? `${path}/${entry.name}` : entry.name;
+            
+            // Skip typical ignored directories
+            if (['.git', 'node_modules', 'target', 'dist', 'build', '.next', '.idea', '.vscode'].includes(entry.name)) continue;
+            
+            if (entry.kind === 'directory') {
+              await uploadDir(entry, fullPath);
+            } else {
+              try {
+                const file = await entry.getFile();
+                // Send to backend which will push to GitHub
+                const reader = new FileReader();
+                const base64Promise = new Promise<string>((resolve) => {
+                  reader.onload = () => {
+                    const result = reader.result as string;
+                    resolve(result.split(',')[1]);
+                  };
+                  reader.readAsDataURL(file);
+                });
+                const base64Content = await base64Promise;
+
+                await fetch(`${API_URL}/api/repos/${username}/${repoName}/contents/${fullPath}`, {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    content: base64Content,
+                    message: "Initial commit via GitTEnz",
+                    isBase64: "true"
+                  })
+                });
+              } catch (e) {
+                console.error(`Failed to upload ${fullPath}`, e);
+              }
+            }
+          }
+        };
+
+        await uploadDir(dirHandle);
+        setProgress(95);
+        toast.success("Successfully pushed initial code to GitHub!");
+      }
+
       setProgress(100);
       setTimeout(() => {
-        // Show success state with commands
         setAnalysis((prev: any) => ({ 
            ...prev, 
            isGit: true, 
