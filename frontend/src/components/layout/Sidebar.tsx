@@ -222,12 +222,12 @@ export function Sidebar({ activeTab, onTabChange }: SidebarProps) {
         </motion.div>
 
         <motion.div variants={itemVariants} className="px-3 pb-2">
-          <div className="p-3 rounded-lg bg-yellow-500/5 border border-yellow-500/10 text-[10px] text-yellow-600 dark:text-yellow-500/70 leading-tight">
+          <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/10 text-[10px] text-blue-600 dark:text-blue-500/70 leading-tight">
             <p className="font-bold mb-0.5 uppercase tracking-wider flex items-center gap-1.5">
-              <span className="w-1 h-1 rounded-full bg-yellow-500 animate-pulse" />
-              Security Notice
+              <span className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" />
+              Secure Session
             </p>
-            Auto-logout after 15 min of inactivity.
+            Persistent (30+ Days)
           </div>
         </motion.div>
 
