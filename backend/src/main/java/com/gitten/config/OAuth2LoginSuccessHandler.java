@@ -121,7 +121,43 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
 
                 String token = jwtService.generateToken(new java.util.HashMap<>(), user.getUsername());
 
-                String targetUrl = UriComponentsBuilder.fromUriString(frontendUrl + "/auth/success")
+                // Determine which frontend to redirect to.
+                // The initiating app passes its origin encoded in the OAuth 'state' param
+                // as "redirect_origin=<url>||<original_state>". This allows both the website
+                // and the desktop app to correctly receive the auth callback.
+                String redirectBase = frontendUrl; // default fallback
+                String stateParam = request.getParameter("state");
+                if (stateParam != null && stateParam.contains("redirect_origin=")) {
+                        try {
+                                String[] parts = stateParam.split("\\|\\|");
+                                for (String part : parts) {
+                                        if (part.startsWith("redirect_origin=")) {
+                                                String encodedOrigin = part.substring("redirect_origin=".length());
+                                                redirectBase = java.net.URLDecoder.decode(encodedOrigin, "UTF-8");
+                                                break;
+                                        }
+                                }
+                        } catch (Exception e) {
+                                log.warn("[OAUTH] Failed to parse redirect_origin from state param, using default: {}", e.getMessage());
+                        }
+                } else {
+                        // Check Origin / Referer headers as a secondary fallback
+                        String origin = request.getHeader("Origin");
+                        String referer = request.getHeader("Referer");
+                        if (origin != null && !origin.isEmpty() && !origin.equals("null")) {
+                                redirectBase = origin;
+                        } else if (referer != null && !referer.isEmpty()) {
+                                try {
+                                        java.net.URL refererUrl = new java.net.URL(referer);
+                                        redirectBase = refererUrl.getProtocol() + "://" + refererUrl.getHost()
+                                                + (refererUrl.getPort() != -1 ? ":" + refererUrl.getPort() : "");
+                                } catch (Exception e) {
+                                        log.warn("[OAUTH] Failed to parse referer header: {}", e.getMessage());
+                                }
+                        }
+                }
+
+                String targetUrl = UriComponentsBuilder.fromUriString(redirectBase + "/auth/success")
                                 .queryParam("token", token)
                                 .build().toUriString();
 
