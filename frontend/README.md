@@ -1,10 +1,10 @@
 # GitTEnz Frontend
 
-This is the frontend application for GitTEnz, built with React, Vite, and Shadcn UI.
+The React + Vite frontend for the [GitTEnz](https://gittenz.vercel.app) platform.
 
-## Project Info
+**Live URL:** [https://gittenz.vercel.app](https://gittenz.vercel.app)
 
-**URL**: [https://gittenz.netlify.app](https://gittenz.netlify.app)
+---
 
 ## Getting Started
 
@@ -15,28 +15,26 @@ This is the frontend application for GitTEnz, built with React, Vite, and Shadcn
 
 ### Setup
 
-1. Install dependencies:
-
 ```sh
 npm install
 ```
 
-2. Configure environment variables:
-
-```sh
-cp .env.example .env
-```
-
-Edit `frontend/.env`:
+Configure environment variables:
 
 ```env
+# frontend/.env — used by local development (npm run dev)
 VITE_API_URL=http://localhost:8080
-VITE_DEVELOPER_LINKEDIN_URL=https://www.linkedin.com/in/yourprofile/
-VITE_DEVELOPER_GITHUB_URL=https://github.com/yourusername
-VITE_DEVELOPER_EMAIL=developer@example.com
+VITE_DEVELOPER_LINKEDIN_URL=https://www.linkedin.com/in/ansumanmahapatra998/
+VITE_DEVELOPER_GITHUB_URL=https://github.com/Ansuman-Mahapatra
+VITE_DEVELOPER_EMAIL=ansuman197463@gmail.com
 ```
 
-3. Start the development server:
+```env
+# frontend/.env.production — used automatically by production builds and Vercel
+VITE_API_URL=https://gittenz.onrender.com
+```
+
+Start the development server:
 
 ```sh
 npm run dev
@@ -44,59 +42,62 @@ npm run dev
 
 Frontend runs on **http://localhost:5180**
 
-### Starting the Backend
-
-```sh
-cd ../backend
-.\run-backend.ps1       # Windows
-./mvnw spring-boot:run  # Linux/Mac
-```
-
 ---
 
 ## Features
 
-- **Matrix Green Theme**: A futuristic, high-performance design system
-- **Tiled Lightning Background**: Immersive custom GLSL shader with dynamic reactive lighting
-- **Smart Server Wake-Up**: Transparent 800ms fast-ping — skips loading screen when backend is already up (local dev), shows animated wake-up UI for Render cold starts only
-- **Multi-Route Landing Experience**: High-energy and immersive pages for Home (`/`), Features (`/features`), Desktop Download (`/download`), and Developer About (`/about`)
-- **Living UI**: Interactive particles, a custom Nav/Footer, and glassmorphism across every page
-- **Email Signup**: No OTP required — user clicks "Check" to confirm email availability, then signs up directly. Admin verifies emails manually within a week.
-- **OAuth2 Login**: Secure authentication with GitHub
-- **Dashboard**: View repository stats (Stars, Forks, Languages) and Recent Activity
-- **Activity Feed**: Real-time updates of your GitHub actions with multi-commit details
-- **Repository Management**:
-  - View code, branches, and commits
-  - **File Tree**: Explore your project structure hierarchically
-  - **Code Editor**: View and edit files with syntax highlighting
-  - **Local Repos**: Select and view local folders securely
-- **AI Assistant**: Chat with your codebase contextually
-
----
-
-## Technologies
-
-- **Vite & React 18**
-- **Three.js & Custom GLSL** (Background Shaders)
-- **TypeScript**
-- **framer-motion** (Animations)
-- **shadcn-ui & Tailwind CSS**
-- **Spring Boot 3** (Backend)
-- **MongoDB Atlas** (Database)
+- **Matrix Green Theme** — A futuristic, high-contrast design system with neon accents
+- **Tiled Lightning Background** — Custom GLSL shader with dynamic reactive lighting
+- **Smart Server Wake-Up** — Skips loading screen if backend responds within 800ms (local dev); shows animated wake-up UI for Render cold starts only
+- **Deleted Repository Tracking** — Repositories removed from GitHub are auto-detected and moved to a "Deleted Repos" section with deletion dates
+- **Manual Sync Button** — "Sync Data" button in the dashboard header forces a live re-sync with GitHub
+- **Desktop App Download** — Direct download button in the sidebar for the GitDense `.exe` installer
+- **Email Signup** — No OTP required. User confirms email availability, signs up directly. Admin verifies emails within a week.
+- **OAuth2 GitHub Login** — Secure GitHub authentication with smart redirect per client app
+- **Dashboard** — Repository stats (Stars, Forks, Languages) and recent activity
+- **Activity Feed** — Real-time GitHub action updates with commit details
+- **Repository Management** — File tree, code viewer/editor, branch/commit history, local repos
+- **AI Assistant** — Context-aware chat powered by OpenAI
 
 ---
 
 ## Key Components
 
-| Component      | Location                 | Description                                                                  |
-| -------------- | ------------------------ | ---------------------------------------------------------------------------- |
-| `ServerWakeUp` | `src/components/layout/` | Smart server health checker — skips overlay if backend responds within 800ms |
-| `SignupPage`   | `src/pages/`             | Email availability check only (no OTP sent), account created immediately     |
-| `LoginPage`    | `src/pages/`             | GitHub OAuth + admin username/password login                                 |
-| `AIAssistant`  | `src/components/ai/`     | Context-aware chat powered by OpenAI                                         |
+| Component | Location | Description |
+|---|---|---|
+| `DashboardPage` | `src/pages/` | Main dashboard with repos, deleted repos, activity, and sync button |
+| `Sidebar` | `src/components/layout/` | Navigation with all tabs including Deleted Repos and Desktop download link |
+| `ServerWakeUp` | `src/components/layout/` | Smart backend health checker |
+| `SignupPage` | `src/pages/` | Email availability check, immediate account creation |
+| `LoginPage` | `src/pages/` | GitHub OAuth + email/password login |
+| `AIAssistant` | `src/components/ai/` | Context-aware chat (reads repo README) |
 
 ---
 
-## How can I deploy this project?
+## Environment Variable Strategy
 
-Please refer to the detailed [`DEPLOYMENT.md`](../DEPLOYMENT.md) in the root directory for instructions on deploying both the frontend and backend.
+Vite automatically selects the correct `.env` file:
+
+| Command | Env File Used | Backend Target |
+|---|---|---|
+| `npm run dev` | `.env` | `http://localhost:8080` |
+| `npm run build` | `.env.production` | `https://gittenz.onrender.com` |
+| Vercel deploy | `.env.production` | `https://gittenz.onrender.com` |
+
+---
+
+## Technologies
+
+- **Vite & React 18** — App framework and build tool
+- **TypeScript** — Type-safe development
+- **Tailwind CSS + Shadcn UI** — Styling and components
+- **TanStack Query** — Server state management and caching
+- **Three.js & Custom GLSL** — WebGL background shaders
+- **Framer Motion** — Smooth UI animations
+- **Lucide React** — Consistent icons
+
+---
+
+## Deployment
+
+See [`DEPLOYMENT.md`](../DEPLOYMENT.md) for full instructions on deploying frontend to Vercel and backend to Render.

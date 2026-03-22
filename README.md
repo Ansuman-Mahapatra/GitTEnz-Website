@@ -1,79 +1,98 @@
-# GitTEnz - Advanced GitHub Dashboard
+# GitTEnz — Advanced GitHub Dashboard
 
-[![Deploy Status](https://img.shields.io/badge/Status-Live-green)](https://gittenz.netlify.app)
+[![Live Demo](https://img.shields.io/badge/Demo-Live-brightgreen?style=for-the-badge)](https://gittenz.vercel.app)
+[![Desktop App](https://img.shields.io/badge/Desktop-GitDense-blue?style=for-the-badge)](https://github.com/Ansuman-Mahapatra/GitDense)
+[![Backend](https://img.shields.io/badge/API-Render-orange?style=for-the-badge)](https://gittenz.onrender.com/api/public/health)
 
-GitTEnz is a high-performance, full-stack web application designed with a futuristic **Matrix Green** aesthetic. It provides a living, interactive experience for GitHub developers, featuring a **Tiled Lightning** background, AI-powered assistance, secure admin OTP authentication, and comprehensive repository insights. Available as both a **web app** and an **Electron desktop app (named GitDense)**. Built with React (WebGL), Spring Boot, and MongoDB.
+GitTEnz is a high-performance, full-stack web application for GitHub developers. It provides a living, interactive dashboard with AI-powered assistance, secure admin authentication, repository insights, and deleted repository tracking. Available as both a **web app** at [gittenz.vercel.app](https://gittenz.vercel.app) and a native **Electron desktop app** called [GitDense](https://github.com/Ansuman-Mahapatra/GitDense). Built with React, Spring Boot, and MongoDB.
+
+---
 
 ## 🚀 Features
 
 ### **Core Features**
 
-- **GitHub Integration**: Seamless OAuth2 login to sync repositories and view detailed statistics
-- **Email Signup**: Users can create accounts directly with email/password — no OTP required, admin verifies emails within a week
-- **Admin Dashboard**: Comprehensive admin panel with user management, analytics, feedback system, and privacy policy management
-- **Admin OTP Authentication**: Secure two-factor authentication via Gmail SMTP for admin login only
-- **Context-Aware AI Assistant**: Chat with an AI about your code — automatically reads repository README for intelligent, context-aware responses
-- **Activity Insights**: Granular breakdown of contribution history (Pushes, Pull Requests) with visual charts and real-time updates
-- **Local Starring**: Star repositories within GitTEnz to create personalized lists without affecting GitHub stars
-- **Code Editor**: Built-in code viewer and editor with syntax highlighting and file tree navigation
-- **Repository Management**: Browse files, view commit history, create branches, and edit code directly in the browser
-- **Desktop App**: Full Electron wrapper that bundles the React frontend into a native cross-platform executable, available in a separate repository as **GitDense**.
+- **GitHub OAuth Integration** — Seamless login to sync repositories and view stats
+- **Email/Password Signup** — Create accounts directly, admin verifies emails within a week
+- **Deleted Repository Tracking** — Repositories removed from GitHub are automatically detected and moved to a "Deleted Repos" section, preserving history
+- **Manual Sync** — One-click "Sync Data" button in the dashboard to pull the latest repository state from GitHub anytime
+- **Admin Dashboard** — Comprehensive panel with user management, analytics, feedback, and policy management
+- **Admin OTP Authentication** — Two-factor login via Gmail SMTP for admin accounts only
+- **AI Assistant** — Context-aware AI reads your repository README for intelligent, relevant responses
+- **Activity Insights** — Contribution history with charts for Pushes, Pull Requests, and more
+- **Local Starring** — Star repositories within GitTEnz without affecting GitHub stars
+- **Code Editor** — View and edit code directly in the browser with a file tree
+- **Desktop App (GitDense)** — Full Electron wrapper with a distinct **Light Blue** theme, persistent 30-day+ sessions, and smart GitHub OAuth redirect back to the desktop client
 
 ### **Admin Features**
 
-- **User Management**: View all users, manage accounts, reset passwords
-- **Email Verification Queue**: View users with unverified emails (`GET /api/admin/users/unverified`) and manually approve them (`PUT /api/admin/users/{id}/verify-email`)
-- **Analytics Dashboard**: Visual insights into user growth, repository statistics, and system usage
-- **Feedback System**: Collect and manage user feedback with ratings
-- **Privacy Policy & Terms**: Manage and update policy documents
-- **System Configuration**: Configure application settings
+- **User Management** — View, manage, reset passwords for all users
+- **Email Verification Queue** — View unverified users (`GET /api/admin/users/unverified`) and approve them
+- **Analytics Dashboard** — Visual insights on user growth and system usage
+- **Feedback System** — Collect and manage user feedback
+- **Privacy Policy & Terms** — Manage and update policy documents
 
 ### **UI/UX & Aesthetics**
 
-- **Matrix Green Theme**: A unified, high-contrast emerald and black design system with neon accents
-- **Tiled Lightning Surface**: A custom WebGL (GLSL) shader background featuring a grid of dark tiles with dynamic lightning pulses in the gaps
-- **Smart Server Wake-Up**: Intelligent loading screen — instantly passes through locally (< 800ms), shows animated wake-up UI only for cold-start Render deployments
-- **Premium Glassmorphism**: High-blur content cards and interfaces for a secondary tactile feel
-- **Fluid Animations**: Powered by Framer Motion for smooth state transitions and interactions
-- **Living Particle System**: Dynamic floating particles that add depth and life to every page
-- **Dark Mode Native**: Immersive dark environment by default, optimized for developers
-- **Mobile Optimized**: Fully responsive grid system that brings the Matrix experience to any device
+- **Matrix Green Theme** (Website) — High-contrast emerald and black design with neon accents
+- **Light Blue Theme** (Desktop GitDense) — Distinct, calm blue palette that differentiates the desktop experience
+- **Tiled Lightning Surface** — Custom WebGL (GLSL) shader background
+- **Smart Server Wake-Up** — Instantly passes through locally (<800ms); shows animated UI for Render cold-starts
+- **Premium Glassmorphism** — High-blur cards and interfaces
+- **Fluid Animations** — Powered by Framer Motion
+- **Living Particle System** — Dynamic particles on every page
+- **Dark Mode Native** — Immersive dark environment optimized for developers
+- **Mobile Optimized** — Fully responsive grid
+
+---
 
 ## 🛠️ Tech Stack
 
-### **Frontend**
+### **Frontend (Website)**
 
-- **React 18** with TypeScript
-- **Vite** - Lightning-fast build tool
-- **Tailwind CSS** - Utility-first styling
-- **Shadcn UI** - Beautiful, accessible components
-- **TanStack Query** - Server state management
-- **React Router** - Client-side routing
-- **Framer Motion** - Smooth UI animations
-- **Three.js & GLSL** - High-performance WebGL shaders for the background
-- **Lucide React** - Beautiful, consistent iconography
+| Tool | Purpose |
+|---|---|
+| React 18 + TypeScript | Core UI framework |
+| Vite | Build tool |
+| Tailwind CSS + Shadcn UI | Styling & components |
+| TanStack Query | Server state management |
+| React Router | Client-side routing |
+| Framer Motion | Animations |
+| Three.js & GLSL | WebGL shader backgrounds |
+| Lucide React | Iconography |
 
 ### **Backend**
 
-- **Spring Boot 3** (Java 17+)
-- **Spring Security** - OAuth2 + JWT authentication
-- **Spring Data MongoDB** - Database integration
-- **Spring Mail** - Gmail SMTP for admin OTP emails only
-- **RestTemplate** - HTTP client for external API calls
-- **Maven** - Dependency management
+| Tool | Purpose |
+|---|---|
+| Spring Boot 3 (Java 17+) | API framework |
+| Spring Security | OAuth2 + JWT authentication |
+| Spring Data MongoDB | Database integration |
+| Spring Mail | Gmail SMTP for admin OTP only |
+| RestTemplate | GitHub API calls |
+| Maven | Dependency management |
 
 ### **Desktop (GitDense)**
 
-- **Electron** - Cross-platform desktop wrapper (main source code located at [Ansuman-Mahapatra/GitDense](https://github.com/Ansuman-Mahapatra/GitDense))
-- **Vite Electron Mode** - Production build with `file://` relative paths
+| Tool | Purpose |
+|---|---|
+| Electron | Native app wrapper |
+| Vite + React | UI rendering |
+| `electron-builder` | NSIS one-click installer |
 
-### **Database & Services**
+### **Infrastructure**
 
-- **MongoDB Atlas** - Primary database
-- **Redis** - Caching layer (optional)
-- **GitHub API** - Repository data source
-- **OpenAI API** - AI assistant
-- **Gmail SMTP** - Admin OTP email delivery
+| Service | Purpose |
+|---|---|
+| MongoDB Atlas | Primary database |
+| Redis | Caching layer (optional) |
+| GitHub API | Repository data source |
+| OpenAI API | AI assistant |
+| Gmail SMTP | Admin OTP delivery |
+| Render | Backend deployment |
+| Vercel | Frontend deployment |
+
+---
 
 ## ⚙️ Prerequisites
 
@@ -81,9 +100,11 @@ GitTEnz is a high-performance, full-stack web application designed with a futuri
 - **Node.js** v18 or higher
 - **Maven** 3.6+
 - **MongoDB Atlas Account**
-- **Gmail Account** with App Password (for admin OTP only)
-- **GitHub Account** (for OAuth)
+- **Gmail Account** with App Password (admin OTP only)
+- **GitHub OAuth App** (for OAuth login)
 - **OpenAI API Key** (for AI features)
+
+---
 
 ## 📦 Installation & Setup
 
@@ -96,95 +117,58 @@ cd GitTEnz
 
 ### 2. Backend Setup
 
-#### Navigate to backend directory:
-
 ```bash
 cd backend
+cp .env.example .env    # Fill in your credentials
 ```
 
-#### Configure Environment Variables:
-
-Copy the example file and fill in your credentials:
-
-```bash
-cp .env.example .env
-```
-
-Key variables to set in `backend/.env`:
+Key variables for `backend/.env`:
 
 ```env
 # GitHub OAuth
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 
-# OpenAI API Key
-OPENAI_API_KEY=sk-your_openai_api_key
+# OpenAI
+OPENAI_API_KEY=sk-your_openai_key
 
-# MongoDB Atlas Connection String
-SPRING_DATA_MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/gitten
+# MongoDB Atlas
+SPRING_DATA_MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/gitten
 
-# Redis (Optional)
-SPRING_DATA_REDIS_HOST=localhost
-SPRING_DATA_REDIS_PORT=6379
-SPRING_DATA_REDIS_USERNAME=default
-SPRING_DATA_REDIS_PASSWORD=your_redis_password
+# Frontend URL (used for OAuth redirect fallback)
+FRONTEND_URL=https://gittenz.vercel.app
 
-# Frontend URL
-FRONTEND_URL=http://localhost:5180
-
-# Gmail SMTP (used only for admin OTP login)
+# Gmail SMTP (admin OTP only)
 SPRING_MAIL_USERNAME=your_email@gmail.com
 SPRING_MAIL_PASSWORD=your_16_char_app_password
 
-# Admin Setup
+# Admin & JWT
 ADMIN_INITIAL_EMAIL=admin@example.com
 JWT_SECRET_KEY=your_64_char_hex_secret
 ```
 
-#### How to Get Credentials:
-
-**GitHub OAuth:**
-
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Click "New OAuth App"
-3. Set Homepage URL: `http://localhost:5180`
-4. Set Authorization callback URL: `http://localhost:8080/login/oauth2/code/github`
-5. Copy Client ID and Client Secret
-
-**Gmail App Password** _(admin login only)_:
-
-1. Enable [2-Step Verification](https://myaccount.google.com/security)
-2. Go to [App Passwords](https://myaccount.google.com/apppasswords)
-3. Select "Mail" and "Other (Custom name)"
-4. Copy the 16-character password (no spaces)
-
-**OpenAI API Key:**
-
-1. Go to [OpenAI Platform](https://platform.openai.com/api-keys)
-2. Create new secret key
-3. Copy the key (starts with `sk-`)
-
-**MongoDB Atlas:**
-
-1. Create account at [MongoDB Atlas](https://cloud.mongodb.com)
-2. Create a free cluster
-3. Create database user and whitelist IP
-4. Get connection string from "Connect" > "Drivers"
-
 ### 3. Frontend Setup
-
-#### Navigate to frontend directory:
 
 ```bash
 cd ../frontend
-```
-
-#### Install dependencies & Configure Env:
-
-```bash
 npm install
-cp .env.example .env
 ```
+
+The `frontend/.env` file controls the local backend target:
+
+```env
+# For local development (talks to local backend)
+VITE_API_URL=http://localhost:8080
+```
+
+The `frontend/.env.production` file controls the production build:
+
+```env
+# For production deployment (talks to cloud backend)
+VITE_API_URL=https://gittenz.onrender.com
+```
+
+---
 
 ## ▶️ Running the Application
 
@@ -200,7 +184,7 @@ cd backend
 ./mvnw spring-boot:run
 ```
 
-\*Backend runs on **http://localhost:8080\***
+**Backend runs on:** `http://localhost:8080`
 
 ### Start Frontend (Terminal 2):
 
@@ -209,186 +193,182 @@ cd frontend
 npm run dev
 ```
 
-\*Frontend runs on **http://localhost:5180\***
+**Frontend runs on:** `http://localhost:5180`
 
-_Ensure the backend and frontend dev server are running first_
+---
+
+## 🖥️ Desktop App (GitDense)
+
+The desktop app is maintained in a separate repository: **[Ansuman-Mahapatra/GitDense](https://github.com/Ansuman-Mahapatra/GitDense)**
+
+### Download the Installer
+
+Download the latest Windows installer (`GitDense-Setup-1.0.0.exe`) directly from the GitDense GitHub repository or from the in-app download button on the website.
+
+### Development (Web View)
+
+```bash
+cd GitDense
+npm install
+npx vite --force --port 5175 --host 0.0.0.0
+```
+
+Open `http://localhost:5175` in your browser. The `.env` file controls the backend:
+
+```env
+# .env (development — talks to cloud backend)
+VITE_API_URL=https://gittenz.onrender.com
+
+# .env.production (packaged .exe — talks to cloud backend)
+VITE_API_URL=https://gittenz.onrender.com
+```
+
+### Build the Installer
+
+```bash
+cd GitDense
+npm run dist
+```
+
+Output: `GitDense/dist-electron/GitDense-Setup-1.0.0.exe`
+
+### Desktop App Architecture Highlights
+
+- **Light Blue Theme**: Desktop has its own distinct design to differ from the website
+- **Persistent Sessions**: Users stay logged in permanently until they manually sign out (no 30-day inactivity logout). JWT tokens are valid for 10 years.
+- **Smart GitHub OAuth Redirect**: When the user clicks "Verify with GitHub" in the desktop app, the app passes its own origin as a `state` parameter. The backend reads this and redirects the token back to the correct app (desktop or web), not always to the live website.
+- **One-Click Auto-Update Installer**: The `oneClick: true` NSIS configuration means downloading and running a newer `.exe` silently overwrites the old installation.
+
+---
 
 ## 🔐 Default Admin Credentials
 
 **Username:** `admin`  
 **Password:** `admin123`
 
-> **Note:** On first admin login, a 6-digit OTP is sent to the `ADMIN_INITIAL_EMAIL` address via Gmail SMTP. Regular user signups do **not** require email OTP — email verification is done manually by admin within a week.
+> **Note:** On first admin login, a 6-digit OTP is sent to `ADMIN_INITIAL_EMAIL` via Gmail SMTP. Regular users do **not** require email OTP — emails are manually verified by admin within a week.
 
-## 📖 Usage Guide
-
-### For Regular Users (Web Signup):
-
-1. Open `http://localhost:5180`
-2. Click "Create Account"
-3. Enter your name, username, email, and password
-4. Click **"Check"** to verify email availability (no code required)
-5. Click **"Sign Up"** — account is created immediately
-6. Your email will be manually verified by admin within a week
-7. Log in and access your dashboard
-
-### For GitHub OAuth Users:
-
-1. Click "Continue with GitHub"
-2. Authorize the application
-3. Access your dashboard with all repository stats
-
-### For Admins:
-
-1. Click "Admin Login" on the login page
-2. Enter username: `admin`, password: `admin123`
-3. Check your email for the 6-digit OTP code
-4. Enter the OTP to access the admin dashboard
-5. **Verify new user emails:** Go to Users tab → see unverified users → click Verify
+---
 
 ## 🏗️ Project Structure
 
 ```
 GitTEnz/
-├── backend/                 # Spring Boot backend
+├── backend/                       # Spring Boot API
 │   ├── src/main/java/com/gitten/
-│   │   ├── config/         # Security, CORS, App configuration
-│   │   ├── controller/     # REST API endpoints
-│   │   │   ├── AuthController.java   # Signup/login (no user OTP)
-│   │   │   ├── AdminController.java  # User verification, analytics
-│   │   │   └── UserController.java   # Profile & repo management
-│   │   ├── model/          # Database entities (User.emailVerified)
-│   │   ├── repository/     # Data access layer
-│   │   ├── service/        # Business logic
-│   │   └── dto/            # Data transfer objects
-│   ├── .env                # Environment variables (not in git)
-│   ├── .env.example        # Template for setting up .env
-│   └── pom.xml             # Maven dependencies
+│   │   ├── config/               # Security, CORS, OAuth success handler
+│   │   │   └── OAuth2LoginSuccessHandler.java  # Smart redirect to origin app
+│   │   ├── controller/           # REST API endpoints
+│   │   ├── model/                # MongoDB entities (incl. deletedOnGithub)
+│   │   ├── service/              # Business logic incl. deleted repo detection
+│   │   └── dto/                  # Data transfer objects
+│   ├── .env                      # Local secrets (not in git)
+│   └── pom.xml
 │
-├── frontend/               # React frontend
+├── frontend/                      # React website
 │   ├── src/
-│   │   ├── components/
-│   │   │   └── layout/ServerWakeUp.tsx   # Smart server health check
-│   │   ├── pages/
-│   │   │   └── SignupPage.tsx             # Email check (no OTP)
-│   │   ├── lib/           # Utilities and auth
-│   │   └── hooks/         # Custom React hooks
-│   ├── .env.example       # Template for setting up .env
-│   ├── package.json       # NPM dependencies
-│   └── vite.config.ts     # Vite configuration
+│   │   ├── pages/DashboardPage.tsx  # Main dashboard (incl. deleted repos tab)
+│   │   ├── components/layout/Sidebar.tsx  # Navigation + download button
+│   │   └── components/layout/ServerWakeUp.tsx
+│   ├── .env                       # Local dev API URL
+│   └── .env.production            # Production API URL
 │
-├── README.md              # This file
-└── DEPLOYMENT.md          # Deployment guide
+├── GitDense/                      # Electron desktop app (separate repo)
+│   ├── src/
+│   │   ├── lib/auth.tsx           # Persistent session, smart GitHub OAuth
+│   │   ├── index.css             # Light blue theme
+│   │   └── App.tsx               # Routes: starts at /login, no marketing pages
+│   ├── .env                       # Dev API URL (cloud backend)
+│   └── .env.production            # Prod API URL (cloud backend)
+│
+├── README.md
+└── DEPLOYMENT.md
 ```
 
-## 🔒 Security Features
+---
 
-- **OAuth2 Authentication** - Secure GitHub login
-- **JWT Tokens** - Stateless authentication
-- **Admin Email OTP** - Two-factor authentication for admin only
-- **Admin-Verified Emails** - New user emails manually verified by admin within a week
-- **BCrypt Password Hashing** - Secure password storage
-- **CORS Protection** - Configured for specific origins
-- **Environment Variables** - Sensitive data not in code
+## 🔒 Security
+
+- **OAuth2** — Secure GitHub login with smart per-app redirect
+- **JWT** — Stateless authentication (10-year expiry; session managed client-side)
+- **Admin OTP** — Two-factor authentication for admin only
+- **BCrypt** — Password hashing
+- **CORS** — Strict origin allowlist including all known frontend origins
+- **Environment Variables** — No secrets in code
+
+---
 
 ## 🐛 Troubleshooting
 
-### Backend won't start:
+| Problem | Solution |
+|---|---|
+| Backend won't start | Check port 8080, verify all `.env` vars, ensure MongoDB URI is correct |
+| Frontend won't start | Check port 5180, run `npm install`, clear `.vite` cache |
+| Admin OTP not received | Verify Gmail App Password (16 chars), check spam, ensure 2FA enabled on Gmail |
+| GitHub OAuth redirects to wrong app | Backend must be redeployed after `OAuth2LoginSuccessHandler.java` changes |
+| "User not found" in desktop app | The account must exist in the **cloud** database. Try logging into `gittenz.vercel.app` first |
+| Deleted repos still showing in main list | Click "Sync Data" button in dashboard to force re-sync from GitHub |
 
-- Check if port 8080 is available
-- Verify all environment variables in `.env`
-- Ensure MongoDB connection string is correct
-- Check Java version (17+ required)
+---
 
-### Frontend won't start:
+## 📝 API Reference
 
-- Check if port 5180 is available
-- Run `npm install` to ensure dependencies are installed
-- Clear `node_modules` and reinstall if needed
+### Public
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/public/health` | GET | Server health check |
+| `/api/auth/signup` | POST | Register new user |
+| `/api/auth/login` | POST | Login (returns OTP required for admin) |
+| `/api/auth/verify-otp` | POST | Verify admin OTP, get JWT |
+| `/api/auth/forgot-password` | POST | Request password reset link |
+| `/api/auth/reset-password` | POST | Submit new password |
 
-### Admin OTP not received:
+### Protected (JWT required)
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/user/me` | GET | Get current user |
+| `/api/user/sync` | POST | Sync repos from GitHub |
+| `/api/repositories/{username}` | GET | Get active repositories |
+| `/api/repositories/{username}/deleted` | GET | Get deleted repositories |
+| `/api/chat` | POST | Chat with AI |
 
-- Verify Gmail credentials in `.env`
-- Check spam folder
-- Ensure 2-Step Verification is enabled on Gmail
-- Verify App Password is correct (16 characters, no spaces)
-- Note: user signup does NOT use email OTP at all
+### Admin (Admin JWT required)
+| Endpoint | Method | Description |
+|---|---|---|
+| `/api/admin/users` | GET | List all users |
+| `/api/admin/users/unverified` | GET | List unverified users |
+| `/api/admin/users/{id}/verify-email` | PUT | Verify user email |
+| `/api/admin/analytics` | GET | Usage statistics |
 
-### Gmail SMTP blocked (on Render free tier):
-
-- Render's free plan blocks outbound SMTP port 587
-- Admin OTP emails will fail silently and log `[EMAIL FAILURE]` in server console
-- **Fix:** Upgrade Render to Starter ($7/mo), or switch backend to Railway (SMTP allowed on free tier)
-
-### "Connecting" screen shown locally:
-
-- The smart `ServerWakeUp` component waits 800ms before showing the loading overlay
-- If you still see it locally, it means the health check endpoint (`/api/public/health`) is slow to respond
-- Ensure the backend is fully started before opening the frontend
-
-### GitHub OAuth fails:
-
-- Verify callback URL matches: `http://localhost:8080/login/oauth2/code/github`
-- Check GitHub OAuth app settings
-- Ensure `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are correct
-
-## 📝 API Documentation
-
-### Public Endpoints:
-
-- `GET /api/public/health` - Server health check
-- `POST /api/auth/send-signup-otp` - Check email availability (no OTP sent)
-- `POST /api/auth/signup` - Register new user
-- `POST /api/auth/login` - Admin login (returns OTP required)
-- `POST /api/auth/verify-otp` - Verify admin OTP and get JWT token
-- `POST /api/auth/forgot-password` - Request password reset link
-- `POST /api/auth/reset-password` - Submit password reset
-- `GET /login/oauth2/code/github` - GitHub OAuth callback
-
-### Protected Endpoints (Require JWT):
-
-- `GET /api/user/me` - Get current user info
-- `POST /api/user/sync` - Sync repositories from GitHub
-- `PUT /api/user/profile` - Update profile
-- `POST /api/chat` - Chat with AI assistant
-
-### Admin Endpoints (Require admin JWT):
-
-- `GET /api/admin/users` - List all users
-- `GET /api/admin/users/unverified` - List users with unverified emails
-- `PUT /api/admin/users/{id}/verify-email` - Mark user email as verified
-- `GET /api/admin/analytics` - Usage statistics
-- `GET /api/admin/feedback` - User feedback list
+---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit: `git commit -m 'feat: add amazing feature'`
+4. Push: `git push origin feature/amazing-feature`
 5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 👥 Authors
-
-**Ansuman Mahapatra**
-
-- GitHub: [@Ansuman-Mahapatra](https://github.com/Ansuman-Mahapatra)
-- Email: ansuman197463@gmail.com
-
-## 🙏 Acknowledgments
-
-- Spring Boot team for the excellent framework
-- React and Vite teams for modern frontend tools
-- Shadcn UI for beautiful components
-- OpenAI for the AI capabilities
-- GitHub for the API and OAuth
 
 ---
 
-**Live Demo:** [https://gittenz.netlify.app](https://gittenz.netlify.app)
+## 📄 License
 
-For deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md)
+MIT License — see [LICENSE](LICENSE) for details.
+
+---
+
+## 👤 Author
+
+**Ansuman Mahapatra**
+
+- 🌐 Website: [gittenz.vercel.app](https://gittenz.vercel.app)
+- 💼 LinkedIn: [ansumanmahapatra998](https://www.linkedin.com/in/ansumanmahapatra998/)
+- 🐙 GitHub: [@Ansuman-Mahapatra](https://github.com/Ansuman-Mahapatra)
+- 📧 Email: ansuman197463@gmail.com
+
+---
+
+**Live Demo:** [https://gittenz.vercel.app](https://gittenz.vercel.app)  
+**Desktop App:** [https://github.com/Ansuman-Mahapatra/GitDense](https://github.com/Ansuman-Mahapatra/GitDense)  
+**Deployment Guide:** [DEPLOYMENT.md](DEPLOYMENT.md)
