@@ -9,16 +9,34 @@ export function AuthSuccessPage() {
     const { setToken } = useAuth();
     const [isDesktop, setIsDesktop] = useState(false);
 
+    const [countdown, setCountdown] = useState(3);
+
     useEffect(() => {
         const token = searchParams.get("token");
         const source = searchParams.get("source");
 
         if (source === "desktop") {
             // This tab was opened by the desktop app for GitHub verification.
-            // Save the token silently (in case user wants to use the website too)
-            // but show "close this tab" instead of navigating to the dashboard.
             setIsDesktop(true);
             if (token) setToken(token);
+
+            // 🚀 AUTOMATIC DEEP LINK REDIRECT
+            // This tries to wake up the GitDense app and pass the token instantly
+            if (token) {
+                window.location.href = `gitdense://auth?token=${token}`;
+                
+                // Backup: countdown to close tab if redirect worked
+                const timer = setInterval(() => {
+                    setCountdown(prev => {
+                        if (prev <= 1) {
+                            clearInterval(timer);
+                            // Some browsers allow window.close() after protocol redirect
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }
             return;
         }
 
@@ -43,19 +61,25 @@ export function AuthSuccessPage() {
                             GitHub Verified!
                         </h1>
                         <p className="text-muted-foreground">
-                            Your GitHub account has been verified successfully.
+                            We're sending you back to the desktop application...
                         </p>
                         <p className="text-sm text-muted-foreground bg-muted/50 rounded-xl px-4 py-3 mt-3">
-                            🖥️ You can now <strong>close this browser tab</strong> and return to the <strong>GitDense</strong> desktop application. It will update automatically.
+                            🖥️ The <strong>GitDense</strong> app should be opening now. 
+                            <br />
+                            <span className="opacity-70 text-[10px] mt-2 block">
+                                If nothing happens, you can manually close this tab.
+                            </span>
                         </p>
                     </div>
-                    <button
-                        onClick={() => window.close()}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
-                    >
-                        <X className="w-4 h-4" />
-                        Close This Tab
-                    </button>
+                    <div className="flex flex-col gap-3 w-full">
+                        <button
+                            onClick={() => window.close()}
+                            className="flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity"
+                        >
+                            <X className="w-4 h-4" />
+                            Close Tab ({countdown}s)
+                        </button>
+                    </div>
                 </div>
             </div>
         );
