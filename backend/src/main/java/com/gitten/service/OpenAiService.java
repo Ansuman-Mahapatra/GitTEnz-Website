@@ -83,7 +83,9 @@ public class OpenAiService implements AiService {
         String apiUrl = "https://api.openai.com/v1/chat/completions";
         String modelName = "gpt-3.5-turbo";
         
-        if (openAiApiKey != null && openAiApiKey.startsWith("nvapi-")) {
+        String cleanKey = openAiApiKey != null ? openAiApiKey.replaceAll("^\"|\"$", "").replaceAll("^'|'$", "").trim() : null;
+        
+        if (cleanKey != null && cleanKey.startsWith("nvapi-")) {
             apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
             modelName = "meta/llama-3.1-8b-instruct";
         }
@@ -101,7 +103,7 @@ public class OpenAiService implements AiService {
         try {
             Map response = openAiClient.post()
                     .uri(apiUrl)
-                    .header("Authorization", "Bearer " + openAiApiKey)
+                    .header("Authorization", "Bearer " + cleanKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
                     .retrieve()

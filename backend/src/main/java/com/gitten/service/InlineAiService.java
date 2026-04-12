@@ -37,14 +37,19 @@ public class InlineAiService {
         this.userRepository = userRepository;
     }
 
+    private String cleanKey(String key) {
+        if (key == null) return null;
+        return key.replaceAll("^\"|\"$", "").replaceAll("^'|'$", "").trim();
+    }
+
     private String getEffectiveKey(String username) {
         if (username != null) {
             Optional<com.gitten.model.User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isPresent() && userOpt.get().getAiApiKey() != null && !userOpt.get().getAiApiKey().isBlank()) {
-                return userOpt.get().getAiApiKey().trim();
+                return cleanKey(userOpt.get().getAiApiKey());
             }
         }
-        return openAiApiKey != null ? openAiApiKey.trim() : null;
+        return cleanKey(openAiApiKey);
     }
 
     public InlineAiResponse chat(String username, InlineAiRequest request) {
