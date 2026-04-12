@@ -30,9 +30,42 @@ public class UserController {
     }
 
     @GetMapping("/me")
-    public User getCurrentUser(java.security.Principal principal) {
-        return userRepository.findByUsername(principal.getName())
+    public java.util.Map<String, Object> getCurrentUser(java.security.Principal principal) {
+        User user = userRepository.findByUsername(principal.getName())
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Compute githubVerificationRequired on the server side (single source of truth)
+        // This avoids client/server clock skew and timezone issues that caused
+        // the verification overlay to behave differently in production vs local.
+        boolean githubVerificationRequired = false;
+        if (user.getGithubId() == null || user.getGithubId().isBlank()) {
+            githubVerificationRequired = true;
+        } else if (user.getLastGithubVerifiedAt() == null) {
+            githubVerificationRequired = true;
+        } else {
+            java.time.Instant threeDaysAgo = java.time.Instant.now()
+                    .minus(3, java.time.temporal.ChronoUnit.DAYS);
+            if (user.getLastGithubVerifiedAt().isBefore(threeDaysAgo)) {
+                githubVerificationRequired = true;
+            }
+        }
+
+        // Build a response map with user fields + the computed flag
+        java.util.Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("id", user.getId());
+        response.put("username", user.getUsername());
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+        response.put("avatarUrl", user.getAvatarUrl());
+        response.put("githubId", user.getGithubId());
+        response.put("role", user.getRole());
+        response.put("onboardingCompleted", user.isOnboardingCompleted());
+        response.put("lastGithubVerifiedAt",
+                user.getLastGithubVerifiedAt() != null ? user.getLastGithubVerifiedAt().toString() : null);
+        response.put("notificationPreferences", user.getNotificationPreferences());
+        response.put("githubVerificationRequired", githubVerificationRequired);
+
+        return response;
     }
 
     @PostMapping("/sync")

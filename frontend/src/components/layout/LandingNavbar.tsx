@@ -39,7 +39,7 @@ export function LandingNavbar() {
                     <Link to="/login">
                         <Button variant="ghost" className="hover:text-primary">Log In</Button>
                     </Link>
-                    <Link to="/login">
+                    <Link to="/signup">
                         <Button className="glow-green">Get Started</Button>
                     </Link>
                 </motion.div>

@@ -41,7 +41,7 @@ export function HomePage() {
                         transition={{ delay: 0.2 }}
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                     >
-                        <Link to="/login">
+                        <Link to="/signup">
                             <Button size="lg" className="glow-green px-8 h-14 rounded-xl text-lg font-bold transition-all hover:scale-105">
                                 Start for Free
                             </Button>
@@ -109,7 +109,7 @@ export function HomePage() {
                             Start for free, no credit card required.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                            <Link to="/login">
+                            <Link to="/signup">
                                 <Button size="lg" className="h-12 px-8 text-lg glow-green w-full sm:w-auto">
                                     Sign Up Now
                                 </Button>

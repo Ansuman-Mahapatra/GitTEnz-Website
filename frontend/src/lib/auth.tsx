@@ -18,6 +18,7 @@ export interface User {
   };
   githubId?: string;
   lastGithubVerifiedAt?: string;
+  githubVerificationRequired?: boolean;
 }
 
 interface AuthContextType {
@@ -230,20 +231,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return await res.json();
   };
 
-  const githubVerificationRequired = !!user && (
-    !user.githubId || 
-    (() => {
-      if (!user.lastGithubVerifiedAt) return true;
-      const verifiedAt = new Date(user.lastGithubVerifiedAt).getTime();
-      if (isNaN(verifiedAt)) return true;
-      
-      // 3 days in milliseconds (plus a 5-minute buffer for server/client clock drift)
-      const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-      const BUFFER_MS = 5 * 60 * 1000;
-      
-      return (Date.now() - verifiedAt) > (THREE_DAYS_MS + BUFFER_MS);
-    })()
-  );
+  // Use the backend-computed flag — the server is the single source of truth.
+  // This fixes the local-vs-production discrepancy caused by client/server
+  // clock skew and timezone differences (e.g. IST client vs UTC server).
+  const githubVerificationRequired = !!user && (user.githubVerificationRequired ?? (
+    // Fallback: if the backend hasn't returned the flag yet (e.g. stale cache),
+    // compute locally as a safety net
+    !user.githubId || !user.lastGithubVerifiedAt
+  ));
 
   return (
     <AuthContext.Provider value={{ user, loading, githubVerificationRequired, signInWithGitHub, signInWithEmail, signUpWithEmail, verifySignupOtp, verifyOtp, signOut, token, setToken }}>

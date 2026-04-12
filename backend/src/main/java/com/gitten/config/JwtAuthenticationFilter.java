@@ -71,11 +71,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void updateUserActivity(String username) {
         try {
             userRepository.findByUsername(username).ifPresent(user -> {
+                java.time.Instant now = java.time.Instant.now();
                 // Only update if last activity was more than 1 minute ago to reduce DB writes
                 if (user.getLastActiveAt() == null ||
-                        java.time.Duration.between(user.getLastActiveAt(), java.time.Instant.now())
+                        java.time.Duration.between(user.getLastActiveAt(), now)
                                 .toMinutes() >= 1) {
-                    user.setLastActiveAt(java.time.Instant.now());
+                    user.setLastActiveAt(now);
+
+                    // Rolling GitHub verification extension:
+                    // If the user has a GitHub account and was verified within the last 3 days,
+                    // extend the verification window since they are actively using the app.
+                    // This prevents the verification overlay from appearing mid-session.
+                    if (user.getGithubId() != null && user.getLastGithubVerifiedAt() != null) {
+                        java.time.Instant threeDaysAgo = now.minus(3, java.time.temporal.ChronoUnit.DAYS);
+                        if (user.getLastGithubVerifiedAt().isAfter(threeDaysAgo)) {
+                            user.setLastGithubVerifiedAt(now);
+                        }
+                    }
+
                     userRepository.save(user);
                 }
             });
