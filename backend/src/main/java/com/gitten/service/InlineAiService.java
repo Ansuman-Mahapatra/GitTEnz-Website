@@ -83,24 +83,32 @@ public class InlineAiService {
             history.addAll(trimmed);
         }
 
-        // Call OpenAI - Upgraded to gpt-4o-mini for better performance
-        Map<String, Object> requestBody = Map.of(
-                "model", "gpt-4o-mini",
-                "messages", new ArrayList<>(history),
-                "temperature", 0.7,
-                "max_tokens", 2048);
-
         String effectiveKey = getEffectiveKey(username);
         if (effectiveKey == null || effectiveKey.isBlank()) {
             return new InlineAiResponse("No OpenAI API Key found. Please configure it in Settings -> Developer.",
                     sessionId);
         }
 
+        String apiUrl = "https://api.openai.com/v1/chat/completions";
+        String modelName = "gpt-4o-mini";
+        
+        if (effectiveKey.startsWith("nvapi-")) {
+            apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+            modelName = "meta/llama-3.1-8b-instruct";
+        }
+
+        // Call OpenAI or Nvidia based on key
+        Map<String, Object> requestBody = Map.of(
+                "model", modelName,
+                "messages", new ArrayList<>(history),
+                "temperature", 0.7,
+                "max_tokens", 2048);
+
         RestClient openAiClient = restClientBuilder.build();
 
         try {
             Map response = openAiClient.post()
-                    .uri("https://api.openai.com/v1/chat/completions")
+                    .uri(apiUrl)
                     .header("Authorization", "Bearer " + effectiveKey)
                     .contentType(Objects.requireNonNull(MediaType.APPLICATION_JSON))
                     .body(Objects.requireNonNull(requestBody))

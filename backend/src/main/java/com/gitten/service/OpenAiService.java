@@ -80,20 +80,27 @@ public class OpenAiService implements AiService {
 
         String systemPrompt = contextBuilder.toString();
 
-        // Call OpenAI
+        String apiUrl = "https://api.openai.com/v1/chat/completions";
+        String modelName = "gpt-3.5-turbo";
+        
+        if (openAiApiKey != null && openAiApiKey.startsWith("nvapi-")) {
+            apiUrl = "https://integrate.api.nvidia.com/v1/chat/completions";
+            modelName = "meta/llama-3.1-8b-instruct";
+        }
+
+        // Call OpenAI or Nvidia based on key
         Map<String, Object> requestBody = Map.of(
-                "model", "gpt-3.5-turbo",
+                "model", modelName,
                 "messages", List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userMessage)));
 
-        // Note: Using a new RestClient here because the main one is configured for
-        // GitHub
+        // Note: Using a new RestClient here because the main one is configured for GitHub
         RestClient openAiClient = restClientBuilder.build();
 
         try {
             Map response = openAiClient.post()
-                    .uri("https://api.openai.com/v1/chat/completions")
+                    .uri(apiUrl)
                     .header("Authorization", "Bearer " + openAiApiKey)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(requestBody)
