@@ -55,9 +55,17 @@
 
 ---
 
-### 🤖 6. AI & Smart Features
-- **Context-Aware AI Assistant:** Reads repository `README.md` and file structures to answer specific development questions.
-- **Server Health Check (Wake-Up):** A specialized "Smart Proxy" that pings the backend health endpoint. It only shows a loading screen for cold-starts (Render/Free tier), staying hidden during local work or active sessions.
+### 🤖 6. AI & Smart Analytics (The New Hub)
+- **Advanced AI Assistant:** Contextual code analysis popup offering instant "Explain Code", "Find Bugs", and "Refactor" support directly on selected IDE text.
+- **Repository Health Analyst:** Brand-new **AI Insights** tab parses repository structures to assign standard Health/Security Scores alongside collaboration metrics.
+- **Custom Reporting Export:** Automatically compiles the AI's complex evaluations into a styled GitHub-Ready Markdown PDF download for team reviews.
+- **Real-Time Notification Sync:** Activity polling hooks into `next-themes` and a centralized settings manager for granular event control.
+
+---
+
+### 🌐 7. Seamless Deep Linking Authentication
+- **Custom Protocol Handlers (`gitdense://`):** Radically enhanced UX where successful web OAuth authentication shoots the user token seamlessly through a localized deep link back into the Desktop application.
+- **Silent Multi-Session Handshake:** Circumvents legacy clipboard copy-pasting—users login on the browser and the Desktop simply "wakes up" authenticated.
 
 ---
 

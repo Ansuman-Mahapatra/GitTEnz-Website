@@ -28,14 +28,17 @@ public class RepositoryController {
     private final RepositoryRepository repositoryRepository;
 
     private final LocalGitService localGitService;
+    private final com.gitten.service.AiService aiService;
 
     public RepositoryController(RepositoryService repositoryService, GitHubService gitHubService,
-            UserRepository userRepository, LocalGitService localGitService, RepositoryRepository repositoryRepository) {
+            UserRepository userRepository, LocalGitService localGitService, RepositoryRepository repositoryRepository,
+            com.gitten.service.AiService aiService) {
         this.repositoryService = repositoryService;
         this.gitHubService = gitHubService;
         this.userRepository = userRepository;
         this.localGitService = localGitService;
         this.repositoryRepository = repositoryRepository;
+        this.aiService = aiService;
     }
 
     @GetMapping
@@ -224,5 +227,22 @@ public class RepositoryController {
         }
 
         return repositoryRepository.save(repo);
+    }
+
+    @GetMapping("/{owner}/{repo}/insights")
+    public ResponseEntity<?> getInsights(@PathVariable String owner, @PathVariable String repo, java.security.Principal principal) {
+        String username = principal.getName();
+        String fullName = owner + "/" + repo;
+        String insightsJson = aiService.generateRepositoryInsights(username, fullName);
+        
+        try {
+            // Need to return it as parsed JSON if it's a string, or just set content type to JSON
+            // Because insightsJson is a JSON string, we can just return it with application/json
+            return ResponseEntity.ok()
+                .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
+                .body(insightsJson);
+        } catch (Exception e) {
+             return ResponseEntity.status(500).body(java.util.Map.of("error", "Failed to parse AI insights"));
+        }
     }
 }

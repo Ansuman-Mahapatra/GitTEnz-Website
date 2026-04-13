@@ -11,11 +11,13 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/lib/auth";
 import { API_URL } from "@/config";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useTheme } from "next-themes";
 import { useToast } from "@/components/ui/use-toast";
 
 export function SettingsPanel() {
   const { user, token, setToken } = useAuth(); // Assuming setToken can trigger re-fetch or we manually re-fetch
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -38,10 +40,13 @@ export function SettingsPanel() {
           pushNotifications: user.notificationPreferences!.pushNotifications,
           emailNotifications: user.notificationPreferences!.emailAlerts,
           commitAlerts: user.notificationPreferences!.commitActivityAlerts,
+          darkMode: theme === "dark"
         }));
+      } else {
+        setPreferences((prev) => ({ ...prev, darkMode: theme === "dark" }));
       }
     }
-  }, [user]);
+  }, [user, theme]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -103,6 +108,10 @@ export function SettingsPanel() {
     const newValue = !preferences[id];
     setPreferences(prev => ({ ...prev, [id]: newValue }));
 
+    if (id === "darkMode") {
+        setTheme(newValue ? "dark" : "light");
+    }
+
     // Sync Notification Preferences with Backend
     if (["pushNotifications", "emailNotifications", "commitAlerts"].includes(id)) {
       const payload = {
@@ -135,7 +144,6 @@ export function SettingsPanel() {
     {
       title: "Appearance",
       icon: Palette,
-      comingSoon: true,
       settings: [
         { id: "darkMode", label: "Dark Mode", description: "Use dark theme across the application" },
         { id: "animations", label: "Animations", description: "Enable smooth transitions and animations" },
@@ -145,7 +153,6 @@ export function SettingsPanel() {
     {
       title: "Notifications",
       icon: Bell,
-      comingSoon: true,
       settings: [
         { id: "pushNotifications", label: "Push Notifications", description: "Receive push notifications" },
         { id: "emailNotifications", label: "Email Notifications", description: "Receive email updates" },
@@ -155,7 +162,6 @@ export function SettingsPanel() {
     {
       title: "Privacy & Security",
       icon: Shield,
-      comingSoon: true, // Flag
       settings: [
         { id: "twoFactor", label: "Two-Factor Auth", description: "Add extra security layer" },
         { id: "activityLog", label: "Activity Log", description: "Track account activity" },
@@ -165,7 +171,6 @@ export function SettingsPanel() {
     {
       title: "Developer",
       icon: Code,
-      comingSoon: true, // Flag
       settings: [
         { id: "apiAccess", label: "API Access", description: "Enable API key generation" },
         { id: "webhooks", label: "Webhooks", description: "Configure webhook endpoints" },
