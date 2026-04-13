@@ -16,13 +16,16 @@ GitTEnz is a high-performance, full-stack web application for GitHub developers.
 - **Email/Password Signup** — Create accounts directly, admin verifies emails within a week
 - **Deleted Repository Tracking** — Repositories removed from GitHub are automatically detected and moved to a "Deleted Repos" section, preserving history
 - **Manual Sync** — One-click "Sync Data" button in the dashboard to pull the latest repository state from GitHub anytime
+- **AI Repository Analysts & Insights** — Brand-new deep parsing of repositories offering Collaboration metrics, Executive Summaries, and calculated Health/Security scores.
+- **Custom Insight Downloads** — Automatically exports formatted `.md` analysis reports for GitHub repositories.
 - **Admin Dashboard** — Comprehensive panel with user management, analytics, feedback, and policy management
 - **Admin OTP Authentication** — Two-factor login via Gmail SMTP for admin accounts only
-- **AI Assistant** — Context-aware AI reads your repository README for intelligent, relevant responses
+- **Advanced Context-Aware AI Assistant** — Highlight text in the code editor to get instant "Explain", "Find Bugs", or "Suggest Refactor" prompts directly connected to OpenAI/Nvidia models.
 - **Activity Insights** — Contribution history with charts for Pushes, Pull Requests, and more
 - **Local Starring** — Star repositories within GitTEnz without affecting GitHub stars
 - **Code Editor** — View and edit code directly in the browser with a file tree
-- **Desktop App (GitDense)** — Full Electron wrapper with a distinct **Light Blue** theme, persistent 30-day+ sessions, and smart GitHub OAuth redirect back to the desktop client
+- **Theme Customization** — Full Light/Dark mode (`next-themes`) synchronized seamlessly through localized central Settings.
+- **Desktop App (GitDense)** — Full Electron wrapper with persistent 30-day+ sessions, and smart `gitdense://` deep-linking for seamless OAuth web-to-desktop transitions.
 
 ### **Admin Features**
 
@@ -87,7 +90,7 @@ GitTEnz is a high-performance, full-stack web application for GitHub developers.
 | MongoDB Atlas | Primary database |
 | Redis | Caching layer (optional) |
 | GitHub API | Repository data source |
-| OpenAI API | AI assistant |
+| OpenAI & NVIDIA API | AI assistance and LLM repository Insights |
 | Gmail SMTP | Admin OTP delivery |
 | Render | Backend deployment |
 | Vercel | Frontend deployment |
@@ -129,8 +132,10 @@ Key variables for `backend/.env`:
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 
-# OpenAI
+# LLM & AI 
 OPENAI_API_KEY=sk-your_openai_key
+# OR optionally override with an NVIDIA NIM key starting with nvapi-
+# NVIDIA_API_KEY=nvapi-your_nvidia_key
 
 # MongoDB Atlas
 SPRING_DATA_MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/gitten

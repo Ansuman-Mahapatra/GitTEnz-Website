@@ -56,8 +56,10 @@ Frontend runs on **http://localhost:5180**
 - **OAuth2 GitHub Login** — Secure GitHub authentication with smart redirect per client app
 - **Dashboard** — Repository stats (Stars, Forks, Languages) and recent activity
 - **Activity Feed** — Real-time GitHub action updates with commit details
+- **Theme Engine** — Native Light & Dark mode support implemented via `next-themes` and a centralized settings dashboard.
 - **Repository Management** — File tree, code viewer/editor, branch/commit history, local repos
-- **AI Assistant** — Context-aware chat powered by OpenAI
+- **AI Analytics** — Generate comprehensive repository structural reports and executive summaries directly from the UI.
+- **Inline AI Assistant** — Powerful contextual popups directly over the CodeEditor allowing instantaneous explanation, bug tracking, and refactoring connected to Nvidia/OpenAI models.
 
 ---
 
@@ -70,7 +72,9 @@ Frontend runs on **http://localhost:5180**
 | `ServerWakeUp` | `src/components/layout/` | Smart backend health checker |
 | `SignupPage` | `src/pages/` | Email availability check, immediate account creation |
 | `LoginPage` | `src/pages/` | GitHub OAuth + email/password login |
-| `AIAssistant` | `src/components/ai/` | Context-aware chat (reads repo README) |
+| `CodeEditor` | `src/components/dashboard/` | Core text editor powering Inline AI highlighting plugins |
+| `SettingsPanel` | `src/components/settings/` | Unified configuration hub for Themes, Notifications, and user configs |
+| `InlineAiProvider` | `src/components/ai/` | Text-highlight driven context-aware chat (reads exact specific code snippets) |
 
 ---
 
