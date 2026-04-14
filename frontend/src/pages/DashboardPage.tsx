@@ -905,7 +905,6 @@ export function DashboardPage() {
               >
                 <Menu className="w-5 h-5" />
               </Button>
-              <h1 className="text-xl font-bold text-gradient hidden sm:block">GitTEnz</h1>
             </div>
 
             <div className="flex items-center gap-3">
